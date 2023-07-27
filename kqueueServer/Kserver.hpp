@@ -15,7 +15,7 @@
 /**
  * @brief kqueue using echo server
  * @details <kqueue 동작 로직>
- * 1. kqeueu() 로 kqueue 생성
+ * 1. kqueue() 로 kqueue 생성
  * 2. eventSet을 이용해서 change_list_에 감지하고자 하는 이벤트의 갯수만큼 넣어준다.
  * 3. 처음에는 웹서버 소켓을 read에 대한 이벤트를 감지하도록 지정해준다.
  * 4. 그렇게 구조체를 초기화 했다면 kevent함수를 호출해서, 서버 소켓에 대한 이벤트를 감지하도록 해준다. 이렇게 하면 에코서버가 시작되는 것이다.
@@ -50,7 +50,7 @@ class Kserver{
 		void  handleEvents();
 		void  registerNewClnt();
 		void  sockReadable(struct kevent *cur_event);
-		void  sockWriterable(struct kevent *cur_event);
+		void  sockWriteable(struct kevent *cur_event);
 		void  disconnectClient(int clnt_fd);
 		Kqueue kqueue_;
 		struct kevent event_list_[8];//한번 감지된 이벤트의 배열

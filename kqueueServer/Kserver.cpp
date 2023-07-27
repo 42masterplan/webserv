@@ -84,7 +84,7 @@ void  Kserver::startWorking(){
  */
 void  Kserver::sockInit(){
 	if (port_ == -1)
-		throw(std::invalid_argument("Port Num is not vaild"));
+		throw(std::invalid_argument("Port Num is not valid"));
 	serv_sockfd_ = socket(PF_INET, SOCK_STREAM, 0);
 	if (serv_sockfd_ == -1)
 		throw(std::runtime_error("SOCK() ERROR"));
@@ -130,7 +130,7 @@ void  Kserver::handleEvents(){
 				sockReadable(cur_event);
 		}
 		else if (cur_event->filter == EVFILT_WRITE)
-			sockWriterable(cur_event);//ONLY CLIENT
+			sockWriteable(cur_event);//ONLY CLIENT
 		else{
 			std:: cout << "????????" <<  cur_event->filter << "\n";
 			throw(std::runtime_error("THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
@@ -139,7 +139,7 @@ void  Kserver::handleEvents(){
 }
 
 /**
- * @brief 새로운 클라이언트를 받았다고 생각한 함수 클라이언트 소켓을 accept 해주고, noblocking으로 만든 후, kqueue 이벤트에 read,write 모두 등록해줍니다.
+ * @brief 새로운 클라이언트를 받았다고 생각한 함수 클라이언트 소켓을 accept 해주고, nonblocking으로 만든 후, kqueue 이벤트에 read,write 모두 등록해줍니다.
  * 추가적으로 클라이언트 저장소에 빈 문자열로 저장해줍니다.
  *
  */
@@ -184,11 +184,11 @@ void  Kserver::sockReadable(struct kevent *cur_event){
  *
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
-void  Kserver::sockWriterable(struct kevent *cur_event){
+void  Kserver::sockWriteable(struct kevent *cur_event){
 	if (clnt_store_.find(cur_event->ident) != clnt_store_.end()){
 		if (clnt_store_[cur_event->ident] != ""){
 				int n = write(cur_event->ident, clnt_store_[cur_event->ident].c_str(),clnt_store_[cur_event->ident].size());
-				std::cout << "Writerable\n";
+				std::cout << "Writeable\n";
 				if (n == -1){
 						std::cerr << "client write error!" << "\n";
 						disconnectClient(cur_event->ident);
@@ -205,7 +205,7 @@ void  Kserver::sockWriterable(struct kevent *cur_event){
  * @param clnt_fd 연결을 끊을 클라이언트 fd
  */
 void  Kserver::disconnectClient(int clnt_fd){
-	std::cout << "CLINET DISCONNECTED:: " << clnt_fd << "\n";
+	std::cout << "CLIENT DISCONNECTED:: " << clnt_fd << "\n";
 	// kqueue_.ChangeEvent(clnt_fd, EVFILT_READ, EV_DELETE | EV_DISABLE, NULL);
 	// kqueue_.ChangeEvent(clnt_fd,EVFILT_WRITE, EV_DELETE | EV_DISABLE, NULL);
 	close(clnt_fd);

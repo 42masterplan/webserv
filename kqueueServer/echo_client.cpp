@@ -47,7 +47,7 @@ const int &Client:: getSock(){
 
 void  Client::ConnectWithServer(){
 	if (connect(sockfd, (sockaddr *)&serv_adr, sizeof(serv_adr)) == -1)
-		throw(std::runtime_error("connet error"));
+		throw(std::runtime_error("connect error"));
 	std::cout << "Connected:..............\n";
 }
 

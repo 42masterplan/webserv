@@ -65,10 +65,10 @@ int stringToInt(const std::string &num);
  * 이런식으로 되있는 경우는 아에 안되는 것으로 처리하겠습니다.
  * ex : server{location{}} 이렇게 오는것도 안 합니다.
  *
- * @tparam T (ConfPaser, HttpBlock, ServBlock, OtherBlock, locBlock) 클래스가 들어옵니다.
+ * @tparam T (ConfParser, HttpBlock, ServBlock, OtherBlock, locBlock) 클래스가 들어옵니다.
  * @warning 호출 하기 전에 T block 안에 makeBlock() 함수가 있는지 확인합니다.
  * @param input conf파일을 열어 놓은 ifstream 입니다.
- * @param line_len_ ConfPaser에서 있는 멤버변수입니다. 에러가 어디서 났는지 알기위해 계속 가져갑니다.
+ * @param line_len_ ConfParser에서 있는 멤버변수입니다. 에러가 어디서 났는지 알기위해 계속 가져갑니다.
  * @param block 새로 만든 즉 벡터에 들어갈 블록이 들어옵니다.
  */
 template <typename T>

@@ -36,6 +36,6 @@ private:
 	int	line_len_;//conf파일 몇번 째 줄까지 읽었는지 확인하는 변수
 	std::vector<HttpBlock>	http_store_;
 	std::vector<OtherBlock>	other_store_;
-	std::map<std::string, std::string>	root_directives_;//key : derective, value : value
+	std::map<std::string, std::string>	root_directives_;//key : directive, value : value
 };
 #endif

@@ -10,13 +10,13 @@ class HttpResponse{
 		HttpResponse();
 
 		/* getter, setter */
-		const int&					getStatusCode(void);
-		const std::string&	getMessage(void);
-		const std::string& getHttpVersion(void);
-		const std::vector<char>&	getBody(void);
-		const int&					getContentLength(void);
-		const std::string&	getContentType(void);
-		const std::string&	getLocation(void);
+		const int&					getStatusCode(void) const;
+		const std::string&	getMessage(void) const;
+		const std::string& getHttpVersion(void) const;
+		const std::vector<char>&	getBody(void) const;
+		const int&					getContentLength(void) const;
+		const std::string&	getContentType(void) const;
+		const std::string&	getLocation(void) const;
 
 		void	setStatusCode(int status_code);
 		void	setMessage(std::string message);

@@ -20,14 +20,14 @@ class HttpRequest{
 		HttpRequest();
 
 		/* getter, setter */
-		const e_method&			getMethod(void);
-		const std::string&	getPath(void);
-		const std::map<std::string, std::string>&	getHeader(void);
-		const std::vector<char>&	getBody(void);
-		const int&					getContentLength(void);
-		const int&					getPort(void);
-		const bool&					getIsChunked(void);
-		const std::string&	getContentType(void);
+		const e_method&			getMethod(void) const;
+		const std::string&	getPath(void) const;
+		const std::map<std::string, std::string>&	getHeader(void) const;
+		const std::vector<char>&	getBody(void) const;
+		const int&					getContentLength(void) const;
+		const int&					getPort(void) const;
+		const bool&					getIsChunked(void) const;
+		const std::string&	getContentType(void) const;
 
 		void	setMethod(e_method method);
 		void	setPath(std::string path);

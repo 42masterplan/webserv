@@ -40,14 +40,14 @@ e_method checkMethodName(const std::string &block_name){
 
 
 /**
- * @brief double값으로 인자를 받는 int oveflow 체크 함수
+ * @brief double값으로 인자를 받는 int overflow 체크 함수
  *
  * @param d 체크하고자 하는 double값
  */
 void  checkOverFlow(double d){
   int a = d;
   if (static_cast<double> (a) != std::floor(d))
-    throw std::overflow_error("TOO_LARGENUM_ERROR");
+    throw std::overflow_error("TOO_LARGE_NUM_ERROR");
 }
 
 /**
@@ -81,10 +81,10 @@ void	trimSidesSpace(std::string &line){
  * @param line 변경할 문자열
  */
 void	trimComment(std::string &line){
-	size_t tmpos = line.find('#');
-	if (tmpos != std::string::npos){
-		line.erase(tmpos,line.size());
-		line = line.substr(0, tmpos);
+	size_t tmp_pos = line.find('#');
+	if (tmp_pos != std::string::npos){
+		line.erase(tmp_pos,line.size());
+		line = line.substr(0, tmp_pos);
 	}
 }
 
@@ -97,16 +97,16 @@ void	trimComment(std::string &line){
  * @warning derective를 key space value 형식이 아니면 runtime_error를 던집니다.
  */
 void	splitKeyVal(std::string& key, std::string &value, std::string &line){
-	size_t tmpos = line.find(' ');
-	if (tmpos == std::string::npos)	//directive<space>value로 되어있어야 한다.
+	size_t tmp_pos = line.find(' ');
+	if (tmp_pos == std::string::npos)	//directive<space>value로 되어있어야 한다.
 		throw(std::runtime_error("ERROR DIRECTIVE key"));
-	key = line.substr(0,tmpos);
+	key = line.substr(0,tmp_pos);
 	// std::cout << "key:|"<< key << "|" << std::endl;
-	for (; tmpos < line.size(); tmpos++){
-		if (line[tmpos] != ' ' && line[tmpos] != '\t')
+	for (; tmp_pos < line.size(); tmp_pos++){
+		if (line[tmp_pos] != ' ' && line[tmp_pos] != '\t')
 			break ;
 	}
-	value = line.substr(tmpos);
+	value = line.substr(tmp_pos);
 	// std::cout << "value:|"<< value << "|" << std::endl;
 }
 

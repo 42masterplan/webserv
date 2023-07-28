@@ -30,7 +30,7 @@ void	HttpBlock::refineAll(){
  * @param port_num 포트번호에 해당하는 값을 전달
  * @param serv_name http메세지에서 host_name
  * @return ServBlock 해당하는 서버 블록 또는 default 서버는 port 번호가 같으면 그걸로 가는것 입니다.(포트가 다르면 짤.)
- * @warning 포트가 일치하는 serverblock이 없는 경우 listen이 -1인 server block을 리턴합니다.
+ * @warning 포트가 일치하는 server_block이 없는 경우 listen이 -1인 server block을 리턴합니다.
  */
 ServBlock HttpBlock::findServBlock(int port_num, std::string serv_name)const {
 	int default_serv = -1;

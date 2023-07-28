@@ -17,14 +17,14 @@ const std::string& HttpBase::getErrorPage() const{return error_page_;}
  * @return std::string error_page 위치
  * @note 이 함수로 error_page의 경로를 찾습니다.
  */
-std::string HttpBase::getConbineErrorPath()const{
+std::string HttpBase::getCombineErrorPath()const{
 	if (error_page_ == "")
 		return (error_page_);
 	return root_+error_page_;
 }
 
 /**
- * @brief httpbase에 있는 멤버변수 정보를 보여주는 함수
+ * @brief http_base에 있는 멤버변수 정보를 보여주는 함수
  * @note 상속 받아서 모든 클래스 Block에서 사용
  */
 void	HttpBase::printHttpInfo()const{

@@ -109,8 +109,6 @@ void	ConfParser::makeBlock(std::string line, std::ifstream& input, int &line_len
 std::map<std::string, std::string>& ConfParser::getDirStore(){return (root_directives_);}
 
 /* private */
-
-
 /**
  * @brief 기본 생성자가 호출되면 conf파일의 경로를 default.conf파일로 설정합니다.
  */

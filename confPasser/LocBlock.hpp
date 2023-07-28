@@ -31,14 +31,14 @@ public:
 	const std::vector<std::string>& getDenyMethod()const;
 
 	/*실제 사용할 경로를 찾아줄 getter*/
-	virtual std::string getConbineErrorPath()const;
-	std::string getConbineUploadStorePath()const;
-	std::string getConbineReturnPath()const;
-	std::string getConbineCgiPath()const;
-	const std::string& getConbineLocPath()const;
+	virtual std::string getCombineErrorPath()const;
+	std::string getCombineUploadStorePath()const;
+	std::string getCombineReturnPath()const;
+	std::string getCombineCgiPath()const;
+	const std::string& getCombineLocPath()const;
 
 	/*setter*/
-	void	setConbinePath(std::string conbie_path);
+	void	setCombinePath(std::string combine_path);
 	void	setHighPriorityRoot(const std::string& root);
 
 	bool isErrorBlock()const;

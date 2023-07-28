@@ -3,12 +3,29 @@
 
 #include "Client.hpp"
 
+#include <string>
+#include <vector>
+#include <map>
+#include <fstream>
+
+typedef enum e_method
+{
+	GET,
+	HEAD,
+	POST,
+	DELETE
+};
+
 class HttpMethod {
 	public:
-		static HttpResponse *handleHttpMethod(HttpRequest* request);
-		static HttpResponse *handleGet(HttpRequest* request);
-		static HttpResponse *handlePost(HttpRequest* request);
-		static HttpResponse *handleDelete(HttpRequest* request);
+		static HttpResponse *handleHttpMethod(HttpRequest* req);
+		static HttpResponse *handleGet(HttpRequest* req);
+		static HttpResponse *handleHead(HttpRequest* req);
+		static HttpResponse *handlePost(HttpRequest* req);
+		static HttpResponse *handleDelete(HttpRequest* req);
+
+		static void writeVectorToFile(const std::string& filename, const std::vector<char>& content);
+		static std::string isEmptyPath(std::string path);
 	private:
 };
 

@@ -16,7 +16,7 @@ public :
 	const std::string& getErrorPage()const;
 
 	/*실제 사용할 경로를 찾아줄 getter*/
-	virtual std::string getCombineErrorPath()const;
+	virtual std::string getConbineErrorPath()const;
 
 	void	printHttpInfo()const;
 	void	setInherit(HttpBase &base);

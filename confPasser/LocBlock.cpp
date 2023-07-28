@@ -53,7 +53,7 @@ const std::vector<std::string>& LocBlock::getDenyMethod()const{return deny_metho
  * @brief error_page경로를 root를 붙혀서 반환하는 함수
  * @return std::string root를 붙힌 error_page 경로
  */
-std::string LocBlock::getCombineErrorPath()const{
+std::string LocBlock::getConbineErrorPath()const{
 	if (error_page_ == "")
 		return (error_page_);
 	if (high_priority_root_ == "")
@@ -65,7 +65,7 @@ std::string LocBlock::getCombineErrorPath()const{
  * @brief upload_store경로를 root를 붙혀서 반환하는 함수
  * @return std::string root를 붙힌 upload_store 경로
  */
-std::string LocBlock::getCombineUploadStorePath()const{
+std::string LocBlock::getConbineUploadStorePath()const{
 	if (upload_store_ == "")
 		return (upload_store_);
 	if (high_priority_root_ == "")
@@ -77,7 +77,7 @@ std::string LocBlock::getCombineUploadStorePath()const{
  * @brief 리다이렉션 경로를 root를 붙혀서 반환하는 함수
  * @return std::string root를 붙힌 리다이렉션 경로
  */
-std::string LocBlock::getCombineReturnPath()const{
+std::string LocBlock::getConbineReturnPath()const{
 	if (return_path_ == "")
 		return (return_path_);
 	if (high_priority_root_ == "")
@@ -89,7 +89,7 @@ std::string LocBlock::getCombineReturnPath()const{
  * @brief cgi경로를 root를 붙혀서 반환하는 함수
  * @return std::string root를 붙힌 cgi의 경로
  */
-std::string LocBlock::getCombineCgiPath()const{
+std::string LocBlock::getConbineCgiPath()const{
 	if (cgi_pass_ == "")
 		return (cgi_pass_);
 	if (high_priority_root_ == "")
@@ -101,10 +101,10 @@ std::string LocBlock::getCombineCgiPath()const{
  * @brief 로케이션 블럭이 index를 거쳐서 붙은 root경로까지 붙힌 완성된 파일 경로
  * @return const std::string& 실제로 접근해서 확인해볼 경로
  */
-const std::string& LocBlock::getCombineLocPath()const{return (combined_path_);}
+const std::string& LocBlock::getConbineLocPath()const{return (combined_path_);}
 
 /*--------setter-------------*/
-void	LocBlock::setCombinePath(std::string combine_path){combined_path_ = combine_path;}
+void	LocBlock::setConbinePath(std::string conbine_path){combined_path_ = conbine_path;}
 void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_ = root;}
 
 /**
@@ -151,12 +151,12 @@ void	LocBlock::printInfo()const{
 	for (size_t i = 0;i < deny_methods_.size(); i++){
 			std::cout << "deny_methods_[" << i << "]:|" << deny_methods_[i] << "|\n";
 	}
-	std::cout << "[Print All combine Path]\n";
-	std::cout << "getCombineErrorPath:|" << getCombineErrorPath()<< "|\n";
-	std::cout << "getCombineUploadStorePath:|" << getCombineUploadStorePath()<< "|\n";
-	std::cout << "getCombineReturnPath:|" << getCombineReturnPath()<< "|\n";
-	std::cout << "getCombineCgiPath:|" << getCombineCgiPath()<< "|\n";
-	std::cout << "getCombineLocPath:|" << getCombineLocPath()<< "|\n";
+	std::cout << "[Print All conbine Path]\n";
+	std::cout << "getConbineErrorPath:|" << getConbineErrorPath()<< "|\n";
+	std::cout << "getConbineUploadStorePath:|" << getConbineUploadStorePath()<< "|\n";
+	std::cout << "getConbineReturnPath:|" << getConbineReturnPath()<< "|\n";
+	std::cout << "getConbineCgiPath:|" << getConbineCgiPath()<< "|\n";
+	std::cout << "getConbineLocPath:|" << getConbineLocPath()<< "|\n";
 }
 
 

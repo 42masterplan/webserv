@@ -16,9 +16,9 @@ const int& ServBlock::getListen()const{return listen_;}
 /**
  * @brief 실제 사용할 경로를 찾아줄 getter
  *
- * @return std::string 실제로 사용할 upload_store 경로
+ * @return std::string 실제로 사용할 uploadstore 경로
  */
-std::string ServBlock::getCombineUploadStorePath()const{
+std::string ServBlock::getConbineUploadStorePath()const{
 	if (upload_store_ == "")
 		return (upload_store_);
 	return(root_ + upload_store_);
@@ -145,7 +145,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 		if (con_path.find(loc_info) == 0){
 			const std::vector<std::string>& loc_index_store = loc_store_[i].getIndex();
 			if (loc_index_store.size() <= 1 && loc_index_store[0]  == ""){
-				loc_store_[i].setCombinePath(troot + path + index);
+				loc_store_[i].setConbinePath(troot + path + index);
 				loc_store_[i].setHighPriorityRoot(troot);
 				return i;
 			}
@@ -156,7 +156,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 						return(ret);
 				}
 				loc_store_[i].setHighPriorityRoot(troot);
-				loc_store_[i].setCombinePath(troot + path + index);
+				loc_store_[i].setConbinePath(troot + path + index);
 				return (i);
 			}
 		}

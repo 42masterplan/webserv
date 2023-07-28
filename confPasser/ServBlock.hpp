@@ -32,7 +32,7 @@ public:
 	const int& getListen()const;
 
 	/*실제 사용할 경로를 찾아줄 getter*/
-	std::string getCombineUploadStorePath()const;
+	std::string getConbineUploadStorePath()const;
 
 	void	refineAll();
 	LocBlock	findLocBlock(std::string path);

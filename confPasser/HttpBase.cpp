@@ -17,7 +17,7 @@ const std::string& HttpBase::getErrorPage() const{return error_page_;}
  * @return std::string error_page 위치
  * @note 이 함수로 error_page의 경로를 찾습니다.
  */
-std::string HttpBase::getCombineErrorPath()const{
+std::string HttpBase::getConbineErrorPath()const{
 	if (error_page_ == "")
 		return (error_page_);
 	return root_+error_page_;
@@ -102,7 +102,7 @@ void	HttpBase::setErrorPage(const std::string& line){
 			break;
 	}
 	if (i == 0)
-		throw(std::runtime_error("ERROR_PAGE SETTING ERROR!!"));
+		throw(std::runtime_error("ERROR_PAGE SETING ERROR!!"));
 	splitAndStore(error_code_,  line.substr(0, i), ' ');
 	error_page_ = line.substr(i+1);
 }

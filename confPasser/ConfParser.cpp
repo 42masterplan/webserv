@@ -2,11 +2,30 @@
 
 /* public */
 
-/**
- * @brief 기본 생성자가 호출되면 conf파일의 경로를 default.conf파일로 설정합니다.
- */
-ConfParser::ConfParser():file_name_("./default.conf"), line_len_(0){}
 ConfParser::~ConfParser(){}
+/**
+ * @brief 싱글톤 패턴을 위해서 static 변수를 반환합니다.
+ * @return ConfParser& 싱글톤 패턴을 위해서 static 변수를 반환합니다.
+ */
+ConfParser& ConfParser::getInstance(){
+	static ConfParser conf_parser_;
+	return conf_parser_;
+}
+
+void	ConfParser::configParseAll(int argc, char**argv){
+	try{
+		if (argc > 2)
+				throw(std::runtime_error("You can only one conffile or default file"));
+		if (argc == 2)
+			setConfPath(argv[1]);//this is my conf_file
+		confInit();
+		refineDirective();
+	}
+	catch (std::exception &e){
+		std::cerr << e.what() << "\n";
+		throw(e);
+	}
+}
 
 /**
  * @brief 파일이름이 있는 경우만 호출하는 conf파일 경로 초기화 함수.
@@ -90,6 +109,13 @@ void	ConfParser::makeBlock(std::string line, std::ifstream& input, int &line_len
 std::map<std::string, std::string>& ConfParser::getDirStore(){return (root_directives_);}
 
 /* private */
+
+
+/**
+ * @brief 기본 생성자가 호출되면 conf파일의 경로를 default.conf파일로 설정합니다.
+ */
+ConfParser::ConfParser():file_name_("./default.conf"), line_len_(0){}
+
 /**
  * @brief HTTP 블록을 만드는 함수
  * @warning HTTP는 오직 1개의 블록만 올 수 있습니다.

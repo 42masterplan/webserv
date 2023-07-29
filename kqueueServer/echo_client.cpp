@@ -73,13 +73,13 @@ void Client::closeConnect(){
 }
 
 int main(int argc, char *argv[]){
-	if (argc != 3){
-		std::cerr << "error : <ip> <port>\n";
+	if (argc != 2){
+		std::cerr << "error : <port>\n";
 		return (1);
 	}
 	try{
 		Client s1;
-		s1.initServAdr(argv[1], argv[2]);
+		s1.initServAdr((char*)"127.0.0.1", argv[1]);
 		s1.makeSock();
 		s1.ConnectWithServer();
 		while (1){

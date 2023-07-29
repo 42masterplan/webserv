@@ -94,7 +94,7 @@ void  Kserver::serverInit(){
  * @brief 메인로직을 구성하는 함수로, kqueue를 시작하고 무한루프를 돌면서 이벤트를 감지->처리합니다.
  */
 void  Kserver::launchServer(){
-	Kqueue::KqueueStart(serv_sockfd_, change_list_);
+	kqueue_fd_ =  Kqueue::KqueueStart(serv_sockfd_, change_list_);
 	while (1){
 		event_list_size_ = Kqueue::detectEvent(event_list_, change_list_, kqueue_fd_);
 		handleEvents();

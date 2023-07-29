@@ -26,7 +26,7 @@ class UData{
 		std::vector<char>	cgi_store_;
 
 	private :
-		
+  
 };
 
 #endif

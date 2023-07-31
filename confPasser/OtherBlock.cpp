@@ -32,7 +32,7 @@ void	OtherBlock::makeBlock(std::string line, std::ifstream& input, int& line_len
 		throw(std::runtime_error("this is not block"));
 	switch(checkBlockName(block_name_)){
 		case HTTP :throw(std::runtime_error("this is not GOOD HTTP block"));
-		case SERVER : throw(std::runtime_error("HERE IS OTHER_BLOCK!"));
+		case SERVER : throw(std::runtime_error("HERE IS OTHERBLOCK!"));
 			break;
 		case LOCATION : throw(std::runtime_error("this is not LOC block"));
 		case OTHERBLOCK : makeOtherBlock(input, line_len_);

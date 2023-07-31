@@ -36,14 +36,12 @@
 class Kserver{
 	public :
 		static const int BUFF_SIZE = 500;
-
-		explicit Kserver(char *port);
-		~Kserver();
-		void  serverInit();
-		// void  sockAccept();//현재 사용하지 않습니다.
-		void  startWorking();
+		explicit  Kserver(char *port);
+		          ~Kserver();
+		void      serverInit();
+		void      launchServer();
 	private:
-		Kserver();
+		      Kserver();
 		void  sockInit();
 		void  sockBind();
 		void  sockListen();
@@ -51,24 +49,19 @@ class Kserver{
 		void  registerNewClnt();
 		void  sockReadable(struct kevent *cur_event);
 		void  sockWriteable(struct kevent *cur_event);
-		void  disconnectClient(int clnt_fd);
-		Kqueue kqueue_;
-		struct kevent event_list_[8];//한번 감지된 이벤트의 배열
-		int event_list_size_;
-		char buff_[BUFF_SIZE];
-		int port_;
+		void  disconnectClient(struct kevent *cur_event);
 
-		//server socket
-		int serv_sockfd_;
-		struct sockaddr_in serv_addr_;
-		socklen_t serv_addrsz_;
+		/* server */
+		char          buff_[BUFF_SIZE];
+		int           port_;
+		int           serv_sockfd_;
+		UData*				serv_udata_ptr_; //서버소켓 udata 포인터입니다. 서버 종료시 delete됩니다.
 
-		//client socket
-		int clnt_sockfd_;
-		struct sockaddr_in clnt_addr_;
-		socklen_t clnt_addrsz_;
-		//클라언트의 소켓 번호와 보내는 데이터를 담는 변수
-		std::map<int, std::string> clnt_store_;
+    /* kqueue */
+    int           kqueue_fd_;
+    std::vector<struct kevent>  change_list_; //등록할 이벤트를 담는 벡터. 담아주고 kqueue에 등록했다면, clear() 해서 비워줍니다.
+		struct kevent event_list_[8]; //한번 감지된 이벤트의 배열 -> udata가 있는 kevent의 배열
+		int           event_list_size_;
 };
 
 #endif

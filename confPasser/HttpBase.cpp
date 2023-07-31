@@ -24,7 +24,7 @@ std::string HttpBase::getCombineErrorPath()const{
 }
 
 /**
- * @brief httpbase에 있는 멤버변수 정보를 보여주는 함수
+ * @brief http_base에 있는 멤버변수 정보를 보여주는 함수
  * @note 상속 받아서 모든 클래스 Block에서 사용
  */
 void	HttpBase::printHttpInfo()const{
@@ -102,7 +102,7 @@ void	HttpBase::setErrorPage(const std::string& line){
 			break;
 	}
 	if (i == 0)
-		throw(std::runtime_error("ERROR_PAGE SETTING ERROR!!"));
+		throw(std::runtime_error("ERROR_PAGE SETING ERROR!!"));
 	splitAndStore(error_code_,  line.substr(0, i), ' ');
 	error_page_ = line.substr(i+1);
 }

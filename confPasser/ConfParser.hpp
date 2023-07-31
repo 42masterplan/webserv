@@ -17,9 +17,10 @@
 class ConfParser : public IBlock{
 
 public:
-	ConfParser();
+	static ConfParser& getInstance();
 	virtual ~ConfParser();
 
+	void	configParseAll(int argc, char**argv);
 	void	setConfPath(char* path);
 	void	confInit();
 	void	refineDirective();
@@ -29,6 +30,7 @@ public:
 	void	makeBlock(std::string line, std::ifstream& input, int& line_len);
 	std::map<std::string, std::string>& getDirStore();
 private:
+	ConfParser();
 	void	makeHttpBlock(std::ifstream& input);
 	void	makeOtherBlock(std::ifstream& input);
 

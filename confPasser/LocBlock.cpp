@@ -104,7 +104,7 @@ std::string LocBlock::getCombineCgiPath()const{
 const std::string& LocBlock::getCombineLocPath()const{return (combined_path_);}
 
 /*--------setter-------------*/
-void	LocBlock::setCombinePath(std::string combine_path){combined_path_ = combine_path;}
+void	LocBlock::setCombinePath(std::string Combine_path){combined_path_ = Combine_path;}
 void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_ = root;}
 
 /**
@@ -151,7 +151,7 @@ void	LocBlock::printInfo()const{
 	for (size_t i = 0;i < deny_methods_.size(); i++){
 			std::cout << "deny_methods_[" << i << "]:|" << deny_methods_[i] << "|\n";
 	}
-	std::cout << "[Print All combine Path]\n";
+	std::cout << "[Print All Combine Path]\n";
 	std::cout << "getCombineErrorPath:|" << getCombineErrorPath()<< "|\n";
 	std::cout << "getCombineUploadStorePath:|" << getCombineUploadStorePath()<< "|\n";
 	std::cout << "getCombineReturnPath:|" << getCombineReturnPath()<< "|\n";

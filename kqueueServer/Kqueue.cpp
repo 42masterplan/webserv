@@ -12,12 +12,11 @@ Kqueue::~Kqueue() {}
  * @return 생성한 kqueue의 fd
  * @exception kqueue()함수에서 에러 발생 시 runtime_error를 throw합니다.
  */
-int  Kqueue::KqueueStart(const int& serv_sock, std::vector<struct kevent>& change_list){
+int  Kqueue::KqueueStart(const int& serv_sock, std::vector<struct kevent>& change_list, UData* udata_ptr){
 	int kqueue_fd = kqueue();
 	if (kqueue_fd == -1)
 		throw(std::runtime_error("kqueue() ERROR!!"));
-	ChangeEvent(serv_sock, EVFILT_READ, EV_ADD | EV_ENABLE, NULL, change_list);//kqueue에 서버소켓 readEvent 등록
-
+	ChangeEvent(serv_sock, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr, change_list);//kqueue에 서버소켓 readEvent 등록
   return (kqueue_fd);
 }
 

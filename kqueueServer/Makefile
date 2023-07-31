@@ -5,7 +5,8 @@ NAME = Kserver
 
 SRCS = main.cpp	\
 			 Kserver.cpp \
-			 Kqueue.cpp
+			 Kqueue.cpp \
+			 UData.cpp \
 
 CSRCS = echo_client.cpp
 

@@ -2,10 +2,12 @@
 #define HTTPMETHOD_HPP
 
 #include "Client.hpp"
+#include "../confPasser/LocBlock.hpp"
+#include "ExtensionMimeMap.hpp"
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <fstream>
 
 typedef enum e_method

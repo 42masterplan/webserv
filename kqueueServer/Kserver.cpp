@@ -6,9 +6,9 @@
  * @return 숫자가 아닌 글자가 들어올 경우 port_ 멤버변수에 -1을 저장하고 함수가 종료됩니다.
 */
 Kserver::Kserver(char* port) {
+	port_ = 0;
 	if (port == NULL)
 		port_ = -1;
-	port_ = 0;
 	int num = 0;
 
 	for (int i = 0; port[i] != '\0'; i++){
@@ -86,7 +86,7 @@ void  Kserver::serverInit(){
  */
 void  Kserver::launchServer(){
 	serv_udata_ptr_ = new UData(SERVER);
-	kqueue_fd_ =  Kqueue::KqueueStart(serv_sockfd_, change_list_, serv_udata_ptr_);
+	kqueue_fd_ =  Kqueue::kqueueStart(serv_sockfd_, change_list_, serv_udata_ptr_);
 	while (1){
 		event_list_size_ = Kqueue::detectEvent(event_list_, change_list_, kqueue_fd_);
 		handleEvents();
@@ -123,7 +123,7 @@ void  Kserver::handleEvents(){
 /**
  * @brief 새로운 클라이언트를 등록하는 함수입니다.
  * 클라이언트 소켓을 accept 해주고 non-blocking으로 만든 후, kqueue 이벤트에 read / write 모두 등록합니다.
- * 클라이언트 데이터 저장 map에 key: 소켓fd, value: ""로 추가합니다.
+ * 클라이언트 UData를 생성해 인자로 등록합니다.
  * @exception accept()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  Kserver::registerNewClnt(){

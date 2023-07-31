@@ -17,7 +17,7 @@
  */
 class Kqueue{
   public:
-    static int   KqueueStart(const int& serv_sock, std::vector<struct kevent>& change_list, UData* udata_ptr);
+    static int   kqueueStart(const int& serv_sock, std::vector<struct kevent>& change_list, UData* udata_ptr);
     static void  ChangeEvent(int ident, int filter, int flags, void* udata, std::vector<struct kevent>& change_list);
     static int   detectEvent(struct kevent *event_list, std::vector<struct kevent>& change_list, const int& kqueue_fd);
   private:

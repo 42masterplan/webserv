@@ -1,5 +1,5 @@
-#ifndef KSERVER_HPP
-# define KSERVER_HPP
+#ifndef SERVMANAGER_HPP
+# define SERVMANAGER_HPP
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cstdio>
 #include "Kqueue.hpp"
+#include "../config/ConfParser.hpp"
 
 /**
  * @brief kqueue using echo server
@@ -33,33 +34,32 @@
  *  7-2-2.클라이언트 소켓에 쌓여있는 데이터들을 write 해줍니다.
  * @note kqueue에 한번 등록한 이벤트는 삭제하지 않는한 계속 존재한다는 사실을 기억합시다.
  */
-class Kserver{
+class ServManager{
 	public :
-		static const int BUFF_SIZE = 500;
-		explicit  Kserver(char *port);
-		          ~Kserver();
+		static ServManager& getInstance();
+		static const int BUFF_SIZE = 1024;
+		          ~ServManager();
 		void      serverInit();
 		void      launchServer();
 	private:
-		      Kserver();
+		      ServManager();
 		void  sockInit();
-		void  sockBind();
+		void  sockBind(int port);
 		void  sockListen();
 		void  handleEvents();
-		void  registerNewClnt();
+		void  registerNewClnt(int serv_sockfd);
+    void  forkCgi();
 		void  sockReadable(struct kevent *cur_event);
-		void  sockWriteable(struct kevent *cur_event);
-		void  disconnectClient(struct kevent *cur_event);
-
+		void  sockWritable(struct kevent *cur_event);
+    void  cgiReadable(struct kevent *cur_event);
+    void  cgiWritable(struct kevent *cur_event);
+		void  disconnectFd(struct kevent *cur_event);
+		std::vector<int> listen_ports_;
+		std::vector<int> serv_sock_fds_;
 		/* server */
 		char          buff_[BUFF_SIZE];
-		int           port_;
-		int           serv_sockfd_;
-		UData*				serv_udata_ptr_; //서버소켓 udata 포인터입니다. 서버 종료시 delete됩니다.
 
     /* kqueue */
-    int           kqueue_fd_;
-    std::vector<struct kevent>  change_list_; //등록할 이벤트를 담는 벡터. 담아주고 kqueue에 등록했다면, clear() 해서 비워줍니다.
 		struct kevent event_list_[8]; //한번 감지된 이벤트의 배열 -> udata가 있는 kevent의 배열
 		int           event_list_size_;
 };

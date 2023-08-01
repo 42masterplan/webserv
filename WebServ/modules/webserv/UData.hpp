@@ -7,13 +7,13 @@
 // # include "../interface/HttpResponse.hpp"
 
 typedef enum errorType{
-	OK = 0,
+	OK = 0
 }e_error;
 
 typedef enum fdType{
 	SERVER,
 	CLNT,
-	CGI,
+	CGI
 }e_fd_type;
 
 class UData{
@@ -32,6 +32,7 @@ class UData{
 		/* cgi */
 		std::string				prog_name_;
 		std::vector<char>	cgi_store_;
+    pid_t             cgi_pid_;
 	private :
 };
 

@@ -1,10 +1,12 @@
 #include "Kqueue.hpp"
 #include <errno.h>
 
-/* Non-usable: Kqueue is static class */
+/* Non-usable: Kqueue is static class (private) */
 Kqueue::Kqueue() {}
 Kqueue::~Kqueue() {}
-
+int Kqueue::kqueue_fd_ = 0;
+std::vector<struct kevent> Kqueue::change_list_;
+// std::vector<struct kevent> Kqueue::change_list_(0);
 /**
  * @brief kqueue를 만들고, 서버소켓의 read 이벤트를 등록하는 함수
  * @param serv_sock 서버소켓의 fd
@@ -12,12 +14,14 @@ Kqueue::~Kqueue() {}
  * @return 생성한 kqueue의 fd
  * @exception kqueue()함수에서 에러 발생 시 runtime_error를 throw합니다.
  */
-int  Kqueue::kqueueStart(const int& serv_sock, std::vector<struct kevent>& change_list, UData* udata_ptr){
-	int kqueue_fd = kqueue();
-	if (kqueue_fd == -1)
+void  Kqueue::kqueueStart(const std::vector<int>& serv_sock_fds){
+	kqueue_fd_ = kqueue();
+	if (kqueue_fd_ == -1)
 		throw(std::runtime_error("kqueue() ERROR!!"));
-	ChangeEvent(serv_sock, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr, change_list);//kqueue에 서버소켓 readEvent 등록
-  return (kqueue_fd);
+	for (size_t i = 0; i < serv_sock_fds.size(); i++){
+		UData*				serv_udata_ptr_ = new UData(SERVER);
+		changeEvent(serv_sock_fds[i], EVFILT_READ, EV_ADD | EV_ENABLE, serv_udata_ptr_);//kqueue에 서버소켓 readEvent 등록
+	}
 }
 
 /**
@@ -32,10 +36,10 @@ int  Kqueue::kqueueStart(const int& serv_sock, std::vector<struct kevent>& chang
  *  EV_DISABLE, EV_DELETE(이벤트 비활성화 삭제),
  *  EV_ONESHOT(설정된 이벤트를 한번만 알려준다)
  */
-void  Kqueue::ChangeEvent(int ident, int filter, int flags, void* udata, std::vector<struct kevent>& change_list){
+void  Kqueue::changeEvent(const int& ident, int filter, int flags, void* udata){
 	struct kevent tmp_event;
 	EV_SET(&tmp_event, ident, filter, flags, 0, 0, udata);
-  change_list.push_back(tmp_event);
+  change_list_.push_back(tmp_event);
 }
 
 /**
@@ -46,13 +50,13 @@ void  Kqueue::ChangeEvent(int ident, int filter, int flags, void* udata, std::ve
  * @return 감지된 이벤트의 갯수
  * @exception kevent()에서 에러 발생 시 runtime_error를 반환합니다.
  */
-int  Kqueue::detectEvent(struct kevent *event_list, std::vector<struct kevent>& change_list, const int& kqueue_fd){
-	int n_event = kevent(kqueue_fd, &change_list[0], change_list.size(), event_list, 8, NULL);
+int  Kqueue::detectEvent(struct kevent *event_list){
+	int n_event = kevent(kqueue_fd_, &change_list_[0], change_list_.size(), event_list, 8, NULL);
 	if (n_event == -1){
     std::cerr << errno << "\n";
     throw(std::runtime_error("kevent() ERROR!!"));
   }
-	change_list.clear(); //등록한 이벤트들은 삭제
+	change_list_.clear(); //등록한 이벤트들은 삭제
 	return (n_event);
 }
 

@@ -105,8 +105,12 @@ void  ServManager::handleEvents(){
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_READ)
 			sockReadable(cur_event);
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_WRITE)
-			sockWriteable(cur_event);
-		else {
+			sockWritable(cur_event);
+		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_READ)
+			cgiReadable(cur_event);
+		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_WRITE)
+			cgiWritable(cur_event);
+		else{
 			std:: cout << "????????" << cur_fd_type << "\n";
 			throw(std::runtime_error("THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
 		}
@@ -147,12 +151,15 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
 		std::cout << "clnt sent eof. disconnecting.\n";
-		disconnectClient(cur_event);
+		disconnectFd(cur_event);
 	}
 	else{
 		buff_[rlen] = '\0';
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
-		std::cout << "FROM CLIENT NUM " << cur_event->ident << ": " << std::string(raw_data_ref.begin(), raw_data_ref.end()) << "\n";
+    std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
+    if (!raw_data_string.compare("CGI"))
+      forkCgi();
+		std::cout << "FROM CLIENT NUM " << cur_event->ident << ": " << raw_data_string << "\n";
 	}
 }
 
@@ -160,32 +167,128 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  * @brief 클라이언트 소켓이 writable할 때 호출되는 함수입니다.
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
-void  ServManager::sockWriteable(struct kevent *cur_event){
+void  ServManager::sockWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
 
-	if (raw_data_ref.size()){
-		char* buff = new char[raw_data_ref.size()];
-		std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
-    int n = write(cur_event->ident, buff, std::strlen(buff));
-		delete[] buff;
-    std::cout << "Writeable\n";
-    if (n == -1){
-        std::cerr << "client write error!" << "\n";
-        disconnectClient(cur_event);
-    }
-    else
-        raw_data_ref.clear();
+	if (!raw_data_ref.size())
+    return ;
+  char* buff = new char[raw_data_ref.size()];
+  std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
+  int n = write(cur_event->ident, buff, raw_data_ref.size());
+  delete[] buff;
+  std::cout << "Writable\n";
+  if (n == -1){
+      std::cerr << "client write error!" << "\n";
+      disconnectFd(cur_event);
+  }
+  else
+      raw_data_ref.clear();
+}
+
+/**
+ * @brief cgi 파이프가 readable할 때 호출되는 함수입니다.
+ * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
+ * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
+ */
+void  ServManager::cgiReadable(struct kevent *cur_event){
+	UData*	cur_udata = (UData*)cur_event->udata;
+	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
+
+	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
+	if (rlen == -1)
+		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
+	else if (rlen == 0){
+		std::cout << "CGI process sent eof, closing fd.\n";
+		disconnectFd(cur_event);
+	}
+	else{
+		buff_[rlen] = '\0';
+		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
+    std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
+    std::cout << "FROM CGI PROC\n" << raw_data_string << "\n";
+    waitpid(-1, NULL, 0);
 	}
 }
 
 /**
- * @brief 클라이언트 연결을 끊는 함수
- * @param clnt_fd 연결을 끊을 클라이언트 fd
+ * @brief cgi 파이프가 writable할 때 호출되는 함수입니다.
+ * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
  */
-void  ServManager::disconnectClient(struct kevent *cur_event){
+void  ServManager::cgiWritable(struct kevent *cur_event){
+	UData*	cur_udata = (UData*)cur_event->udata;
+	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
+
+	if (!raw_data_ref.size())
+    return ;
+  char* buff = new char[raw_data_ref.size()];
+  std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
+  int n = write(cur_event->ident, buff, raw_data_ref.size());
+  delete[] buff;
+  std::cout << "Writable\n";
+  if (n == -1){
+      std::cerr << "CGI write error!" << "\n";
+      disconnectFd(cur_event);
+  }
+  else
+      raw_data_ref.clear();
+}
+
+/**
+ * @brief fd 연결을 끊는 함수
+ * @param cur_event 해당되는 이벤트 구조체
+ */
+void  ServManager::disconnectFd(struct kevent *cur_event){
 	UData*	udata = (UData*)cur_event->udata;
+  if (udata->fd_type_ == CLNT)
+	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << "\n";
+  else if (udata->fd_type_ == CGI)
+	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << "\n";
 	delete udata;
-	std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << "\n";
 	close(cur_event->ident);
+}
+
+/**
+ * @brief 새로운 CGI 프로세스를 생성하는 함수입니다.
+ * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
+ * 자식 프로세스는 주어진 CGI 스크립트를 실행합니다.
+ * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
+ * @todo 자식 프로세스에 대한 WRITE 이벤트를 등록해야하나?
+ */
+void  ServManager::forkCgi(){
+  int   pfd[2];
+  pid_t child_pid;
+
+  if (pipe(pfd) == -1)
+    throw (std::runtime_error("pipe() Error"));
+  int flags = fcntl(pfd[0], F_GETFL, 0);
+  fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
+  UData*  ptr = new UData(CGI);
+  ptr->prog_name_ = "CGI.py";
+  Kqueue::changeEvent(pfd[0], EVFILT_READ, EV_ADD | EV_ENABLE, ptr);
+  Kqueue::changeEvent(pfd[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, ptr);
+
+  child_pid = fork();
+  if (child_pid == -1){
+    close(pfd[1]);
+    close(pfd[0]);
+    throw (std::runtime_error("fork() Error"));
+  }
+  else if (!child_pid){ //child
+    close(pfd[0]);
+    dup2(pfd[1], STDOUT_FILENO);
+    int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
+    fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
+    char* script_name = new char[ptr->prog_name_.size()];
+    std::strcpy(script_name, ptr->prog_name_.c_str());
+    char* exec_file[3];
+    exec_file[0] = (char*)"/usr/local/bin/python3";
+    exec_file[1] = script_name;
+    exec_file[2] = NULL;
+    if (execve(exec_file[0], exec_file, NULL) == -1)//envp needed
+      throw (std::runtime_error("execve() Error"));
+  }
+  else //parent
+    close(pfd[1]);
+  ptr->cgi_pid_ = child_pid;
 }

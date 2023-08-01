@@ -21,10 +21,58 @@
 
 // TODO: UData에 fd 추가?
 
-void HttpParser::parse(char* buff, size_t len, UData u_data) {
-	u_data.raw_data_.insert(u_data.raw_data_.end(), buff, buff + len);
-	// if (parseStatus == FIN), parse fin.
+void HttpParser::parse(char* buff, size_t len, UData& u_data) const {
+	std::vector<char>&	raw_data = u_data.raw_data_; // TODO: 제대로 되는 지 확인 필요
+	std::string					line;
+	size_t							split_idx;
 
+	raw_data.insert(raw_data.end(), buff, buff + len);
+	// if (parseStatus == FIN), parse fin.
+	// if (parseStatus == BODY), use body parsing func.
+	
+	/* BODY 아님을 가정하여 진행 */
+	split_idx = findCRLF(raw_data);
+	if (split_idx == raw_data.size())	return ; // there isn't CRLF in raw data.
+	line = std::string(&raw_data[0], split_idx);
+	raw_data.erase(raw_data.begin(), raw_data.begin() + split_idx + 2);
+
+	// if (parseStatus == FIRST)
+	// line.find(' ')
 }
 
+size_t HttpParser::findCRLF(const std::vector<char>& raw_data) const {
+	for (size_t i = 0; i < raw_data.size() - 1; i++) {
+		if (raw_data[i] == '\r' && raw_data[i + 1] == '\n')
+			return i;
+	}
+	return raw_data.size();
+}
 
+void	parseFirstLine(std::string line, UData& u_data) {
+	const std::vector<std::string>	methods = {"GET", "HEAD", "DELETE", "POST", "PUT", "PATCH"};
+	std::string	target;
+	size_t	split_idx;
+	int			method;
+
+	/* method 분리 */
+	split_idx = line.find(' ');
+	if (split_idx == std::string::npos) {
+		// wrong form error
+	}
+	target = line.substr(0, split_idx);
+	line.erase(line.begin(), line.begin() + split_idx + 1);
+	method = find(methods.begin(), methods.end(), target) - methods.begin();
+	if (method < 0 || method >= 6) {
+		// wrong method error
+	}
+	u_data.http_request_.setMethod(static_cast<e_method>(method));
+
+	/* path 분리 */
+	split_idx = line.find(' ');
+	if (split_idx == std::string::npos) {
+		// wrong form error
+	}
+	target = line.substr(0, split_idx);
+	line.erase(line.begin(), line.begin() + split_idx + 1);
+
+}

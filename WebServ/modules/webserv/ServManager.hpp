@@ -37,7 +37,7 @@
 class ServManager{
 	public :
 		static ServManager& getInstance();
-		static const int BUFF_SIZE = 500;
+		static const int BUFF_SIZE = 1024;
 		          ~ServManager();
 		void      serverInit();
 		void      launchServer();
@@ -48,9 +48,12 @@ class ServManager{
 		void  sockListen();
 		void  handleEvents();
 		void  registerNewClnt(int serv_sockfd);
+    void  forkCgi();
 		void  sockReadable(struct kevent *cur_event);
-		void  sockWriteable(struct kevent *cur_event);
-		void  disconnectClient(struct kevent *cur_event);
+		void  sockWritable(struct kevent *cur_event);
+    void  cgiReadable(struct kevent *cur_event);
+    void  cgiWritable(struct kevent *cur_event);
+		void  disconnectFd(struct kevent *cur_event);
 		std::vector<int> listen_ports_;
 		std::vector<int> serv_sock_fds_;
 		/* server */

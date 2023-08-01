@@ -16,6 +16,7 @@ class UData{
 		UData();
 
 		/* variables */
+		int							fd_;
 		HttpRequest				http_request_;
 		HttpResponse			http_response_;
 		e_error 					error_flag_;

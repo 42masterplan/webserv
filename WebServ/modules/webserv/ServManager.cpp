@@ -279,8 +279,9 @@ void  ServManager::forkCgi(){
     dup2(pfd[1], STDOUT_FILENO);
     int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
     fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
-    char* script_name = new char[ptr->prog_name_.size()];
+    char* script_name = new char[ptr->prog_name_.size() + 1];
     std::strcpy(script_name, ptr->prog_name_.c_str());
+    script_name[ptr->prog_name_.size()] = '\0';
     char* exec_file[3];
     exec_file[0] = (char*)"/usr/local/bin/python3";
     exec_file[1] = script_name;

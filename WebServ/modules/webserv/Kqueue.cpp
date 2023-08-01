@@ -20,7 +20,7 @@ void  Kqueue::kqueueStart(const std::vector<int>& serv_sock_fds){
 		throw(std::runtime_error("kqueue() ERROR!!"));
 	for (size_t i = 0; i < serv_sock_fds.size(); i++){
 		UData*				serv_udata_ptr_ = new UData(SERVER);
-		ChangeEvent(serv_sock_fds[i], EVFILT_READ, EV_ADD | EV_ENABLE, serv_udata_ptr_);//kqueue에 서버소켓 readEvent 등록
+		changeEvent(serv_sock_fds[i], EVFILT_READ, EV_ADD | EV_ENABLE, serv_udata_ptr_);//kqueue에 서버소켓 readEvent 등록
 	}
 }
 
@@ -36,7 +36,7 @@ void  Kqueue::kqueueStart(const std::vector<int>& serv_sock_fds){
  *  EV_DISABLE, EV_DELETE(이벤트 비활성화 삭제),
  *  EV_ONESHOT(설정된 이벤트를 한번만 알려준다)
  */
-void  Kqueue::ChangeEvent(const int& ident, int filter, int flags, void* udata){
+void  Kqueue::changeEvent(const int& ident, int filter, int flags, void* udata){
 	struct kevent tmp_event;
 	EV_SET(&tmp_event, ident, filter, flags, 0, 0, udata);
   change_list_.push_back(tmp_event);

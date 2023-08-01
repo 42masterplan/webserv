@@ -129,8 +129,8 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	std::cout << "Connected Client : " << clnt_sockfd << "\n";
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
 	UData*	udata_ptr = new UData(CLNT);
-	Kqueue::ChangeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
-	Kqueue::ChangeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
+	Kqueue::changeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
+	Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
 }
 
 /**

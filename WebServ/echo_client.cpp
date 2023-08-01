@@ -20,7 +20,7 @@ class Client{
 		void  initServAdr(char *ip_ad, char* port);
 		void  makeSock();
 		const int& getSock();
-		void  ConnectWithServer();
+		void  connectWithServer();
 		void  sendData();
 		void  receiveResult();
 		void  closeConnect();
@@ -45,7 +45,7 @@ const int &Client:: getSock(){
 	return (sockfd);
 }
 
-void  Client::ConnectWithServer(){
+void  Client::connectWithServer(){
 	if (connect(sockfd, (sockaddr *)&serv_adr, sizeof(serv_adr)) == -1)
 		throw(std::runtime_error("connect error"));
 	std::cout << "Connected:..............\n";
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]){
 		Client s1;
 		s1.initServAdr((char*)"127.0.0.1", argv[1]);
 		s1.makeSock();
-		s1.ConnectWithServer();
+		s1.connectWithServer();
 		while (1){
 			s1.sendData();
 			s1.receiveResult();

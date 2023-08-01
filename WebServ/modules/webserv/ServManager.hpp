@@ -55,11 +55,8 @@ class ServManager{
 		std::vector<int> serv_sock_fds_;
 		/* server */
 		char          buff_[BUFF_SIZE];
-		// int           serv_sockfd_;
-		// UData*				serv_udata_ptr_; //서버소켓 udata 포인터입니다. 서버 종료시 delete됩니다.
 
     /* kqueue */
-
 		struct kevent event_list_[8]; //한번 감지된 이벤트의 배열 -> udata가 있는 kevent의 배열
 		int           event_list_size_;
 };

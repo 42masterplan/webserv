@@ -1,6 +1,6 @@
 NAME = webserv
 CXX = c++
-CXXFLAGS = -std=c++98 -pedantic  -Wall -Wextra -Werror -g3 -fsanitize=address
+CXXFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 
 
 #conf_file
 CONFIGSRCS = ConfParser.cpp \
@@ -29,7 +29,6 @@ MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 CSRCS = echo_client.cpp
 COBJS = $(CSRCS:.cpp=.o)
 
-
 OBJS  =  $(CONFIGOBJS) $(WEBSERVOBJS) $(MAINOBJ)
 
 RM = rm -rf
@@ -52,7 +51,6 @@ clean:
 fclean: clean
 		$(RM) $(NAME)
 		$(RM) client
-
 
 re:
 	make fclean

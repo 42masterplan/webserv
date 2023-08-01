@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-static const std::map<std::string, std::string> EXTENSION_MIME_MAP = {
+static std::map<std::string, std::string> EXTENSION_MIME_MAP = {
 	{"txt", "text/plain"},
 	{"html", "text/html"},
 	{"css", "text/css"},

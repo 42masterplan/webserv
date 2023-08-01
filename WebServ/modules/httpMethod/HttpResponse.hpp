@@ -1,6 +1,6 @@
 #ifndef HTTPRESPONSE_HPP
 # define HTTPRESPONSE_HPP
-# include "LocBlock.hpp"
+# include "../config/LocationBlock/LocBlock.hpp"
 # include <iostream>
 # include <string>
 # include <vector>
@@ -15,11 +15,13 @@ class HttpResponse{
 		HttpResponse();
 
 		/* methods */
+
+		void 		initStatusStore(void);
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
-		void 		processDefaultRedirectRes(HttpResponse &res, int status_code);
+		void 		processRedirectRes(HttpResponse &res, int status_code);
 		
 	private :
-		const std::string http_version_ = "HTTP/1.1";
+		std::string 			http_version_;
 		int								status_code_;
 		std::string				status_;
 		/* headers */
@@ -29,7 +31,7 @@ class HttpResponse{
 
 		std::vector<char>	body_;
 		std::vector<char>	joined_data_;
-		LocBlock					loc_block_;
+		// LocBlock					loc_block_;
 };
 
 #endif

@@ -37,7 +37,8 @@ void HttpParser::parse(char* buff, size_t len, UData& u_data) const {
 	raw_data.erase(raw_data.begin(), raw_data.begin() + split_idx + 2);
 
 	// if (parseStatus == FIRST)
-	// line.find(' ')
+	parseFirstLine(line, u_data);
+	// TODO: 에러 확인
 }
 
 size_t HttpParser::findCRLF(const std::vector<char>& raw_data) const {
@@ -48,19 +49,28 @@ size_t HttpParser::findCRLF(const std::vector<char>& raw_data) const {
 	return raw_data.size();
 }
 
-void	parseFirstLine(std::string line, UData& u_data) {
+std::string& HttpParser::getTarget(std::string& line) const {
+	std::string	target = "";
+	size_t			split_idx;
+
+	split_idx = line.find(' ');
+	if (split_idx == std::string::npos) {
+		// wrong form error
+		return target;
+	}
+	target = line.substr(0, split_idx);
+	line.erase(line.begin(), line.begin() + split_idx + 1);
+	return target;
+}
+
+void	HttpParser::parseFirstLine(std::string& line, UData& u_data) const {
 	const std::vector<std::string>	methods = {"GET", "HEAD", "DELETE", "POST", "PUT", "PATCH"};
 	std::string	target;
 	size_t	split_idx;
 	int			method;
 
 	/* method 분리 */
-	split_idx = line.find(' ');
-	if (split_idx == std::string::npos) {
-		// wrong form error
-	}
-	target = line.substr(0, split_idx);
-	line.erase(line.begin(), line.begin() + split_idx + 1);
+	target = getTarget(line);
 	method = find(methods.begin(), methods.end(), target) - methods.begin();
 	if (method < 0 || method >= 6) {
 		// wrong method error
@@ -68,11 +78,26 @@ void	parseFirstLine(std::string line, UData& u_data) {
 	u_data.http_request_.setMethod(static_cast<e_method>(method));
 
 	/* path 분리 */
-	split_idx = line.find(' ');
+	target = getTarget(line);
+	u_data.http_request_.setPath(target);
+
+	/* version */
+	if (line != "HTTP/1.1") {
+		// wrong version error
+	}
+}
+
+bool	HttpParser::parseHeader(std::string& line, UData& u_data) const {
+	std::string	key, value;
+	size_t			split_idx;
+
+	split_idx = line.find(':');
 	if (split_idx == std::string::npos) {
 		// wrong form error
+		return false;
 	}
-	target = line.substr(0, split_idx);
-	line.erase(line.begin(), line.begin() + split_idx + 1);
-
+	key = line.substr(0, split_idx);
+	value = line.substr(split_idx + 1);
+	// insert header
+	return true;
 }

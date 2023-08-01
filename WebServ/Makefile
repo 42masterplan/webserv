@@ -1,6 +1,6 @@
 NAME = webserv
 CXX = c++
-CXXFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 
+CXXFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 -fsanitize=address
 
 #conf_file
 CONFIGSRCS = ConfParser.cpp \

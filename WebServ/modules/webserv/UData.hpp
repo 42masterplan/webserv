@@ -32,6 +32,7 @@ class UData{
 		/* cgi */
 		std::string				prog_name_;
 		std::vector<char>	cgi_store_;
+    pid_t             cgi_pid_;
 	private :
 };
 

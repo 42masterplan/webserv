@@ -11,7 +11,6 @@ typedef enum errorType{
 }e_error;
 
 typedef enum fdType{
-	SERVER,
 	CLNT,
 	CGI
 }e_fd_type;

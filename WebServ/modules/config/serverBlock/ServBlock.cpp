@@ -55,6 +55,7 @@ LocBlock ServBlock::findLocBlock(std::string path){
 			return (loc_store_[ret]);
 	}
 	LocBlock ret_loc("");
+	ret_loc.setInherit(*this);
 	return ret_loc;
 }
 

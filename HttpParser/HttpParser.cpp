@@ -23,7 +23,7 @@
 
 HttpRequest::HttpRequest(): parse_status_(e_parseStatus::FIRST), parse_error_(e_parseError::OK) { }
 
-void HttpRequest::parse(char* buff, size_t len, std::vector<char>& raw_data) {
+void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
 		if (parse_error_)
 			return ; // TODO: 에러 발생 시 플로우 확인

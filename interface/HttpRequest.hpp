@@ -46,7 +46,7 @@ class HttpRequest{
 
 		/* methods */
 		void		clear();
-		void		parse(char* buff, size_t len, std::vector<char>& raw_data);
+		void		parse(std::vector<char>& raw_data);
 
 	private :
 		e_method		method_;

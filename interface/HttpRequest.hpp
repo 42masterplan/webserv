@@ -15,12 +15,12 @@ typedef enum methodType{
 	PATCH
 }e_method;
 
-typedef enum parseStatus{
+typedef enum parseStatusType{
 	FIRST,
 	HEADER,
 	BODY,
 	FIN
-}e_parse;
+}e_parseStatus;
 
 typedef enum parseErrorType{
 	OK = 0,
@@ -46,17 +46,7 @@ class HttpRequest{
 
 		/* methods */
 		void		clear();
-		e_error parse(char* buff, size_t len, std::vector<char>& raw_data);
-
-		
-		// void	setMethod(e_method method);
-		// void	setPath(std::string path);
-		// void	setHeader(std::map<std::string, std::string> header);
-		// void	setBody(std::vector<char> body);
-		// void	setContentLength(int content_length);
-		// void	setPort(int port);
-		// void	setIsChunked(bool is_chunked);
-		// void	setContentType(std::string content_type);
+		void		parse(char* buff, size_t len, std::vector<char>& raw_data);
 
 	private :
 		e_method		method_;
@@ -71,18 +61,18 @@ class HttpRequest{
 		std::string		content_type_;
 
 		/* parsing */
-		e_parse				parse_status_;
+		e_parseStatus	parse_status_;
 		e_parseError	parse_error_;
 		
 		/* parsing functions */
-		void					parseFirstLine(std::string& line);
-		void					parseHeader(std::string& line);
+		void					parseFirstLine(std::string line);
+		void					parseHeader(std::string line);
 
 		/* parsing utils */
 		size_t				findCRLF(const std::vector<char>& raw_data) const;
 		bool					hasCRLF(const std::vector<char>& raw_data) const;
-		std::string&	getLine(std::vector<char>& raw_data) const;
-		std::string&	getTarget(std::string& line) const;
+		std::string		getLine(std::vector<char>& raw_data);
+		std::string		getTarget(std::string& line);
 
 };
 

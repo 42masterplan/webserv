@@ -134,7 +134,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
 	UData*	udata_ptr = new UData(CLNT);
 	Kqueue::changeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
-	Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
+	// Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
 }
 
 /**
@@ -159,7 +159,16 @@ void  ServManager::sockReadable(struct kevent *cur_event){
     std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
     if (!raw_data_string.compare("CGI"))
       forkCgi();
+		//---------------test-------------
 		std::cout << "FROM CLIENT NUM " << cur_event->ident << ": " << raw_data_string << "\n";
+		for (size_t i = 0; i < raw_data_ref.size(); i++){
+			std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
+		}
+		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
+		std::vector<char> tmp1(tmp.begin(),tmp.end());
+		cur_udata->ret_store_ = tmp1;
+		Kqueue::changeEvent(cur_event->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, cur_event->udata);
+		//---------------test-------------
 	}
 }
 
@@ -169,21 +178,21 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  */
 void  ServManager::sockWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
+	std::vector<char>&	ret_store_ref = cur_udata->ret_store_;
 
-	if (!raw_data_ref.size())
+	if (!ret_store_ref.size())
     return ;
-  char* buff = new char[raw_data_ref.size()];
-  std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
-  int n = write(cur_event->ident, buff, raw_data_ref.size());
-  delete[] buff;
+  char* buff = new char[ret_store_ref.size()];
+  std::copy(ret_store_ref.begin(), ret_store_ref.end(), buff);
+  int n = write(cur_event->ident, buff, ret_store_ref.size());
+  // delete[] buff;
   std::cout << "Writable\n";
   if (n == -1){
       std::cerr << "client write error!" << "\n";
       disconnectFd(cur_event);
   }
   else
-      raw_data_ref.clear();
+      ret_store_ref.clear();
 }
 
 /**
@@ -225,7 +234,7 @@ void  ServManager::cgiWritable(struct kevent *cur_event){
   std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
   int n = write(cur_event->ident, buff, raw_data_ref.size());
   delete[] buff;
-  std::cout << "Writable\n";
+  std::cout << "Writable\n" << std::endl;
   if (n == -1){
       std::cerr << "CGI write error!" << "\n";
       disconnectFd(cur_event);

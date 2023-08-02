@@ -108,44 +108,14 @@ void	HttpRequest::parseHeader(std::string line) {
 	}
 	key = line.substr(0, split_idx);
 	value = line.substr(split_idx + 1);
-	header_.insert(std::pair<std::string, std::string>(lowerString(key), trimString(value)));
+	trimComment(value);
+	header_.insert(std::pair<std::string, std::string>(lowerString(key), value));
 }
 
 void	HttpRequest::checkHeader(void) {
 	// if (header_.find(std::string("transfer-encoding")) != header_.end()) {
 	// 	if (header_["transfer-encoding"] == "")
 	// }
-}
-
-/**
- * @brief vector<char>에서 CRLF의 위치를 찾습니다.
- * 
- * @param raw_data 
- * @return size_t CRLF이 시작하는 index를 반환합니다.
- * @warning CRLF가 존재하지 않을 때 vector<char>의 size를 반환합니다.
- */
-size_t HttpRequest::findCRLF(const std::vector<char>& raw_data) const {
-	for (size_t i = 0; i < raw_data.size() - 1; i++) {
-		if (raw_data[i] == '\r' && raw_data[i + 1] == '\n')
-			return i;
-	}
-	return raw_data.size();
-}
-
-/**
- * @brief findCRLF()를 이용하여 CRLF의 존재 여부를 확인합니다.
- * 
- * @param raw_data 
- * @return true : CRLF 존재함
- * @return false : CRLF 존재하지 않음
- */
-bool HttpRequest::hasCRLF(const std::vector<char>& raw_data) const {
-  size_t  split_idx;
-
-  split_idx = findCRLF(raw_data);
-	if (split_idx == raw_data.size())
-    return false;
-  return true;
 }
 
 /**
@@ -189,43 +159,4 @@ std::string	HttpRequest::getTarget(std::string& line) {
 	target = line.substr(0, split_idx);
 	line.erase(line.begin(), line.begin() + split_idx + 1);
 	return target;
-}
-
-/**
- * @brief 인자로 들어온 string의 앞뒤 white space를 trim하는 함수입니다.
- * 
- * @return std::string 
- */
-std::string		HttpRequest::trimString(std::string& str) const {
-	const std::string whiteSpaces = " \n\r\t\f\v";
-	size_t start, end;
-	
-	start = str.find_first_not_of(whiteSpaces);
-	end = str.find_last_not_of(whiteSpaces);
-	if (start == std::string::npos || end == std::string::npos)
-		return "";
-	return str.substr(start, end - start + 1);
-}
-
-/**
- * @brief 인자로 들어온 string을 모두 lower-case로 만들어주는 함수입니다.
- * 
- * @return std::string 
- */
-std::string	HttpRequest::lowerString(std::string& str) const {
-	std::string	lowerStr = "";
-
-	for (size_t i = 0; i < str.length(); i++)
-		lowerStr.push_back(tolower(str[i]));
-	return lowerStr;
-}
-
-/**
- * @brief 인자로 들어온 두 개의 string을 case-insensitive하게 비교해주는 함수입니다.
- * 
- * @return true 
- * @return false 
- */
-bool	HttpRequest::insensitiveCompare(std::string& str1, std::string& str2) const {
-	return lowerString(str1) == lowerString(str2);
 }

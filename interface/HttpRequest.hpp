@@ -4,16 +4,7 @@
 # include <string>
 # include <map>
 # include <vector>
-
-//TODO: 조신님과 겹침 !
-typedef enum methodType{
-	GET,
-	HEAD,
-	DELETE,
-	POST,
-	PUT,
-	PATCH
-}e_method;
+# include "../WebServ/modules/config/Tools/ParseTool.hpp"
 
 typedef enum parseStatusType{
 	FIRST,
@@ -70,13 +61,8 @@ class HttpRequest{
 		void					checkHeader(void);
 
 		/* parsing utils */
-		size_t				findCRLF(const std::vector<char>& raw_data) const;
-		bool					hasCRLF(const std::vector<char>& raw_data) const;
 		std::string		getLine(std::vector<char>& raw_data);
 		std::string		getTarget(std::string& line);
-		std::string		trimString(std::string& str) const;
-		std::string		lowerString(std::string& str) const;
-		bool					insensitiveCompare(std::string& str1, std::string& str2) const;
 };
 
 #endif

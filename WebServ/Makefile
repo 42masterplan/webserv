@@ -17,7 +17,8 @@ CONFIGOBJS = $(addprefix ./modules/config/, $(CONFIGSRCS:.cpp=.o))
 WEBSERVSRCS = Kqueue.cpp \
 							WebServ.cpp \
 							ServManager.cpp \
-							UData.cpp
+							UData.cpp \
+							AutoIndex.cpp \
 
 WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
 

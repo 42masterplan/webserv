@@ -4,7 +4,7 @@
  * 파싱 순서 정리 (new) *HttpRequest가 vector<HttpRequest>의 형태로 변함에 따라 파싱 알고리즘이 변화되었습니다.*
  * ---- event handler ----
  * 1. event를 handle하는 곳에서 raw_data에 buff를 더합니다.
- * 2. request가 없거나, 모든 request가 FIN 상태일 때 새 HttpRequest를 생성합니다.
+ * 2. request가 없거나, 모든 request가 FINISH 상태일 때 새 HttpRequest를 생성합니다.
  * 3. FIN이 아닌 HttpRequest에 대해 raw_data를 인자로 parse 함수를 실행합니다.
  * ---- parse 함수 실행 ----
  * 주어진 raw_data에 대해 가능한 모든 파싱을 진행합니다.
@@ -29,7 +29,7 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 		if (parse_error_)
 			return ;
 		switch (parse_status_) {
-			case FIN:
+			case FINISH:
 				return ;
 			case BODY:
 				/**

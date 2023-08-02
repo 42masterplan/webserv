@@ -19,7 +19,7 @@ typedef enum parseStatusType{
 	FIRST,
 	HEADER,
 	BODY,
-	FIN
+	FINISH
 }e_parseStatus;
 
 typedef enum parseErrorType{

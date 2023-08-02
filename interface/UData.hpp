@@ -16,10 +16,10 @@ class UData{
 		UData();
 
 		/* variables */
-		HttpRequest				http_request_;
-		HttpResponse			http_response_;
-		e_error 					error_flag_;
-		std::vector<char>	raw_data_;
+		std::vector<HttpRequest>	http_request_;
+		std::vector<HttpResponse>	http_response_;
+		e_error 									error_flag_;
+		std::vector<char>					raw_data_;
 
 		/* cgi */
 		std::string				prog_name_;

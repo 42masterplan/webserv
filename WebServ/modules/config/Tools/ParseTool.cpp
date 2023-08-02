@@ -51,26 +51,28 @@ void  checkOverFlow(double d){
 }
 
 /**
- * @brief 들어온 문자열의 양옆에 있는 space와 tab을 지워주는 함수
+ * @brief 들어온 문자열의 양옆에 있는 white space을 지워주는 함수
  *
  * @param line 변경할 문자열
  */
 void	trimSidesSpace(std::string &line){
 	size_t i;
-	//앞쪽에 스페이스 지운다.
+	//앞쪽의 white space를 지운다.
 	if (line == "")
 		return ;
 	for (i = 0; i < line.size();	i++){
-		if (line[i] != '\t' && line[i] != ' ')
+		if (line[i] != '\t' && line[i] != ' ' && line[i] != '\n' \
+				&& line[i] != '\r' && line[i] != '\f' && line[i] != '\v')
 			break;
 	}
 	line.erase(0, i);
-	//뒤쪽의 스페이스와 tab 을 다 지운다.
+	//뒤쪽의 white space를 지운다.
 	if (line == "")
 		return ;
 	for (i = line.size() - 1; i > 0; i--){
-		if (line[i] != '\t' && line[i] != ' ')
-				break ;
+		if (line[i] != '\t' && line[i] != ' ' && line[i] != '\n' \
+				&& line[i] != '\r' && line[i] != '\f' && line[i] != '\v')
+			break ;
 	}
 	line.erase(line.begin() + i + 1, line.end());
 }
@@ -183,5 +185,56 @@ int stringToInt(const std::string &num){
 	return ret;
 }
 
+/**
+ * @brief vector<char>에서 CRLF의 위치를 찾습니다.
+ * 
+ * @param raw_data 
+ * @return size_t CRLF이 시작하는 index를 반환합니다.
+ * @warning CRLF가 존재하지 않을 때 vector<char>의 size를 반환합니다.
+ */
+size_t findCRLF(const std::vector<char>& raw_data) {
+	for (size_t i = 0; i < raw_data.size() - 1; i++) {
+		if (raw_data[i] == '\r' && raw_data[i + 1] == '\n')
+			return i;
+	}
+	return raw_data.size();
+}
 
+/**
+ * @brief findCRLF()를 이용하여 CRLF의 존재 여부를 확인합니다.
+ * 
+ * @param raw_data 
+ * @return true : CRLF 존재함
+ * @return false : CRLF 존재하지 않음
+ */
+bool hasCRLF(const std::vector<char>& raw_data) {
+  size_t  split_idx;
 
+  split_idx = findCRLF(raw_data);
+	if (split_idx == raw_data.size())
+    return false;
+  return true;
+}
+
+/**
+ * @brief 인자로 들어온 string을 모두 lower-case로 만들어주는 함수입니다.
+ * 
+ * @return std::string 
+ */
+std::string	lowerString(std::string& str) {
+	std::string	lowerStr = "";
+
+	for (size_t i = 0; i < str.length(); i++)
+		lowerStr.push_back(tolower(str[i]));
+	return lowerStr;
+}
+
+/**
+ * @brief 인자로 들어온 두 개의 string을 case-insensitive하게 비교해주는 함수입니다.
+ * 
+ * @return true 
+ * @return false 
+ */
+bool	insensitiveCompare(std::string& str1, std::string& str2) {
+	return lowerString(str1) == lowerString(str2);
+}

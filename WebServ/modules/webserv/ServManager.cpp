@@ -160,11 +160,12 @@ void  ServManager::sockReadable(struct kevent *cur_event){
     if (!raw_data_string.compare("CGI"))
       forkCgi();
 		//---------------test-------------
-		std::cout << "FROM CLIENT NUM " << cur_event->ident << ": " << raw_data_string << "\n";
-		for (size_t i = 0; i < raw_data_ref.size(); i++){
-			std::cout << raw_data_ref[i] <<"(" << (int)raw_data_ref[i] <<")";
+		std::cout << "FROM CLIENT NUM " << cur_event->ident << std::endl;
+		std::cout << raw_data_string << std::endl;
+		std::string test_input = "";
+		for (size_t i = 0; i < raw_data_string.size(); i++){
+			std::cout << raw_data_string[i] << "("  <<  (int)raw_data_string[i]  << ")" << std::endl;
 		}
-		std::cout << std::endl;
 		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
 		std::vector<char> tmp1(tmp.begin(),tmp.end());
 		cur_udata->ret_store_ = tmp1;

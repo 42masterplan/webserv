@@ -8,14 +8,15 @@
 # include <map>
 # include <algorithm>
 # include <cmath>
-typedef enum blocktype{
+
+typedef enum blockType{
 	HTTPBLOCK,
 	SERVERBLOCK,
 	LOCATIONBLOCK,
 	OTHERBLOCK
 }e_block;
 
-typedef enum methodtype{
+typedef enum methodType{
 	GET,
 	POST,
 	HEAD,
@@ -33,7 +34,7 @@ typedef enum methodtype{
 // UNLOCK,
 // MKCOL //디렉토리 만드는 method
 
-
+/* ConfParser utils */
 e_block	checkBlockName(const std::string& block_name);
 e_method checkMethodName(const std::string &block_name);
 
@@ -49,7 +50,6 @@ void	splitAndStore(std::vector<int>& store, std::string line, char delimiter);
 void  extractDirective(std::string line, std::map<std::string, std::string>& directives_map);
 
 int stringToInt(const std::string &num);
-
 
 /**
  * @brief [파싱에서 가장 핵심 함수] 재귀적으로 괄호가 닫힐때까지 탐색하는 함수
@@ -104,5 +104,11 @@ void	parseUntilEnd(std::ifstream& input, int& line_len_, T& block){
 	if (input.eof() == false) //시작할 때 괄호가 모두 닫혀있지 않다면
 		throw(std::runtime_error("NOT CLOSE the {}"));
 }
+
+/* HttpParser utils */
+size_t				findCRLF(const std::vector<char>& raw_data);
+bool					hasCRLF(const std::vector<char>& raw_data);
+std::string		lowerString(std::string& str);
+bool					insensitiveCompare(std::string& str1, std::string& str2);
 
 #endif

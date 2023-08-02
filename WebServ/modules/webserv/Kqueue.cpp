@@ -19,8 +19,7 @@ void  Kqueue::kqueueStart(const std::vector<int>& serv_sock_fds){
 	if (kqueue_fd_ == -1)
 		throw(std::runtime_error("kqueue() ERROR!!"));
 	for (size_t i = 0; i < serv_sock_fds.size(); i++){
-		UData*				serv_udata_ptr_ = new UData(SERVER);
-		changeEvent(serv_sock_fds[i], EVFILT_READ, EV_ADD | EV_ENABLE, serv_udata_ptr_);//kqueue에 서버소켓 readEvent 등록
+		changeEvent(serv_sock_fds[i], EVFILT_READ, EV_ADD | EV_ENABLE, NULL);//kqueue에 서버소켓 readEvent 등록
 	}
 }
 

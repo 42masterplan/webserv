@@ -15,7 +15,8 @@
  * ---- parse 함수 끝 ----
  * event handler는 해당 HttpRequest가 FIN이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
  * 
- * TODO: 오류 발생 시 어떻게 진행할 지 결정 필요
+ * TODO: 오류 발생 시 플로우 생각해보기
+ * TODO: 헤더에 여러줄 올 수도 있넴요 . .
  * 
  * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
@@ -26,7 +27,7 @@ HttpRequest::HttpRequest(): parse_status_(e_parseStatus::FIRST), parse_error_(e_
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
 		if (parse_error_)
-			return ; // TODO: 에러 발생 시 플로우 확인
+			return ;
 		switch (parse_status_) {
 			case FIN:
 				return ;
@@ -107,7 +108,13 @@ void	HttpRequest::parseHeader(std::string line) {
 	}
 	key = line.substr(0, split_idx);
 	value = line.substr(split_idx + 1);
-	header_.insert(std::pair<std::string, std::string>(key, value));
+	header_.insert(std::pair<std::string, std::string>(lowerString(key), trimString(value)));
+}
+
+void	HttpRequest::checkHeader(void) {
+	// if (header_.find(std::string("transfer-encoding")) != header_.end()) {
+	// 	if (header_["transfer-encoding"] == "")
+	// }
 }
 
 /**
@@ -182,4 +189,43 @@ std::string	HttpRequest::getTarget(std::string& line) {
 	target = line.substr(0, split_idx);
 	line.erase(line.begin(), line.begin() + split_idx + 1);
 	return target;
+}
+
+/**
+ * @brief 인자로 들어온 string의 앞뒤 white space를 trim하는 함수입니다.
+ * 
+ * @return std::string 
+ */
+std::string		HttpRequest::trimString(std::string& str) const {
+	const std::string whiteSpaces = " \n\r\t\f\v";
+	size_t start, end;
+	
+	start = str.find_first_not_of(whiteSpaces);
+	end = str.find_last_not_of(whiteSpaces);
+	if (start == std::string::npos || end == std::string::npos)
+		return "";
+	return str.substr(start, end - start + 1);
+}
+
+/**
+ * @brief 인자로 들어온 string을 모두 lower-case로 만들어주는 함수입니다.
+ * 
+ * @return std::string 
+ */
+std::string	HttpRequest::lowerString(std::string& str) const {
+	std::string	lowerStr = "";
+
+	for (size_t i = 0; i < str.length(); i++)
+		lowerStr.push_back(tolower(str[i]));
+	return lowerStr;
+}
+
+/**
+ * @brief 인자로 들어온 두 개의 string을 case-insensitive하게 비교해주는 함수입니다.
+ * 
+ * @return true 
+ * @return false 
+ */
+bool	HttpRequest::insensitiveCompare(std::string& str1, std::string& str2) const {
+	return lowerString(str1) == lowerString(str2);
 }

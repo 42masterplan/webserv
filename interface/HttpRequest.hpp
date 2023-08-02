@@ -67,13 +67,16 @@ class HttpRequest{
 		/* parsing functions */
 		void					parseFirstLine(std::string line);
 		void					parseHeader(std::string line);
+		void					checkHeader(void);
 
 		/* parsing utils */
 		size_t				findCRLF(const std::vector<char>& raw_data) const;
 		bool					hasCRLF(const std::vector<char>& raw_data) const;
 		std::string		getLine(std::vector<char>& raw_data);
 		std::string		getTarget(std::string& line);
-
+		std::string		trimString(std::string& str) const;
+		std::string		lowerString(std::string& str) const;
+		bool					insensitiveCompare(std::string& str1, std::string& str2) const;
 };
 
 #endif

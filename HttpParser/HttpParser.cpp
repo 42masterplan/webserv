@@ -4,7 +4,7 @@
  * 파싱 순서 정리 (new) *HttpRequest가 vector<HttpRequest>의 형태로 변함에 따라 파싱 알고리즘이 변화되었습니다.*
  * ---- event handler ----
  * 1. event를 handle하는 곳에서 raw_data에 buff를 더합니다.
- * 2. request가 없거나, 모든 request가 FIN 형태일 때 새 HttpRequest를 생성합니다.
+ * 2. request가 없거나, 모든 request가 FIN 상태일 때 새 HttpRequest를 생성합니다.
  * 3. FIN이 아닌 HttpRequest에 대해 raw_data를 인자로 parse 함수를 실행합니다.
  * ---- parse 함수 실행 ----
  * 주어진 raw_data에 대해 가능한 모든 파싱을 진행합니다.
@@ -13,7 +13,7 @@
  * * METHOD_ERROR: 405 Method Not Allowed -> ** TODO: response에 반드시 Allow 헤더가 포함되어야 합니다. **
  * * VERSION_ERROR: 505 HTTP Version Not Supported
  * ---- parse 함수 끝 ----
- * event handler는 해당 HttpRequest가 FIN이고, raw_data가 비어있을 시 다음 HttpRequest 파싱을 진행합니다.
+ * event handler는 해당 HttpRequest가 FIN이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
  * 
  * TODO: 오류 발생 시 어떻게 진행할 지 결정 필요
  * 
@@ -153,7 +153,7 @@ std::string HttpRequest::getLine(std::vector<char>& raw_data) {
   std::string line;
   size_t      split_idx;
 
-  if (hasCRLF(raw_data)) {
+  if (!hasCRLF(raw_data)) {
 		parse_error_ = e_parseError::FORM_ERROR;
     return "";
   }

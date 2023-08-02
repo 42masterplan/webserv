@@ -1,24 +1,6 @@
 #include "../interface/UData.hpp"
 
 /**
- * 파싱 순서 정리 **일단 헤더까지만**
- * 1. raw_data_ 에 buff 이어 붙이기
- * 2. client의 http_request의 파싱이 완료되었고, 비어있지 않다면? //* parseStatus == FIN
- * 2-1. 요청 파싱 끝
- * 3. raw_data_에서 CRLF 기준으로 앞부분 떼어 오고 기존 raw_data_에서는 삭제
- * * 시작 줄 -> 헤더 -> 본문 순으로 채운다.: 현재 단계 확인 필요
- * 4. 시작 줄 비어있을 때 파싱: '메서드 URL 버전' 순으로 하나의 공백을 가지고 분리하여 저장한다.
- * 4-1. 메서드가 우리가 지원하는 것이 아니라면 405 Method Not Allowed
- * 4-2. 버전이 우리가 지원하는 것이 아니라면 505 error
- * 5. 빈 줄 들어오기 전까지 헤더에 집어넣기: 3번에서 CRLF 기준으로 다 잘라옴.
- * 5-1. 헤더의 값이 비어 있으면 그냥 빈 대로 두기
- * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
- * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
- */
-
-HttpRequest::HttpRequest(): parse_status_(e_parseStatus::FIRST), parse_error_(e_parseError::OK) { }
-
-/**
  * 파싱 순서 정리 (new) *HttpRequest가 vector<HttpRequest>의 형태로 변함에 따라 파싱 알고리즘이 변화되었습니다.*
  * ---- event handler ----
  * 1. event를 handle하는 곳에서 raw_data에 buff를 더합니다.
@@ -32,14 +14,19 @@ HttpRequest::HttpRequest(): parse_status_(e_parseStatus::FIRST), parse_error_(e_
  * * VERSION_ERROR: 505 HTTP Version Not Supported
  * ---- parse 함수 끝 ----
  * event handler는 해당 HttpRequest가 FIN이고, raw_data가 비어있을 시 다음 HttpRequest 파싱을 진행합니다.
+ * 
  * TODO: 오류 발생 시 어떻게 진행할 지 결정 필요
+ * 
+ * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
+ * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
+HttpRequest::HttpRequest(): parse_status_(e_parseStatus::FIRST), parse_error_(e_parseError::OK) { }
 
 void HttpRequest::parse(char* buff, size_t len, std::vector<char>& raw_data) {
 	while (true) {
 		if (parse_error_)
-			return ;
+			return ; // TODO: 에러 발생 시 플로우 확인
 		switch (parse_status_) {
 			case FIN:
 				return ;

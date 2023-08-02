@@ -16,8 +16,8 @@ class UData{
 		UData();
 
 		/* variables */
-		std::vector<HttpRequest>	http_requests_;
-		std::vector<HttpResponse>	http_responses_;
+		std::vector<HttpRequest>	http_request_;
+		std::vector<HttpResponse>	http_response_;
 		e_error 									error_flag_;
 		std::vector<char>					raw_data_;
 

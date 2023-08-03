@@ -11,7 +11,6 @@ typedef enum errorType{
 }e_error;
 
 typedef enum fdType{
-	SERVER,
 	CLNT,
 	CGI
 }e_fd_type;
@@ -33,6 +32,7 @@ class UData{
 		std::string				prog_name_;
 		std::vector<char>	cgi_store_;
     pid_t             cgi_pid_;
+		std::vector<char> ret_store_;//return 하는 값을 저장하는 저장소. 임시로 만듬
 	private :
 };
 

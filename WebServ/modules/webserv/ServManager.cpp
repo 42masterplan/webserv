@@ -98,9 +98,11 @@ void  ServManager::handleEvents(){
 
 	for (int i = 0; i < event_list_size_; i++){
 		cur_event = &event_list_[i];
-    cur_udata = (UData*)cur_event->udata;
-		cur_fd_type = cur_udata->fd_type_;
-		if (cur_fd_type == SERVER)
+		if (cur_event->udata != NULL){
+			cur_udata = (UData*)cur_event->udata;
+			cur_fd_type = cur_udata->fd_type_;
+		}
+		if (cur_event->udata == NULL)
 			registerNewClnt(cur_event->ident);
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_READ)
 			sockReadable(cur_event);
@@ -127,14 +129,18 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	struct sockaddr_in	clnt_addr;
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
-
+	int									option;
+	socklen_t						optlen;
 	if (clnt_sockfd == -1)
 		throw(std::runtime_error("ACCEPT() ERROR"));
-	std::cout << "Connected Client : " << clnt_sockfd << "\n";
+	std::cout << "Connected Client : " << clnt_sockfd << std::endl;
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
+	optlen = sizeof(option);
+	option = 1;
+	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
 	UData*	udata_ptr = new UData(CLNT);
 	Kqueue::changeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
-	Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
+	// Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
 }
 
 /**
@@ -159,7 +165,16 @@ void  ServManager::sockReadable(struct kevent *cur_event){
     std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
     if (!raw_data_string.compare("CGI"))
       forkCgi();
-		std::cout << "FROM CLIENT NUM " << cur_event->ident << ": " << raw_data_string << "\n";
+		//---------------test-------------
+		std::cout << "FROM CLIENT NUM " << cur_event->ident <<std::endl << raw_data_string << std::endl;
+		for (size_t i = 0; i < raw_data_ref.size(); i++){
+			std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
+		}
+		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
+		std::vector<char> tmp1(tmp.begin(),tmp.end());
+		cur_udata->ret_store_ = tmp1;
+		Kqueue::changeEvent(cur_event->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, cur_event->udata);
+		//---------------test-------------
 	}
 }
 
@@ -169,21 +184,16 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  */
 void  ServManager::sockWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
-	if (!raw_data_ref.size())
+	std::vector<char>&	ret_store_ref = cur_udata->ret_store_;
+	if (!ret_store_ref.size())
     return ;
-  char* buff = new char[raw_data_ref.size()];
-  std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
-  int n = write(cur_event->ident, buff, raw_data_ref.size());
-  delete[] buff;
-  std::cout << "Writable\n";
+  int n = write(cur_event->ident, &ret_store_ref[0], ret_store_ref.size());
   if (n == -1){
-      std::cerr << "client write error!" << "\n";
-      disconnectFd(cur_event);
-  }
-  else
-      raw_data_ref.clear();
+    std::cerr << "client write error!" << "\n";
+    disconnectFd(cur_event);
+	}
+	else
+		ret_store_ref.erase(ret_store_ref.begin(), ret_store_ref.begin() + n);
 }
 
 /**
@@ -225,7 +235,7 @@ void  ServManager::cgiWritable(struct kevent *cur_event){
   std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
   int n = write(cur_event->ident, buff, raw_data_ref.size());
   delete[] buff;
-  std::cout << "Writable\n";
+  std::cout << "Writable\n" << std::endl;
   if (n == -1){
       std::cerr << "CGI write error!" << "\n";
       disconnectFd(cur_event);

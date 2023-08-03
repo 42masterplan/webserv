@@ -24,24 +24,6 @@ void  Kqueue::kqueueStart(const std::vector<int>& serv_sock_fds){
 }
 
 /**
- * @brief 등록할 이벤트를 생성하여 change_list_에 추가하는 함수
- * @param ident 이벤트를 감시할 대상에 대한 fd
- * @param filter 이벤트 필터 플래그 EVFILT_READ, EVFILT_WRITE
- * @param flags EV_ADD,EV_ENABLE,EV_DISABLE,EV_DELETE,EV_ONESHOT
- * @param udata 이벤트 핸들링에 필요한 모든 변수, 메소드가 담긴 클래스
- * @param change_list 생성한 이벤트를 추가할 kevent 벡터
- * @return EV_SET한 kevent구조체. event_list_에 추가해야 한다.
- * @note flags : EV_ADD ,EV_ENABLE (이벤트를 추가/활성화)
- *  EV_DISABLE, EV_DELETE(이벤트 비활성화 삭제),
- *  EV_ONESHOT(설정된 이벤트를 한번만 알려준다)
- */
-void  Kqueue::changeEvent(const int& ident, int filter, int flags, void* udata){
-	struct kevent tmp_event;
-	EV_SET(&tmp_event, ident, filter, flags, 0, 0, udata);
-  change_list_.push_back(tmp_event);
-}
-
-/**
  * @brief kqueue에서 이벤트를 감지하는 함수
  * @param event_list 감지된 이벤트를 담을 8칸 배열
  * @param change_list kevent함수에 등록할 kevent 벡터. 등록 후 clear된다.
@@ -59,3 +41,25 @@ int  Kqueue::detectEvent(struct kevent *event_list){
 	return (n_event);
 }
 
+void	Kqueue::registerReadEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_READ, EV_ADD | EV_ENABLE, udata);}
+void	Kqueue::registerWriteEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata);}
+void	Kqueue::unregisterReadEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_READ, EV_DISABLE | EV_DELETE, udata);}
+void	Kqueue::unregisterWriteEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_WRITE, EV_DISABLE | EV_DELETE, udata);}
+
+/**
+ * @brief 등록할 이벤트를 생성하여 change_list_에 추가하는 함수
+ * @param ident 이벤트를 감시할 대상에 대한 fd
+ * @param filter 이벤트 필터 플래그 EVFILT_READ, EVFILT_WRITE
+ * @param flags EV_ADD,EV_ENABLE,EV_DISABLE,EV_DELETE,EV_ONESHOT
+ * @param udata 이벤트 핸들링에 필요한 모든 변수, 메소드가 담긴 클래스
+ * @param change_list 생성한 이벤트를 추가할 kevent 벡터
+ * @return EV_SET한 kevent구조체. event_list_에 추가해야 한다.
+ * @note flags : EV_ADD ,EV_ENABLE (이벤트를 추가/활성화)
+ *  EV_DISABLE, EV_DELETE(이벤트 비활성화 삭제),
+ *  EV_ONESHOT(설정된 이벤트를 한번만 알려준다)
+ */
+void  Kqueue::changeEvent(const int& ident, int filter, int flags, void* udata){
+	struct kevent tmp_event;
+	EV_SET(&tmp_event, ident, filter, flags, 0, 0, udata);
+  change_list_.push_back(tmp_event);
+}

@@ -129,11 +129,15 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	struct sockaddr_in	clnt_addr;
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
-
+	int									option;
+	socklen_t						optlen;
 	if (clnt_sockfd == -1)
 		throw(std::runtime_error("ACCEPT() ERROR"));
-	std::cout << "Connected Client : " << clnt_sockfd << "\n";
+	std::cout << "Connected Client : " << clnt_sockfd << std::endl;
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
+	optlen = sizeof(option);
+	option = 1;
+	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
 	UData*	udata_ptr = new UData(CLNT);
 	Kqueue::changeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
 	// Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
@@ -162,10 +166,10 @@ void  ServManager::sockReadable(struct kevent *cur_event){
     if (!raw_data_string.compare("CGI"))
       forkCgi();
 		//---------------test-------------
-		std::cout << "FROM CLIENT NUM " << cur_event->ident << ": " << raw_data_string << "\n";
-		// for (size_t i = 0; i < raw_data_ref.size(); i++){
-		// 	std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
-		// }
+		std::cout << "FROM CLIENT NUM " << cur_event->ident <<std::endl << raw_data_string << std::endl;
+		for (size_t i = 0; i < raw_data_ref.size(); i++){
+			std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
+		}
 		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
 		std::vector<char> tmp1(tmp.begin(),tmp.end());
 		cur_udata->ret_store_ = tmp1;
@@ -181,20 +185,15 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 void  ServManager::sockWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>&	ret_store_ref = cur_udata->ret_store_;
-
 	if (!ret_store_ref.size())
     return ;
-  char* buff = new char[ret_store_ref.size()];
-  std::copy(ret_store_ref.begin(), ret_store_ref.end(), buff);
-  int n = write(cur_event->ident, buff, ret_store_ref.size());
-  // delete[] buff;
-  std::cout << "Writable\n";
+  int n = write(cur_event->ident, &ret_store_ref[0], ret_store_ref.size());
   if (n == -1){
-      std::cerr << "client write error!" << "\n";
-      disconnectFd(cur_event);
-  }
-  else
-      ret_store_ref.clear();
+    std::cerr << "client write error!" << "\n";
+    disconnectFd(cur_event);
+	}
+	else
+		ret_store_ref.erase(ret_store_ref.begin(), ret_store_ref.begin() + n);
 }
 
 /**

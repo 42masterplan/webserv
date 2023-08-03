@@ -67,7 +67,7 @@ std::string  AutoIndex::getFileTemplate(const char* file, const char* size, cons
   buff.replace(pos, 6, size);
   pos = buff.find("_MODIFIED_TIME_", pos);
   buff.replace(pos, 15, modified_time);
-  return buff;
+  return (buff);
 }
 
 /**
@@ -98,5 +98,5 @@ std::string  AutoIndex::getDirectoryListing(const char* input_dir){
     ent = readdir(dir);
   }
   ret += "    </table>\n</body>\n</html>";
-  return ret;
+  return (ret);
 }

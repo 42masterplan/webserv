@@ -26,14 +26,16 @@ class HttpRequest{
 		HttpRequest();
 
 		/* getter, setter */
-		const e_method&			getMethod(void) const;
-		const std::string&	getPath(void) const;
+		const e_method&						getMethod(void) const;
+		const std::string&				getPath(void) const;
 		const std::map<std::string, std::string>&	getHeader(void) const;
 		const std::vector<char>&	getBody(void) const;
-		const int&					getContentLength(void) const;
-		const int&					getPort(void) const;
-		const bool&					getIsChunked(void) const;
-		const std::string&	getContentType(void) const;
+		const int&								getContentLength(void) const;
+		const int&								getPort(void) const;
+		const bool&								getIsChunked(void) const;
+		const std::string&				getContentType(void) const;
+		const e_parseStatus&			getParseStatus(void) const;
+		const e_parseError&				getParseError(void) const;
 
 		/* methods */
 		void		clear();

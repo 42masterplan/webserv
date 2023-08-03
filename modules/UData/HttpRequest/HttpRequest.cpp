@@ -8,26 +8,42 @@
  * 3. FIN이 아닌 HttpRequest에 대해 raw_data를 인자로 parse 함수를 실행합니다.
  * ---- parse 함수 실행 ----
  * 주어진 raw_data에 대해 가능한 모든 파싱을 진행합니다.
- * 각 request마다 오류가 발생했을 시 flag를 설정합니다
+ * 각 request마다 오류가 발생했을 시 flag를 설정한 뒤 종료합니다.
  * * FORM_ERROR: 400 Bad Request
  * * METHOD_ERROR: 405 Method Not Allowed -> ** TODO: response에 반드시 Allow 헤더가 포함되어야 합니다. **
  * * VERSION_ERROR: 505 HTTP Version Not Supported
  * ---- parse 함수 끝 ----
- * event handler는 해당 HttpRequest가 FIN이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
+ * 마지막 HttpRequest가 FINISH 이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
+ * ---- 전체 파싱 끝 ----
+ * getParseError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
+ * status가 FINISH인 HttpRequest에 대해 HttpResponse를 생성한 뒤 해당 HttpRequest를 vector에서 pop합니다.
  * 
- * TODO: 오류 발생 시 플로우 생각해보기
  * TODO: 헤더에 여러줄 올 수도 있넴요 . .
  * 
  * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
+// TODO: port 설정 어디에서 할 지 결정
 HttpRequest::HttpRequest(): parse_status_(FIRST), parse_error_(OK) { }
+
+const e_method&						HttpRequest::getMethod(void) const { return method_; }
+const std::string&				HttpRequest::getPath(void) const { return path_; }
+const std::map<std::string, std::string>&	HttpRequest::getHeader(void) const { return header_; }
+const std::vector<char>&	HttpRequest::getBody(void) const { return body_; }
+const int&								HttpRequest::getContentLength(void) const { return content_length_; }
+const int&								HttpRequest::getPort(void) const { return port_; }
+const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
+const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
+const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
+const e_parseError&				HttpRequest::getParseError(void) const { return parse_error_; }
 
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
-		if (parse_error_)
+		if (parse_error_) {
+			parse_status_ = FINISH;
 			return ;
+		}
 		switch (parse_status_) {
 			case FINISH:
 				return ;
@@ -61,8 +77,7 @@ void	HttpRequest::parseFirstLine(std::string line) {
 	const char* method_tmp[] = {"GET", "HEAD", "DELETE", "POST", "PUT", "PATCH"};
 	std::vector<const char*> methods(method_tmp, method_tmp + 6);
 	std::string	target;
-	// size_t	split_idx;
-	int			method;
+	int					method;
 
 	/* method 분리 */
 	target = getTarget(line);

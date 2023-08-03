@@ -18,7 +18,7 @@ WEBSERVSRCS = Kqueue.cpp \
 							WebServ.cpp \
 							ServManager.cpp \
 							UData.cpp \
-							AutoIndex.cpp \
+							AutoIndex.cpp
 
 WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
 

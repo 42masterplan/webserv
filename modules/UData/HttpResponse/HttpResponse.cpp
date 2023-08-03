@@ -65,6 +65,8 @@ void HttpResponse::processRedirectRes(HttpResponse &res, int status_code) {
 	std::cout << std::string(res.joined_data_.begin(), res.joined_data_.end()) << "\n";
 }
 
+const std::vector<char>& HttpResponse::getJoinedData()const{return joined_data_;}
+
 int main() {
 	HttpResponse res;
 	res.initStatusStore();

@@ -55,7 +55,7 @@ const std::string AutoIndex::f_info_template_ =
  * @param modified_time 파일이 최근 수정된 시간입니다.
  * @return 가공된 템플릿이 담긴 string입니다.
  */
-std::string  AutoIndex::concatTemplate(const char* file, const char* size, const char* modified_time){
+std::string  AutoIndex::getFileTemplate(const char* file, const char* size, const char* modified_time){
   std::string buff = f_info_template_;
   size_t pos = 0;
 
@@ -94,7 +94,7 @@ std::string  AutoIndex::getDirectoryListing(const char* input_dir){
     if (stat(file_path.c_str(), &file_stat) == -1)
       throw std::runtime_error("stat() ERROR");
     std::string file_size = std::to_string(file_stat.st_size);
-    ret += concatTemplate(ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
+    ret += getFileTemplate(ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
     ent = readdir(dir);
   }
   ret += "    </table>\n</body>\n</html>";

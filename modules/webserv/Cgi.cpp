@@ -1,5 +1,11 @@
 #include "Cgi.hpp"
 
+/**
+ * @brief CGI 자식 프로세스에게 전달할 envp를 제공하는 함수입니다.
+ * 메소드, 헤더, 바디가 순서대로 envp에 저장됩니다.
+ * @param req CGI 프로세스를 생성할 HttpRequest 클래스 인스턴스 레퍼런스입니다.
+ * @return 완성된 envp입니다.
+ */
 char**  Cgi::getEnvs(HttpRequest& req){
   const std::map<std::string, std::string>&  header = req.getHeader();
   char**  envp = new char* [header.size() + 3];
@@ -33,6 +39,7 @@ char**  Cgi::getEnvs(HttpRequest& req){
  * @brief 새로운 Cgi 프로세스를 생성하는 함수입니다.
  * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
  * 자식 프로세스는 주어진 Cgi 스크립트를 실행합니다.
+ * @param req CGI 프로세스를 생성할 HttpRequest 클래스 인스턴스 레퍼런스입니다.
  * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  Cgi::forkCgi(HttpRequest& req){

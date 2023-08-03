@@ -1,5 +1,9 @@
 #include "Cgi.hpp"
 
+Cgi::Cgi(){}
+
+Cgi::~Cgi(){}
+
 /**
  * @brief CGI 자식 프로세스에게 전달할 envp를 제공하는 함수입니다.
  * 메소드, 헤더, 바디가 순서대로 envp에 저장됩니다.
@@ -52,8 +56,8 @@ void  Cgi::forkCgi(HttpRequest& req){
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
   UData*  ptr = new UData(CGI);
   ptr->prog_name_ = "CGI.py";
-  Kqueue::changeEvent(pfd[0], EVFILT_READ, EV_ADD | EV_ENABLE, ptr);
-  Kqueue::changeEvent(pfd[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, ptr);
+  Kqueue::registerReadEvent(pfd[0], ptr);
+  Kqueue::registerWriteEvent(pfd[1], ptr);
   child_pid = fork();
   if (child_pid == -1){
     close(pfd[1]);

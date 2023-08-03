@@ -18,11 +18,15 @@
 class Kqueue{
 	public:
 		static void kqueueStart(const std::vector<int>& serv_sock_fds);
-		static void changeEvent(const int& ident, int filter, int flags, void* udata);
 		static int  detectEvent(struct kevent *event_list);
+		static void	registerReadEvent(const int& ident, void* udata);
+		static void	registerWriteEvent(const int& ident, void* udata);
+		static void	unregisterReadEvent(const int& ident, void* udata);
+		static void	unregisterWriteEvent(const int& ident, void* udata);
 	private:
 		~Kqueue();
 		Kqueue();
+		static void changeEvent(const int& ident, int filter, int flags, void* udata);
 		static int           kqueue_fd_;
 		static std::vector<struct kevent>  change_list_; //등록할 이벤트를 담는 벡터. 담아주고 kqueue에 등록했다면, clear() 해서 비워줍니다.
 };

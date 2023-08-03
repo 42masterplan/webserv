@@ -19,7 +19,7 @@ class HttpResponse{
 		void 		initStatusStore(void);
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
 		void 		processRedirectRes(HttpResponse &res, int status_code);
-		
+		const std::vector<char>& getJoinedData()const;
 	private :
 		std::string 			http_version_;
 		int								status_code_;

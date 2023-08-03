@@ -1,14 +1,25 @@
-#ifndef HTTPRESPONSE_HPP
-# define HTTPRESPONSE_HPP
+#ifndef HTTP_RESPONSE_HPP
+# define HTTP_RESPONSE_HPP
 
 # include "../../config/LocationBlock/LocBlock.hpp"
-# include "StatusStore.hpp"
+# include "../../config/ConfParser.hpp"
+
+# include "HttpRequest.hpp"
+# include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
 
 # include <iostream>
 # include <string>
 # include <vector>
 # include <map>
+
+typedef enum e_res_type {
+	UPLOAD_STORE,
+	CGI,
+	REDIRECT,
+	ERROR
+} e_res_type;
+
 
 class HttpResponse{
 
@@ -17,12 +28,14 @@ class HttpResponse{
 		
 		/* constructor */
 		HttpResponse();
+		HttpResponse(HttpRequest &req);
 
 		/* methods */
-
-		void 		initStatusStore(void);
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
 		void 		processRedirectRes(HttpResponse &res, int status_code);
+
+		e_res_type	initResType(HttpRequest &req, LocBlock &loc);
+
 		
 	private :
 		std::string 			http_version_;
@@ -36,6 +49,7 @@ class HttpResponse{
 		std::vector<char>	body_;
 		std::vector<char>	joined_data_;
 		LocBlock					loc_block_;
+		e_res_type				res_type_;
 };
 
 #endif

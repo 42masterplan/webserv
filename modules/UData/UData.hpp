@@ -11,19 +11,17 @@
 // 	OK = 0
 // }e_error;
 
-typedef enum fdType{
-	CLNT,
-	CGI
-}e_fd_type;
 
 class UData{
 	public :
 		/* constructor */
-		UData(e_fd_type type);
+		UData();
 		~UData();
 
+		/* methods */
+		void		generateResponses(void);
+
 		/* variables */
-		e_fd_type					fd_type_;
 		std::vector<HttpRequest>	http_request_;
 		std::vector<HttpResponse>	http_response_;
 		// e_error 									error_flag_;

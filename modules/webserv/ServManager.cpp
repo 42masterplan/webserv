@@ -165,6 +165,9 @@ void  ServManager::sockReadable(struct kevent *cur_event){
     std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
     if (!raw_data_string.compare("CGI"))
       forkCgi();
+		//TODO: 이곳에 HTTP parse함수가 호출
+		//TODO: parse함수가 끝났는지 아닌지를 알 수 있어야 한다.
+		//parse함수가 끝났다는 건 HTTP response Class까지 완성된 상태이다.
 		//---------------test-------------
 		std::cout << "FROM CLIENT NUM " << cur_event->ident <<std::endl << raw_data_string << std::endl;
 		for (size_t i = 0; i < raw_data_ref.size(); i++){
@@ -173,7 +176,7 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
 		std::vector<char> tmp1(tmp.begin(),tmp.end());
 		cur_udata->ret_store_ = tmp1;
-		Kqueue::changeEvent(cur_event->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, cur_event->udata);
+		Kqueue::changeEvent(cur_event->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, cur_event->udata);//TODO : ReadEvent unregister 필요
 		//---------------test-------------
 	}
 }

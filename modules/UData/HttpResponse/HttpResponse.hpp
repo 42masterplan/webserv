@@ -1,6 +1,6 @@
 #ifndef HTTPRESPONSE_HPP
 # define HTTPRESPONSE_HPP
-# include "../config/LocationBlock/LocBlock.hpp"
+# include "../../config/LocationBlock/LocBlock.hpp"
 # include <iostream>
 # include <string>
 # include <vector>
@@ -31,7 +31,7 @@ class HttpResponse{
 
 		std::vector<char>	body_;
 		std::vector<char>	joined_data_;
-		// LocBlock					loc_block_;
+		LocBlock					loc_block_;
 };
 
 #endif

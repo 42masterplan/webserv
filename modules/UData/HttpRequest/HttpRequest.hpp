@@ -18,7 +18,8 @@ typedef enum requestErrorType{
 	FORM_ERROR,
 	METHOD_ERROR,
 	VERSION_ERROR,
-	UNIMPLEMENTED_ERROR
+	UNIMPLEMENTED_ERROR,
+	LENGTH_REQUIRED_ERROR
 }e_requestError;
 
 class HttpRequest{

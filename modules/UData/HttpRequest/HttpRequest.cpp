@@ -13,6 +13,7 @@
  * * METHOD_ERROR: 405 Method Not Allowed -> ** TODO: response에 반드시 Allow 헤더가 포함되어야 합니다. **
  * * VERSION_ERROR: 505 HTTP Version Not Supported
  * * UNIMPLEMENTED_ERROR: 501 Unimplemented
+ * * LENGTH_REQUIRED_ERROR: 411 Length Required
  * ---- parse 함수 끝 ----
  * 마지막 HttpRequest가 FINISH 이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
  * ---- 전체 파싱 끝 ----
@@ -118,7 +119,11 @@ void	HttpRequest::parseHeader(std::string line) {
 	size_t			split_idx;
 
 	if (line == "") {
-		parse_status_ = BODY;
+		checkHeader();
+		if (request_error_)
+			parse_status_ = FINISH;
+		else
+			parse_status_ = BODY;
 		return ;
 	}
 	split_idx = line.find(':');
@@ -133,11 +138,32 @@ void	HttpRequest::parseHeader(std::string line) {
 }
 
 void	HttpRequest::checkHeader(void) {
+	/* content-type */
+	if (header_.find(std::string("content-type")) != header_.end())
+		content_type_ = header_["content-type"];
+	
+	/* transfer-encoding */
 	if (header_.find(std::string("transfer-encoding")) != header_.end()) {
 		if (header_["transfer-encoding"] == "chunked")
 			is_chunked_ = true;
 		else
 			request_error_ = UNIMPLEMENTED_ERROR;
+		return ;
+	}
+
+	/* content-length */
+	if (header_.find(std::string("content-length")) != header_.end()) {
+		std::stringstream ss(header_["content-length"]);
+		ssize_t length;
+
+		ss >> length;
+		if (length < 0 || ss.tellg() != -1) {
+			request_error_ = FORM_ERROR;
+			return ;
+		}
+		content_length_ = length;
+	} else {
+		request_error_ = LENGTH_REQUIRED_ERROR;
 	}
 }
 

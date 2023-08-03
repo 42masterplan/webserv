@@ -48,7 +48,7 @@ class ServManager{
 		void  sockListen();
 		void  handleEvents();
 		void  registerNewClnt(int serv_sockfd);
-    void  forkCgi();
+    void  forkCgi(HttpRequest& req);
 		void  sockReadable(struct kevent *cur_event);
 		void  sockWritable(struct kevent *cur_event);
     void  cgiReadable(struct kevent *cur_event);

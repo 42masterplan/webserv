@@ -261,14 +261,40 @@ void  ServManager::disconnectFd(struct kevent *cur_event){
 	close(cur_event->ident);
 }
 
+char**  getEnvs(HttpRequest& req){
+  const std::map<std::string, std::string>&  header = req.getHeader();
+  char**  envp = new char* [header.size() + 3];
+  envp[header.size() + 2] = NULL;
+
+  if (req.getMethod() == GET){
+    envp[0] = new char[11];
+    std::strcpy(envp[0], "METHOD=GET");
+  }
+  else if (req.getMethod() == POST){
+    envp[0] = new char[12];
+    std::strcpy(envp[0], "METHOD=POST");
+  }
+  std::string header_buff = "";
+  std::map<std::string, std::string>::const_iterator it;
+  int i = 1;
+  for (it = header.begin(); it != header.end(); ++it, ++i) {
+    header_buff = it->first + "=" + it->second;
+    envp[i] = new char[header_buff.size() + 1];
+    std::strcpy(envp[i], header_buff.c_str());
+  }
+  const std::vector<char>&  body = req.getBody();
+  envp[i] = new char[body.size() + 1];
+  std::strncpy(envp[i], &body[0], body.size());
+  return (envp);
+}
+
 /**
  * @brief 새로운 CGI 프로세스를 생성하는 함수입니다.
  * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
  * 자식 프로세스는 주어진 CGI 스크립트를 실행합니다.
  * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
- * @todo 자식 프로세스에 대한 WRITE 이벤트를 등록해야하나?
  */
-void  ServManager::forkCgi(){
+void  ServManager::forkCgi(HttpRequest& req){
   int   pfd[2];
   pid_t child_pid;
 
@@ -280,7 +306,6 @@ void  ServManager::forkCgi(){
   ptr->prog_name_ = "CGI.py";
   Kqueue::changeEvent(pfd[0], EVFILT_READ, EV_ADD | EV_ENABLE, ptr);
   Kqueue::changeEvent(pfd[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, ptr);
-
   child_pid = fork();
   if (child_pid == -1){
     close(pfd[1]);
@@ -299,7 +324,7 @@ void  ServManager::forkCgi(){
     exec_file[0] = (char*)"/usr/local/bin/python3";
     exec_file[1] = script_name;
     exec_file[2] = NULL;
-    if (execve(exec_file[0], exec_file, NULL) == -1)//envp needed
+    if (execve(exec_file[0], exec_file, getEnvs(req)) == -1)//envp needed
       throw (std::runtime_error("execve() Error"));
   }
   else //parent

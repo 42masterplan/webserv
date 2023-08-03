@@ -4,15 +4,21 @@
 # include <string>
 # include <map>
 # include <vector>
+# include "../WebServ/modules/config/Tools/ParseTool.hpp"
 
-typedef enum methodType{
-	GET,
-	HEAD,
-	DELETE,
-	POST,
-	PUT,
-	PATCH
-}e_method;
+typedef enum parseStatusType{
+	FIRST,
+	HEADER,
+	BODY,
+	FINISH
+}e_parseStatus;
+
+typedef enum parseErrorType{
+	OK = 0,
+	FORM_ERROR,
+	METHOD_ERROR,
+	VERSION_ERROR,
+}e_parseError;
 
 class HttpRequest{
 	public :
@@ -29,17 +35,9 @@ class HttpRequest{
 		const bool&					getIsChunked(void) const;
 		const std::string&	getContentType(void) const;
 
-		void	setMethod(e_method method);
-		void	setPath(std::string path);
-		void	setHeader(std::map<std::string, std::string> header);
-		void	setBody(std::vector<char> body);
-		void	setContentLength(int content_length);
-		void	setPort(int port);
-		void	setIsChunked(bool is_chunked);
-		void	setContentType(std::string content_type);
-
 		/* methods */
-		void clear();
+		void		clear();
+		void		parse(std::vector<char>& raw_data);
 
 	private :
 		e_method		method_;
@@ -48,10 +46,23 @@ class HttpRequest{
 		std::vector<char>	body_;
 
 		/* headers */
-		int					port_;
-		bool				is_chunked_;
-		int					content_length_;
-		std::string	content_type_;
+		int						port_;
+		bool					is_chunked_;
+		int						content_length_;
+		std::string		content_type_;
+
+		/* parsing */
+		e_parseStatus	parse_status_;
+		e_parseError	parse_error_;
+		
+		/* parsing functions */
+		void					parseFirstLine(std::string line);
+		void					parseHeader(std::string line);
+		void					checkHeader(void);
+
+		/* parsing utils */
+		std::string		getLine(std::vector<char>& raw_data);
+		std::string		getTarget(std::string& line);
 };
 
 #endif

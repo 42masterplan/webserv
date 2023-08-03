@@ -17,10 +17,17 @@ CONFIGOBJS = $(addprefix ./modules/config/, $(CONFIGSRCS:.cpp=.o))
 WEBSERVSRCS = Kqueue.cpp \
 							WebServ.cpp \
 							ServManager.cpp \
-							UData.cpp \
-							AutoIndex.cpp
+							AutoIndex.cpp 
+
 
 WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
+
+#UData
+UDATASRCS = UData.cpp \
+						HttpRequest/HttpRequest.cpp 
+#HttpResponse/HttpResponse.cpp
+UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))
+
 
 #main문
 MAINSRC = main.cpp
@@ -30,7 +37,7 @@ MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 CSRCS = echo_client.cpp
 COBJS = $(CSRCS:.cpp=.o)
 
-OBJS  =  $(CONFIGOBJS) $(WEBSERVOBJS) $(MAINOBJ)
+OBJS  =  $(CONFIGOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(MAINOBJ) 
 
 RM = rm -rf
 

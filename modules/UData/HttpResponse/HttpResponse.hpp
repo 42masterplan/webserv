@@ -33,9 +33,6 @@ class HttpResponse{
 		/* methods */
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
 		void 		processRedirectRes(HttpResponse &res, int status_code);
-
-		e_res_type	initResType(HttpRequest &req, LocBlock &loc);
-
 		
 	private :
 		std::string 			http_version_;

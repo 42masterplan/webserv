@@ -3,12 +3,13 @@
 # include <iostream>
 # include <string>
 # include <vector>
-// # include "../interface/HttpRequest.hpp"
-// # include "../interface/HttpResponse.hpp"
+# include "./HttpRequest/HttpRequest.hpp"
+# include "./HttpResponse/HttpResponse.hpp"
 
-typedef enum errorType{
-	OK = 0
-}e_error;
+//OK가 HttpRequest file과 겹침
+// typedef enum errorType{
+// 	OK = 0
+// }e_error;
 
 typedef enum fdType{
 	CLNT,
@@ -23,17 +24,20 @@ class UData{
 
 		/* variables */
 		e_fd_type					fd_type_;
-		// HttpRequest				http_request_;
-		// HttpResponse			http_response_;
-		e_error 					error_flag_;
-		std::vector<char>	raw_data_;
+		std::vector<HttpRequest>	http_request_;
+		std::vector<HttpResponse>	http_response_;
+		// e_error 									error_flag_;
+		std::vector<char>					raw_data_;
 
 		/* cgi */
 		std::string				prog_name_;
 		std::vector<char>	cgi_store_;
-    pid_t             cgi_pid_;
+		pid_t							cgi_pid_;
+
+		/*임시 결과 저장소 for test*/
 		std::vector<char> ret_store_;//return 하는 값을 저장하는 저장소. 임시로 만듬
 	private :
+		UData();
 };
 
 #endif

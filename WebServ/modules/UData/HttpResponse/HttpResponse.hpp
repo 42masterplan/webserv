@@ -32,7 +32,7 @@ class HttpResponse{
 	private :
 		int								status_code_;
 		std::string				message_;
-		const std::string http_version_ = "HTTP/1.1";
+		// const std::string http_version_ = "HTTP/1.1";
 		std::vector<char>	body_;
 
 		/* headers */

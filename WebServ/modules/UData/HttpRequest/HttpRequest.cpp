@@ -1,4 +1,4 @@
-#include "../interface/UData.hpp"
+#include "../UData.hpp"
 
 /**
  * 파싱 순서 정리 (new) *HttpRequest가 vector<HttpRequest>의 형태로 변함에 따라 파싱 알고리즘이 변화되었습니다.*
@@ -22,7 +22,7 @@
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
-HttpRequest::HttpRequest(): parse_status_(e_parseStatus::FIRST), parse_error_(e_parseError::OK) { }
+HttpRequest::HttpRequest(): parse_status_(FIRST), parse_error_(OK) { }
 
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
@@ -58,9 +58,10 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
  * @note 정상 실행 후 parse_status_가 HEADER로 변경됩니다.
  */
 void	HttpRequest::parseFirstLine(std::string line) {
-	const std::vector<std::string>	methods = {"GET", "HEAD", "DELETE", "POST", "PUT", "PATCH"};
+	const char* method_tmp[] = {"GET", "HEAD", "DELETE", "POST", "PUT", "PATCH"};
+	std::vector<const char*> methods(method_tmp, method_tmp + 6);
 	std::string	target;
-	size_t	split_idx;
+	// size_t	split_idx;
 	int			method;
 
 	/* method 분리 */
@@ -68,7 +69,7 @@ void	HttpRequest::parseFirstLine(std::string line) {
 	if (parse_error_) return ;
 	method = find(methods.begin(), methods.end(), target) - methods.begin();
 	if (method < 0 || method >= 6) {
-		parse_error_ = e_parseError::METHOD_ERROR;
+		parse_error_ = METHOD_ERROR;
 		return ;
 	}
   method_ = static_cast<e_method>(method);
@@ -80,10 +81,10 @@ void	HttpRequest::parseFirstLine(std::string line) {
 
 	/* version */
 	if (line != "HTTP/1.1") {
-		parse_error_ = e_parseError::VERSION_ERROR;
+		parse_error_ = VERSION_ERROR;
 		return ;
 	}
-	parse_status_ = e_parseStatus::HEADER;
+	parse_status_ = HEADER;
 }
 
 /**
@@ -98,12 +99,12 @@ void	HttpRequest::parseHeader(std::string line) {
 	size_t			split_idx;
 
 	if (line == "") {
-		parse_status_ = e_parseStatus::BODY;
+		parse_status_ = BODY;
 		return ;
 	}
 	split_idx = line.find(':');
 	if (split_idx == std::string::npos) {
-		parse_error_ = e_parseError::FORM_ERROR;
+		parse_error_ = FORM_ERROR;
     return ;
 	}
 	key = line.substr(0, split_idx);
@@ -131,7 +132,7 @@ std::string HttpRequest::getLine(std::vector<char>& raw_data) {
   size_t      split_idx;
 
   if (!hasCRLF(raw_data)) {
-		parse_error_ = e_parseError::FORM_ERROR;
+		parse_error_ = FORM_ERROR;
     return "";
   }
   split_idx = findCRLF(raw_data);
@@ -153,7 +154,7 @@ std::string	HttpRequest::getTarget(std::string& line) {
 
 	split_idx = line.find(' ');
 	if (split_idx == std::string::npos) {
-		parse_error_ = e_parseError::FORM_ERROR;
+		parse_error_ = FORM_ERROR;
 		return target;
 	}
 	target = line.substr(0, split_idx);

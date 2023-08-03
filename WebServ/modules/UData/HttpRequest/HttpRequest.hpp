@@ -4,7 +4,7 @@
 # include <string>
 # include <map>
 # include <vector>
-# include "../WebServ/modules/config/Tools/ParseTool.hpp"
+# include "../../config/Tools/ParseTool.hpp"
 
 typedef enum parseStatusType{
 	FIRST,
@@ -17,7 +17,7 @@ typedef enum parseErrorType{
 	OK = 0,
 	FORM_ERROR,
 	METHOD_ERROR,
-	VERSION_ERROR,
+	VERSION_ERROR
 }e_parseError;
 
 class HttpRequest{

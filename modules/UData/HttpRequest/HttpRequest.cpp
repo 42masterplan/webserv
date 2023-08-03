@@ -12,11 +12,15 @@
  * * FORM_ERROR: 400 Bad Request
  * * METHOD_ERROR: 405 Method Not Allowed -> ** TODO: response에 반드시 Allow 헤더가 포함되어야 합니다. **
  * * VERSION_ERROR: 505 HTTP Version Not Supported
+ * * UNIMPLEMENTED_ERROR: 501 Unimplemented
  * ---- parse 함수 끝 ----
  * 마지막 HttpRequest가 FINISH 이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
  * ---- 전체 파싱 끝 ----
  * getParseError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
  * status가 FINISH인 HttpRequest에 대해 HttpResponse를 생성한 뒤 해당 HttpRequest를 vector에서 pop합니다.
+ * 
+ * !! chunked encoding의 경우, BODY를 받은 이후 HEADER가 들어올 수 있습니다(Trailer).
+ * !! Trailer에는 Transfer-Encoding, Content-Length, Trailer가 포함되어서는 안됩니다.
  * 
  * TODO: 헤더에 여러줄 올 수도 있넴요 . .
  * 
@@ -25,7 +29,7 @@
  */
 
 // TODO: port 설정 어디에서 할 지 결정
-HttpRequest::HttpRequest(): parse_status_(FIRST), parse_error_(OK) { }
+HttpRequest::HttpRequest(): parse_status_(FIRST), request_error_(OK) { }
 
 const e_method&						HttpRequest::getMethod(void) const { return method_; }
 const std::string&				HttpRequest::getPath(void) const { return path_; }
@@ -36,11 +40,11 @@ const int&								HttpRequest::getPort(void) const { return port_; }
 const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
 const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
-const e_parseError&				HttpRequest::getParseError(void) const { return parse_error_; }
+const e_requestError&			HttpRequest::getParseError(void) const { return request_error_; }
 
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
-		if (parse_error_) {
+		if (request_error_) {
 			parse_status_ = FINISH;
 			return ;
 		}
@@ -81,22 +85,22 @@ void	HttpRequest::parseFirstLine(std::string line) {
 
 	/* method 분리 */
 	target = getTarget(line);
-	if (parse_error_) return ;
+	if (request_error_) return ;
 	method = find(methods.begin(), methods.end(), target) - methods.begin();
 	if (method < 0 || method >= 6) {
-		parse_error_ = METHOD_ERROR;
+		request_error_ = METHOD_ERROR;
 		return ;
 	}
   method_ = static_cast<e_method>(method);
 
 	/* path 분리 */
 	target = getTarget(line);
-	if (parse_error_) return ;
+	if (request_error_) return ;
   path_ = target;
 
 	/* version */
 	if (line != "HTTP/1.1") {
-		parse_error_ = VERSION_ERROR;
+		request_error_ = VERSION_ERROR;
 		return ;
 	}
 	parse_status_ = HEADER;
@@ -119,19 +123,22 @@ void	HttpRequest::parseHeader(std::string line) {
 	}
 	split_idx = line.find(':');
 	if (split_idx == std::string::npos) {
-		parse_error_ = FORM_ERROR;
+		request_error_ = FORM_ERROR;
     return ;
 	}
 	key = line.substr(0, split_idx);
 	value = line.substr(split_idx + 1);
 	trimComment(value);
-	header_.insert(std::pair<std::string, std::string>(lowerString(key), value));
+	header_.insert(std::pair<std::string, std::string>(lowerString(key), lowerString(value)));
 }
 
 void	HttpRequest::checkHeader(void) {
-	// if (header_.find(std::string("transfer-encoding")) != header_.end()) {
-	// 	if (header_["transfer-encoding"] == "")
-	// }
+	if (header_.find(std::string("transfer-encoding")) != header_.end()) {
+		if (header_["transfer-encoding"] == "chunked")
+			is_chunked_ = true;
+		else
+			request_error_ = UNIMPLEMENTED_ERROR;
+	}
 }
 
 /**
@@ -147,7 +154,7 @@ std::string HttpRequest::getLine(std::vector<char>& raw_data) {
   size_t      split_idx;
 
   if (!hasCRLF(raw_data)) {
-		parse_error_ = FORM_ERROR;
+		request_error_ = FORM_ERROR;
     return "";
   }
   split_idx = findCRLF(raw_data);
@@ -169,7 +176,7 @@ std::string	HttpRequest::getTarget(std::string& line) {
 
 	split_idx = line.find(' ');
 	if (split_idx == std::string::npos) {
-		parse_error_ = FORM_ERROR;
+		request_error_ = FORM_ERROR;
 		return target;
 	}
 	target = line.substr(0, split_idx);

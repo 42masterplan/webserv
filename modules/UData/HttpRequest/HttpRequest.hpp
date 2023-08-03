@@ -13,12 +13,13 @@ typedef enum parseStatusType{
 	FINISH
 }e_parseStatus;
 
-typedef enum parseErrorType{
+typedef enum requestErrorType{
 	OK = 0,
 	FORM_ERROR,
 	METHOD_ERROR,
-	VERSION_ERROR
-}e_parseError;
+	VERSION_ERROR,
+	UNIMPLEMENTED_ERROR
+}e_requestError;
 
 class HttpRequest{
 	public :
@@ -35,36 +36,36 @@ class HttpRequest{
 		const bool&								getIsChunked(void) const;
 		const std::string&				getContentType(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
-		const e_parseError&				getParseError(void) const;
+		const e_requestError&			getParseError(void) const;
 
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);
 
 	private :
-		e_method		method_;
-		std::string	path_;
+		e_method				method_;
+		std::string			path_;
 		std::map<std::string, std::string>	header_;
 		std::vector<char>	body_;
 
 		/* headers */
-		int						port_;
-		bool					is_chunked_;
-		int						content_length_;
-		std::string		content_type_;
+		int							port_;
+		bool						is_chunked_;
+		int							content_length_;
+		std::string			content_type_;
 
 		/* parsing */
-		e_parseStatus	parse_status_;
-		e_parseError	parse_error_;
+		e_parseStatus		parse_status_;
+		e_requestError	request_error_;
 		
 		/* parsing functions */
-		void					parseFirstLine(std::string line);
-		void					parseHeader(std::string line);
-		void					checkHeader(void);
+		void						parseFirstLine(std::string line);
+		void						parseHeader(std::string line);
+		void						checkHeader(void);
 
 		/* parsing utils */
-		std::string		getLine(std::vector<char>& raw_data);
-		std::string		getTarget(std::string& line);
+		std::string			getLine(std::vector<char>& raw_data);
+		std::string			getTarget(std::string& line);
 };
 
 #endif

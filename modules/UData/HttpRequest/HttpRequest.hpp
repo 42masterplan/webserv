@@ -36,6 +36,7 @@ class HttpRequest{
 		const int&								getPort(void) const;
 		const bool&								getIsChunked(void) const;
 		const std::string&				getContentType(void) const;
+		const std::string&				getHost(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
 		const e_requestError&			getParseError(void) const;
 
@@ -54,10 +55,12 @@ class HttpRequest{
 		bool						is_chunked_;
 		int							content_length_;
 		std::string			content_type_;
+		std::string			host_;
 
 		/* parsing */
 		e_parseStatus		parse_status_;
 		e_requestError	request_error_;
+		std::string			last_header_;
 		
 		/* parsing functions */
 		void						parseFirstLine(std::string line);

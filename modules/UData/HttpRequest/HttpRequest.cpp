@@ -15,7 +15,7 @@
  * * UNIMPLEMENTED_ERROR: 501 Unimplemented
  * * LENGTH_REQUIRED_ERROR: 411 Length Required
  * ---- parse 함수 끝 ----
- * 마지막 HttpRequest가 FINISH 이고, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
+ * 마지막 HttpRequest가 FINISH이고 오류가 없으며, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
  * ---- 전체 파싱 끝 ----
  * getParseError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
  * status가 FINISH인 HttpRequest에 대해 HttpResponse를 생성한 뒤 해당 HttpRequest를 vector에서 pop합니다.
@@ -29,6 +29,8 @@
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
+
+
 // TODO: port 설정 어디에서 할 지 결정
 HttpRequest::HttpRequest(): parse_status_(FIRST), request_error_(OK) { }
 
@@ -40,6 +42,7 @@ const int&								HttpRequest::getContentLength(void) const { return content_len
 const int&								HttpRequest::getPort(void) const { return port_; }
 const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
+const std::string&				HttpRequest::getHost(void) const { return host_; }
 const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
 const e_requestError&			HttpRequest::getParseError(void) const { return request_error_; }
 
@@ -111,13 +114,15 @@ void	HttpRequest::parseFirstLine(std::string line) {
  * @brief HTTP 메세지의 Header 한 줄을 해석하는 함수입니다.
  * 
  * @param line string reference로, 함수 내부에서 변경됩니다.
- * @note *FORM_ERROR* 가 발생할 수 있습니다.
- * @note 빈 문자열이 들어올 시 parse_status_를 BODY로 변경 및 종료합니다.
+ * @note 파싱할 때 *FORM_ERROR* 가 발생할 수 있습니다.
+ * @note 빈 문자열이 들어올 시 parse_status_를 BODY로 변경 및 필요한 헤더 존재여부 확인 후 종료합니다.
+ * @note 헤더 확인 과정에서 *FORM_ERROR, UNIMPLEMENTED_ERROR, LENGTH_REQUIRED_ERROR*가 발생할 수 있습니다.
  */
 void	HttpRequest::parseHeader(std::string line) {
 	std::string	key, value;
 	size_t			split_idx;
 
+	/* header 끝 */
 	if (line == "") {
 		checkHeader();
 		if (request_error_)
@@ -126,6 +131,14 @@ void	HttpRequest::parseHeader(std::string line) {
 			parse_status_ = BODY;
 		return ;
 	}
+
+	/* header 추가 */
+	/* 이전 헤더에 연결되는 값 */
+	if (line[0] == ' ' || line[0] == '\t') {
+		header_[last_header_] += line;
+		return ;
+	}
+	/* 새로운 헤더 */
 	split_idx = line.find(':');
 	if (split_idx == std::string::npos) {
 		request_error_ = FORM_ERROR;
@@ -133,18 +146,39 @@ void	HttpRequest::parseHeader(std::string line) {
 	}
 	key = line.substr(0, split_idx);
 	value = line.substr(split_idx + 1);
+	last_header_ = key;
 	trimComment(value);
-	header_.insert(std::pair<std::string, std::string>(lowerString(key), lowerString(value)));
+	if (header_.find(key) != header_.end()) {
+		if (key == "content-length" || key == "content-type") {
+			request_error_ = FORM_ERROR;
+			return ;
+		}
+		if (header_[key] != value) // TODO: split 해서 비교해야 함
+			header_[key] += ", " + value; // key값이 이미 존재할 때 뒤에 리스트 형태로 더해줘야 한다.
+	}
+	else
+		header_.insert(std::pair<std::string, std::string>(lowerString(key), lowerString(value)));
 }
 
+/**
+ * @brief content-type, transfer-encoding, content-length 확인하여 변수에 저장하는 함수입니다.
+ * 
+ * @note transfer-encoding이 chunked가 아닐 때 *UNIMPLEMENTED_ERROR*가 발생합니다.
+ * @note content-length가 올바른 숫자가 아니거나 0보다 작을 때 *FORM_ERROR*가 발생합니다.
+ * @note transfer-encoding과 content-length 둘 다 존재하지 않으면 *LENGTH_REQUIRED_ERROR*가 발생합니다.
+ */
 void	HttpRequest::checkHeader(void) {
+	/* host */
+	if (header_.find(std::string("host")) != header_.end())
+		host_ = header_["host"];
+
 	/* content-type */
 	if (header_.find(std::string("content-type")) != header_.end())
 		content_type_ = header_["content-type"];
 	
 	/* transfer-encoding */
 	if (header_.find(std::string("transfer-encoding")) != header_.end()) {
-		if (header_["transfer-encoding"] == "chunked")
+		if (header_["transfer-encoding"] == "chunked") //split해서 해결
 			is_chunked_ = true;
 		else
 			request_error_ = UNIMPLEMENTED_ERROR;
@@ -208,4 +242,58 @@ std::string	HttpRequest::getTarget(std::string& line) {
 	target = line.substr(0, split_idx);
 	line.erase(line.begin(), line.begin() + split_idx + 1);
 	return target;
+}
+
+std::map<std::string, bool> get_multiple_header() {
+	std::map<std::string, bool> map;
+
+	map["accept"] = true;
+	map["accept-charset"] = true;
+	map["accept-encoding"] = true;
+	map["accept-language"] = true;
+	map["accept-ranges"] = false;
+	map["age"] = false;
+	map["allow"] = true;
+	map["authorization"] = false;
+	map["cache-control"] = true;
+	map["connection"] = true;
+	map["content-encoding"] = true;
+	map["content-language"] = true;
+	map["content-length"] = false;
+	map["content-location"] = false;
+	map["content-md5"] = false;
+	map["content-range"] = false;
+	map["content-type"] = false;
+	map["date"] = false;
+	map["etag"] = false;
+	map["expect"] = true;
+	map["expires"] = false;
+	map["from"] = false;
+	map["host"] = false;
+	map["if-match"] = true;
+	map["if-modified-since"] = false;
+	map["if-none-match"] = true;
+	map["if-range"] = false;
+	map["if-unmodified-since"] = false;
+	map["last-modified"] = false;
+	map["location"] = false;
+	map["max-forwards"] = false;
+	map["pragma"] = true;
+	map["proxy-authenticate"] = true;
+	map["proxy-authorization"] = false;
+	map["range"] = false;
+	map["referer"] = false;
+	map["retry-after"] = false;
+	map["server"] = false;
+	map["te"] = true;
+	map["trailer"] = true;
+	map["transfer-encoding"] = true;
+	map["upgrade"] = true;
+	map["user-agent"] = false;
+	map["vary"] = true;
+	map["via"] = true;
+	map["warning"] = true;
+	map["www-authenticate"] = true;
+
+	return map;
 }

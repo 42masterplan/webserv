@@ -102,8 +102,10 @@ void  ServManager::handleEvents(){
 			cur_udata = (UData*)cur_event->udata;
 			cur_fd_type = cur_udata->fd_type_;
 		}
-		if (cur_event->udata == NULL)
+		if (std::find(serv_sock_fds_.begin(), serv_sock_fds_.end(),cur_event->ident) != serv_sock_fds_.end())
 			registerNewClnt(cur_event->ident);
+		else if (cur_event->udata == NULL)
+			continue;
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_READ)
 			sockReadable(cur_event);
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_WRITE)
@@ -139,8 +141,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	option = 1;
 	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
 	UData*	udata_ptr = new UData(CLNT);
-	Kqueue::changeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
-	// Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
+	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
 
 /**
@@ -150,12 +151,16 @@ void  ServManager::registerNewClnt(int serv_sockfd){
  */
 void  ServManager::sockReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
+	if (cur_udata == NULL){
+		std::cout << cur_event->ident << "is already disconnected!(read)"<< std::endl;
+		return ;
+	}
 	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
-	if (rlen == -1)
-		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
-	else if (rlen == 0){
+	if (rlen == -1){
+		std::cerr << "already disconnected!"<< std::endl;
+		// throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
+	} else if (rlen == 0){
 		std::cout << "clnt sent eof. disconnecting.\n";
 		disconnectFd(cur_event);
 	}
@@ -170,13 +175,14 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 		//parse함수가 끝났다는 건 HTTP response Class까지 완성된 상태이다.
 		//---------------test-------------
 		std::cout << "FROM CLIENT NUM " << cur_event->ident <<std::endl << raw_data_string << std::endl;
-		for (size_t i = 0; i < raw_data_ref.size(); i++){
-			std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
-		}
+		// for (size_t i = 0; i < raw_data_ref.size(); i++){
+		// 	std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
+		// }
 		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
 		std::vector<char> tmp1(tmp.begin(),tmp.end());
 		cur_udata->ret_store_ = tmp1;
-		Kqueue::changeEvent(cur_event->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, cur_event->udata);//TODO : ReadEvent unregister 필요
+		Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
+		Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
 		//---------------test-------------
 	}
 }
@@ -187,16 +193,26 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  */
 void  ServManager::sockWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
+		if (cur_udata == NULL){
+			std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
+		return ;
+	}
 	std::vector<char>&	ret_store_ref = cur_udata->ret_store_;
 	if (!ret_store_ref.size())
     return ;
   int n = write(cur_event->ident, &ret_store_ref[0], ret_store_ref.size());
   if (n == -1){
-    std::cerr << "client write error!" << "\n";
+    std::cerr << "client write error!" << std::endl;
     disconnectFd(cur_event);
 	}
-	else
+	else{
 		ret_store_ref.erase(ret_store_ref.begin(), ret_store_ref.begin() + n);
+		if (ret_store_ref.size() == 0){
+			std::cout << "HI!!" << std::endl;
+			Kqueue::registerReadEvent(cur_event->ident, cur_udata);
+			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+		}
+	}
 }
 
 /**
@@ -213,7 +229,8 @@ void  ServManager::cgiReadable(struct kevent *cur_event){
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
 		std::cout << "CGI process sent eof, closing fd.\n";
-		disconnectFd(cur_event);
+		if (cur_event->udata != NULL)
+			disconnectFd(cur_event);
 	}
 	else{
 		buff_[rlen] = '\0';
@@ -254,11 +271,12 @@ void  ServManager::cgiWritable(struct kevent *cur_event){
 void  ServManager::disconnectFd(struct kevent *cur_event){
 	UData*	udata = (UData*)cur_event->udata;
   if (udata->fd_type_ == CLNT)
-	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << "\n";
+	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
   else if (udata->fd_type_ == CGI)
-	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << "\n";
-	delete udata;
+	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
 	close(cur_event->ident);
+	delete udata;
+	cur_event->udata = NULL;
 }
 
 /**
@@ -278,8 +296,8 @@ void  ServManager::forkCgi(){
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
   UData*  ptr = new UData(CGI);
   ptr->prog_name_ = "CGI.py";
-  Kqueue::changeEvent(pfd[0], EVFILT_READ, EV_ADD | EV_ENABLE, ptr);
-  Kqueue::changeEvent(pfd[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, ptr);
+  Kqueue::registerReadEvent(pfd[0],  ptr);
+  Kqueue::registerWriteEvent(pfd[1], ptr);
 
   child_pid = fork();
   if (child_pid == -1){

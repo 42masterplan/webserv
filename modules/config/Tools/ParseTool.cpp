@@ -40,7 +40,7 @@ e_method checkMethodName(const std::string &block_name){
 
 
 /**
- * @brief double값으로 인자를 받는 int oveflow 체크 함수
+ * @brief double값으로 인자를 받는 int overflow 체크 함수
  *
  * @param d 체크하고자 하는 double값
  */

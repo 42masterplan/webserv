@@ -13,6 +13,8 @@ class AutoIndex {
   public:
     static std::string        getDirectoryListing(const char* input_dir);
   private:
+    AutoIndex();
+    ~AutoIndex();
     static std::string        getFileTemplate(const char* file, const char* size, const char* modified_time);
     static const std::string  autoindex_template_;
     static const std::string  f_info_template_;

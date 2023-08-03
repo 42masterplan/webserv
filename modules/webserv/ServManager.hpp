@@ -4,7 +4,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -48,7 +47,6 @@ class ServManager{
 		void  sockListen();
 		void  handleEvents();
 		void  registerNewClnt(int serv_sockfd);
-    void  forkCgi();
 		void  sockReadable(struct kevent *cur_event);
 		void  sockWritable(struct kevent *cur_event);
     void  cgiReadable(struct kevent *cur_event);

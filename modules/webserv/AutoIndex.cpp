@@ -1,5 +1,9 @@
 #include "AutoIndex.hpp"
 
+AutoIndex::AutoIndex(){}
+
+AutoIndex::~AutoIndex(){}
+
 /**
  * @brief 오토인덱싱 html 상 템플릿입니다.
  * 자체로는 쓸모가 없고 파일 명세를 추가하며 완성해야 합니다.

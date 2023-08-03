@@ -1,31 +1,7 @@
 #include "HttpResponse.hpp"
 
-std::map<int, std::string> HttpResponse::status_store_;
-
-HttpResponse::HttpResponse() {}
-
-void HttpResponse::initStatusStore(void) {
-	status_store_[200] = "200 OK";
-	status_store_[201] = "201 Created";
-	status_store_[202] = "202 Accepted";
-	status_store_[204] = "204 No Content";
-	status_store_[301] = "301 Moved Permanently";
-	status_store_[302] = "302 Found";
-	status_store_[304] = "304 Not Modified";
-	status_store_[400] = "400 Bad Request";
-	status_store_[401] = "401 Unauthorized";
-	status_store_[403] = "403 Forbidden";
-	status_store_[404] = "404 Not Found";
-	status_store_[405] = "405 Method Not Allowed";
-	status_store_[500] = "500 Internal Server Error";
-	status_store_[501] = "501 Not Implemented";
-	status_store_[502] = "502 Bad Gateway";
-	status_store_[503] = "503 Service Unavailable";
-}
-
 /**
  * @brief 반환할 ErrorLocation이 없는 경우에 사용
- 
  * 
  * @param res 채워질 HttpResponse 객체
  * @param status_code 

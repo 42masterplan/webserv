@@ -1,6 +1,10 @@
 #ifndef HTTPRESPONSE_HPP
 # define HTTPRESPONSE_HPP
+
 # include "../../config/LocationBlock/LocBlock.hpp"
+# include "StatusStore.hpp"
+# include "MimeStore.hpp"
+
 # include <iostream>
 # include <string>
 # include <vector>

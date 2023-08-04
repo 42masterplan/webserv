@@ -35,11 +35,6 @@ void HttpRequest2::parse(std::vector<char>& raw_data) {
 				if (!parseBody(raw_data))
 					return ;
 				parse_status_ = FINISH;
-				/**
-				 * body parsing 진행: 리턴 값은 완료 시 true, 아직 끝나지 않았을 때 false
-				 * true일 때 status를 FINISH으로 바꿔준다.
-				 * false일 때 함수를 종료한다.
-				 */
 				break;
 			case HEADER:
 				if (!hasCRLF(raw_data)) return ;
@@ -53,16 +48,84 @@ void HttpRequest2::parse(std::vector<char>& raw_data) {
 	}
 }
 
+/**
+ * @brief Body를 받는 함수
+ * [chunked가 아닌 경우]
+ * raw_data는 content_length만큼 받지 않았으면 raw_data를 비우지 않고 false를 반환한다.
+ * [chunked인 경우]
+ * 1.CRLF를 찾아서 raw_data를 읽은 만큼 비워줍니다.
+ * 2.
+ * @param raw_data 들어온 데이터를 저장하는 저장소
+ * @return true 파싱이 끝남
+ * @return false 파싱이 안 끝남
+ * @warning body파싱중 에러가 나도 FORM ERROR로 처리하고 return true 합니다.
+ */
 bool	HttpRequest2::parseBody(std::vector<char>& raw_data){
+	static bool read_state = false;
+	static int to_read = 0;
 	if (is_chunked_){
-		if (!hasCRLF(raw_data))
-			return false;
+		if (!read_state){
+			std::string ret = getLine(raw_data);
+			to_read = hexToDec(ret);
+			if (to_read < 0){
+				if (to_read == -1 || getLine(raw_data) != "")
+					parse_error_ = FORM_ERROR;
+				return true;
+			}
+			read_state = true;
+		}
+		else if (raw_data.size() >= (size_t)to_read){
+			read_state = false;
+			to_read = 0;
+			std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
+			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
+			if (getLine(raw_data) != ""){
+				parse_error_ = FORM_ERROR;
+				return true;
+			}
+		}
 	}
-	else {
-		if (content_length_ < raw_data.size())
-			return false;
-		
+	else if ((size_t)content_length_ >= raw_data.size()){
+		std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
+		raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
+		return true;
 	}
+	return false;
+}
+
+/**
+ * @brief 16진수 string을 int로 변환하는 함수입니다.
+ * 
+ * @param base_num 16진수 숫자 string입니다.
+ * @return int 변경완료한 함수
+ * @warning
+ * 1. 숫자가 아닌경우
+ * 2. 음수인 경우
+ * 3. overflow
+ * 전부 e_parseError	parse_error_ 변수를 FORM_ERROR로 초기화합니다.
+ */
+int	HttpRequest2::hexToDec(const std::string& base_num){
+	double ret = 0;
+	for (std::string::const_iterator it = base_num.begin(); it != base_num.end(); it++){
+		ret *= 16;
+		if (*it >= '0' && *it <= '9'){
+			ret += *it -'0';
+		}else if ('A' <=*it && *it <='F'){
+			ret+= *it-'A' + 10;
+		}else if ('a' <= *it && *it <= 'f'){
+				ret+= *it-'a' + 10;
+		}
+		else{
+			parse_error_ = FORM_ERROR;
+			return -1;
+		}
+	}
+	int a = ret;
+  if (static_cast<double> (a) != std::floor(ret)){
+		parse_error_ = FORM_ERROR;
+		return (-1);
+	}
+	return (a);
 }
 
 /**

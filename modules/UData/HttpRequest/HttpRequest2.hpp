@@ -64,6 +64,8 @@ class HttpRequest2{
 		/* parsing utils */
 		std::string		getLine(std::vector<char>& raw_data);
 		std::string		getTarget(std::string& line);
+		int						hexToDec(const std::string& base_num); 
 };
+
 
 #endif

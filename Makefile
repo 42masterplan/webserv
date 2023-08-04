@@ -24,7 +24,8 @@ WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
 
 #UData
 UDATASRCS = UData.cpp \
-						HttpRequest/HttpRequest.cpp 
+						HttpRequest/HttpRequest.cpp \
+						HttpResponse/HttpResponse.cpp
 #HttpResponse/HttpResponse.cpp
 UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))
 

@@ -1,8 +1,11 @@
 #include "HttpResponse.hpp"
-
 std::map<int, std::string> HttpResponse::status_store_;
 
 HttpResponse::HttpResponse() {}
+
+void	HttpResponse::makeResponse(HttpRequest &request){
+	(void)request;
+}
 
 void HttpResponse::initStatusStore(void) {
 	status_store_[200] = "200 OK";
@@ -67,10 +70,10 @@ void HttpResponse::processRedirectRes(HttpResponse &res, int status_code) {
 
 const std::vector<char>& HttpResponse::getJoinedData()const{return joined_data_;}
 
-int main() {
-	HttpResponse res;
-	res.initStatusStore();
-	res.processDefaultErrorRes(res, 404);
-	res.processRedirectRes(res, 301);
-	return 0;
-}
+// int main() {
+// 	HttpResponse res;
+// 	res.initStatusStore();
+// 	res.processDefaultErrorRes(res, 404);
+// 	res.processRedirectRes(res, 301);
+// 	return 0;
+// }

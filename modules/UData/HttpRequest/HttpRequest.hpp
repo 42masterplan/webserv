@@ -70,6 +70,7 @@ class HttpRequest{
 		/* parsing utils */
 		std::string			getLine(std::vector<char>& raw_data);
 		std::string			getTarget(std::string& line);
+		static const std::map<std::string, bool>	get_multiple_header();
 };
 
 #endif

@@ -1,4 +1,4 @@
-#include "../UData.hpp"
+#include "HttpRequest.hpp"
 
 /**
  * 파싱 순서 정리 (new) *HttpRequest가 vector<HttpRequest>의 형태로 변함에 따라 파싱 알고리즘이 변화되었습니다.*
@@ -23,13 +23,9 @@
  * !! chunked encoding의 경우, BODY를 받은 이후 HEADER가 들어올 수 있습니다(Trailer).
  * !! Trailer에는 Transfer-Encoding, Content-Length, Trailer가 포함되어서는 안됩니다.
  * 
- * TODO: 헤더에 여러줄 올 수도 있넴요 . .
- * 
  * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
-
-
 
 // TODO: port 설정 어디에서 할 지 결정
 HttpRequest::HttpRequest(): parse_status_(FIRST), request_error_(OK) { }
@@ -111,9 +107,9 @@ void	HttpRequest::parseFirstLine(std::string line) {
 }
 
 /**
- * @brief HTTP 메세지의 Header 한 줄을 해석하는 함수입니다.
+ * @brief HTTP 메세지의 Header 한 줄을 해석하여 key, value를 lower-case로 저장하는 함수입니다.
  * 
- * @param line string reference로, 함수 내부에서 변경됩니다.
+ * @param line
  * @note 파싱할 때 *FORM_ERROR* 가 발생할 수 있습니다.
  * @note 빈 문자열이 들어올 시 parse_status_를 BODY로 변경 및 필요한 헤더 존재여부 확인 후 종료합니다.
  * @note 헤더 확인 과정에서 *FORM_ERROR, UNIMPLEMENTED_ERROR, LENGTH_REQUIRED_ERROR*가 발생할 수 있습니다.
@@ -135,6 +131,12 @@ void	HttpRequest::parseHeader(std::string line) {
 	/* header 추가 */
 	/* 이전 헤더에 연결되는 값 */
 	if (line[0] == ' ' || line[0] == '\t') {
+		trimComment(line);
+		lowerString(line);
+		if (last_header_ == "") {
+			request_error_ = FORM_ERROR;
+			return ;
+		}
 		header_[last_header_] += line;
 		return ;
 	}
@@ -146,24 +148,29 @@ void	HttpRequest::parseHeader(std::string line) {
 	}
 	key = line.substr(0, split_idx);
 	value = line.substr(split_idx + 1);
-	last_header_ = key;
-	trimComment(value);
-	if (header_.find(key) != header_.end()) {
-		if (key == "content-length" || key == "content-type") {
-			request_error_ = FORM_ERROR;
-			return ;
-		}
-		if (header_[key] != value) // TODO: split 해서 비교해야 함
-			header_[key] += ", " + value; // key값이 이미 존재할 때 뒤에 리스트 형태로 더해줘야 한다.
+	if (key == "") {
+		request_error_ = FORM_ERROR;
+    return ;
 	}
-	else
-		header_.insert(std::pair<std::string, std::string>(lowerString(key), lowerString(value)));
+	lowerString(key);
+	lowerString(value);
+	trimSidesSpace(value);
+	last_header_ = key;
+	if (header_.find(key) == header_.end())
+		header_[key] = value;
+	else if (get_multiple_header().find(key) != get_multiple_header().end() && !get_multiple_header().at(key))
+		header_[key] = value;
+	else {
+		std::vector<std::string> list = split(header_[key], ", ");
+		if (std::find(list.begin(), list.end(), value) == list.end())
+			header_[key] += ", " + value;
+	}
 }
 
 /**
  * @brief content-type, transfer-encoding, content-length 확인하여 변수에 저장하는 함수입니다.
  * 
- * @note transfer-encoding이 chunked가 아닐 때 *UNIMPLEMENTED_ERROR*가 발생합니다.
+ * @note transfer-encoding에 chunked만 있지 않을 때 *UNIMPLEMENTED_ERROR*가 발생합니다.
  * @note content-length가 올바른 숫자가 아니거나 0보다 작을 때 *FORM_ERROR*가 발생합니다.
  * @note transfer-encoding과 content-length 둘 다 존재하지 않으면 *LENGTH_REQUIRED_ERROR*가 발생합니다.
  */
@@ -178,10 +185,11 @@ void	HttpRequest::checkHeader(void) {
 	
 	/* transfer-encoding */
 	if (header_.find(std::string("transfer-encoding")) != header_.end()) {
-		if (header_["transfer-encoding"] == "chunked") //split해서 해결
-			is_chunked_ = true;
-		else
+		std::vector<std::string> list = split(header_["transfer-encoding"], ", ");
+		if (list.size() != 1 || list[0] != "chunked")
 			request_error_ = UNIMPLEMENTED_ERROR;
+		else
+			is_chunked_ = true;
 		return ;
 	}
 
@@ -196,7 +204,7 @@ void	HttpRequest::checkHeader(void) {
 			return ;
 		}
 		content_length_ = length;
-	} else {
+	} else if (method_ == POST || method_ == PUT) {
 		request_error_ = LENGTH_REQUIRED_ERROR;
 	}
 }
@@ -244,8 +252,14 @@ std::string	HttpRequest::getTarget(std::string& line) {
 	return target;
 }
 
-std::map<std::string, bool> get_multiple_header() {
-	std::map<std::string, bool> map;
+/**
+ * @brief rfc 2616에 존재하는 모든 헤더에 대하여 multiple value를 가지는 지 여부를 나타내는 map을 반환하는 함수
+ * 
+ * @note HttpRequest 클래스의 static 함수입니다.
+ * @return const std::map<std::string, bool> 
+ */
+const std::map<std::string, bool> HttpRequest::get_multiple_header() {
+	static std::map<std::string, bool> map;
 
 	map["accept"] = true;
 	map["accept-charset"] = true;

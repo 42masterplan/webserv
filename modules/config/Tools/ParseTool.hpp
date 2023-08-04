@@ -108,7 +108,9 @@ void	parseUntilEnd(std::ifstream& input, int& line_len_, T& block){
 /* HttpParser utils */
 size_t				findCRLF(const std::vector<char>& raw_data);
 bool					hasCRLF(const std::vector<char>& raw_data);
-std::string		lowerString(std::string& str);
-bool					insensitiveCompare(std::string& str1, std::string& str2);
+void					lowerString(std::string& str);
+bool					insensitiveCompare(std::string str1, std::string str2);
+std::vector<std::string>	split(std::string input, std::string delimiter);
+
 
 #endif

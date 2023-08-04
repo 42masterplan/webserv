@@ -17,7 +17,7 @@
  * ---- parse 함수 끝 ----
  * 마지막 HttpRequest가 FINISH이고 오류가 없으며, raw_data가 비어있지 않을 시 다음 HttpRequest 파싱을 진행합니다.
  * ---- 전체 파싱 끝 ----
- * getParseError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
+ * getRequestError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
  * status가 FINISH인 HttpRequest에 대해 HttpResponse를 생성한 뒤 해당 HttpRequest를 vector에서 pop합니다.
  * 
  * !! chunked encoding의 경우, BODY를 받은 이후 HEADER가 들어올 수 있습니다(Trailer).
@@ -40,7 +40,7 @@ const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
 const std::string&				HttpRequest::getHost(void) const { return host_; }
 const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
-const e_requestError&			HttpRequest::getParseError(void) const { return request_error_; }
+const e_requestError&			HttpRequest::getRequestError(void) const { return request_error_; }
 
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {

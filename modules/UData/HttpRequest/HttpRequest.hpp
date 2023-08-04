@@ -38,7 +38,7 @@ class HttpRequest{
 		const std::string&				getContentType(void) const;
 		const std::string&				getHost(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
-		const e_requestError&			getParseError(void) const;
+		const e_requestError&			getRequestError(void) const;
 
 		/* methods */
 		void		clear();

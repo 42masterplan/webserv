@@ -171,14 +171,14 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			HttpRequest request_parser;
 			cur_udata->http_request_.push_back(request_parser);
 		}
-		// if (cur_udata->http_request_.back().getParseError()){
-		// 	//Error Handle
-		// 	return ;
-		// }
-		// else if (cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size()){
-		// 	HttpRequest request_parser;
-		// 	cur_udata->http_request_.push_back(request_parser);
-		// }
+		if (cur_udata->http_request_.back().getRequestError()){
+			//Error Handle
+			return ;
+		}
+		else if (cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size()){
+			HttpRequest request_parser;
+			cur_udata->http_request_.push_back(request_parser);
+		}
 		cur_udata->http_request_.back().parse(raw_data_ref);
 		if (raw_data_ref.size() == 0){
 			cur_udata->http_response_.reserve(cur_udata->http_request_.size());

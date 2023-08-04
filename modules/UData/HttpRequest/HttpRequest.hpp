@@ -66,11 +66,13 @@ class HttpRequest{
 		void						parseFirstLine(std::string line);
 		void						parseHeader(std::string line);
 		void						checkHeader(void);
+		bool						parseBody(std::vector<char>& raw_data);
 
 		/* parsing utils */
 		std::string			getLine(std::vector<char>& raw_data);
 		std::string			getTarget(std::string& line);
 		static const std::map<std::string, bool>	get_multiple_header();
+		int							hexToDec(const std::string& base_num); 
 };
 
 #endif

@@ -1,7 +1,7 @@
-#include "HttpRequest2.hpp"
+#include "HttpRequest.hpp"
 
 int main(){
-	HttpRequest2 h2;
+	HttpRequest h2;
 	std::vector<std::string> svec;
 	std::string a1= "GET / HTTP/1.1\r\nHost: localhost:80\r\nUser-Agent: Go-http-client/1.1\r\nAccept-Encoding: gzip\r\n";
 	svec.push_back(a1);

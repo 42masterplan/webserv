@@ -131,7 +131,7 @@ void	HttpRequest::parseHeader(std::string line) {
 	/* header 추가 */
 	/* 이전 헤더에 연결되는 값 */
 	if (line[0] == ' ' || line[0] == '\t') {
-		trimComment(line);
+		trimSidesSpace(line);
 		lowerString(line);
 		if (last_header_ == "") {
 			request_error_ = FORM_ERROR;
@@ -259,7 +259,7 @@ std::string	HttpRequest::getTarget(std::string& line) {
  * @return const std::map<std::string, bool> 
  */
 const std::map<std::string, bool> HttpRequest::get_multiple_header() {
-	static std::map<std::string, bool> map;
+	std::map<std::string, bool> map;
 
 	map["accept"] = true;
 	map["accept-charset"] = true;

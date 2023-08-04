@@ -193,9 +193,11 @@ int stringToInt(const std::string &num){
  * @warning CRLF가 존재하지 않을 때 vector<char>의 size를 반환합니다.
  */
 size_t findCRLF(const std::vector<char>& raw_data) {
-	for (size_t i = 0; i < raw_data.size() - 1; i++) {
-		if (raw_data[i] == '\r' && raw_data[i + 1] == '\n')
-			return i;
+	if (raw_data.size() != 0) {
+		for (size_t i = 0; i < raw_data.size() - 1; i++) {
+			if (raw_data[i] == '\r' && raw_data[i + 1] == '\n')
+				return i;
+		}
 	}
 	return raw_data.size();
 }
@@ -217,16 +219,14 @@ bool hasCRLF(const std::vector<char>& raw_data) {
 }
 
 /**
- * @brief 인자로 들어온 string을 모두 lower-case로 만들어주는 함수입니다.
+ * @brief 인자로 들어온 string reference를 lower-case로 만들어주는 함수입니다. 
  * 
- * @return std::string 
+ * @return void
+ * @note 인자에 들어온 string이 변합니다.
  */
-std::string	lowerString(std::string& str) {
-	std::string	lowerStr = "";
-
+void	lowerString(std::string& str) {
 	for (size_t i = 0; i < str.length(); i++)
-		lowerStr.push_back(tolower(str[i]));
-	return lowerStr;
+		str[i] = tolower(str[i]);
 }
 
 /**
@@ -234,7 +234,32 @@ std::string	lowerString(std::string& str) {
  * 
  * @return true 
  * @return false 
+ * @note 인자로 들어온 string은 변하지 않습니다.
  */
-bool	insensitiveCompare(std::string& str1, std::string& str2) {
-	return lowerString(str1) == lowerString(str2);
+bool	insensitiveCompare(std::string str1, std::string str2) {
+	lowerString(str1);
+	lowerString(str2);
+	return str1 == str2;
+}
+
+/**
+ * @brief string을 delimeter 그 자체를 기준으로 split해서 vector<string>에 담아주는 함수
+ * 
+ * @param input 
+ * @param delimiter ", " 이 들어올 시 ',' ' ' 기준으로 split하는 것이 아닌 ", " 자체를 기준으로 split합니다!
+ * @return std::vector<std::string> 
+ */
+std::vector<std::string>	split(std::string input, std::string delimiter) {
+  std::vector<std::string> result;
+  std::string token;
+	size_t			pos = 0;
+ 
+  while ((pos = input.find(delimiter)) != std::string::npos) {
+    token = input.substr(0, pos);
+		result.push_back(token);
+    input.erase(0, pos + delimiter.length());
+	}
+	if (input.length())
+		result.push_back(input);
+  return result;
 }

@@ -58,7 +58,7 @@ class HttpRequest2{
 		/* parsing functions */
 		void					parseFirstLine(std::string line);
 		void					parseHeader(std::string line);
-		void					parseBody(std::vector<char>& raw_data);
+		bool					parseBody(std::vector<char>& raw_data);
 		bool					checkHeader(void);
 
 		/* parsing utils */

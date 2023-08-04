@@ -32,12 +32,14 @@ void HttpRequest2::parse(std::vector<char>& raw_data) {
 			case FINISH:
 				return ;
 			case BODY:
+				if (!parseBody(raw_data))
+					return ;
+				parse_status_ = FINISH;
 				/**
 				 * body parsing 진행: 리턴 값은 완료 시 true, 아직 끝나지 않았을 때 false
-				 * true일 때 status를 FIN으로 바꿔준다.
+				 * true일 때 status를 FINISH으로 바꿔준다.
 				 * false일 때 함수를 종료한다.
 				 */
-				parseBody(raw_data);
 				break;
 			case HEADER:
 				if (!hasCRLF(raw_data)) return ;
@@ -126,11 +128,11 @@ void	HttpRequest2::parseHeader(std::string line) {
 	header_.insert(std::pair<std::string, std::string>(lowerString(key), value));
 }
 
-void	HttpRequest2::checkHeader(void) {
-	// if (header_.find(std::string("transfer-encoding")) != header_.end()) {
-	// 	if (header_["transfer-encoding"] == "")
-	// }
-}
+// void	HttpRequest2::checkHeader(void) {
+// 	// if (header_.find(std::string("transfer-encoding")) != header_.end()) {
+// 	// 	if (header_["transfer-encoding"] == "")
+// 	// }
+// }
 
 /**
  * @brief findCRLF()를 사용하여 CRLF을 기준으로 문자열을 반환한 뒤, raw_data에서 해당 부분을 삭제합니다.

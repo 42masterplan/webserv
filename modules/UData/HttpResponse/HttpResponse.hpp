@@ -1,10 +1,11 @@
 #ifndef HTTPRESPONSE_HPP
 # define HTTPRESPONSE_HPP
-# include "../../config/LocationBlock/LocBlock.hpp"
 # include <iostream>
 # include <string>
 # include <vector>
 # include <map>
+# include "../../config/LocationBlock/LocBlock.hpp"
+# include "../UData.hpp"
 
 class HttpResponse{
 
@@ -13,9 +14,9 @@ class HttpResponse{
 		
 		/* constructor */
 		HttpResponse();
+		void		makeResponse(HttpRequest &request);
 
 		/* methods */
-
 		void 		initStatusStore(void);
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
 		void 		processRedirectRes(HttpResponse &res, int status_code);

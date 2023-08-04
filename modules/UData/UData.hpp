@@ -6,6 +6,7 @@
 # include "./HttpRequest/HttpRequest.hpp"
 # include "./HttpResponse/HttpResponse.hpp"
 
+class HttpResponse;
 //OK가 HttpRequest file과 겹침
 // typedef enum errorType{
 // 	OK = 0

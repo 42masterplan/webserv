@@ -16,6 +16,7 @@
  */
 class LocBlock : public IBlock, public HttpBase{
 public:
+	LocBlock();
 	LocBlock(std::string loc_info);
 	virtual ~LocBlock();
 	// LocBlock& operator=(const LocBlock& obj );
@@ -49,7 +50,6 @@ public:
 	void	makeBlock(std::string line, std::ifstream& input, int& line_len_);
 	std::map<std::string, std::string>& getDirStore();
 private:
-	LocBlock();
 	void	parseLocDirective();
 	void	parseReturn(std::string ret_line);
 

@@ -102,8 +102,10 @@ void  ServManager::handleEvents(){
 			cur_udata = (UData*)cur_event->udata;
 			cur_fd_type = cur_udata->fd_type_;
 		}
-		if (cur_event->udata == NULL)
+		if (std::find(serv_sock_fds_.begin(), serv_sock_fds_.end(),cur_event->ident) != serv_sock_fds_.end())
 			registerNewClnt(cur_event->ident);
+		else if (cur_event->udata == NULL)
+			continue;
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_READ)
 			sockReadable(cur_event);
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_WRITE)
@@ -139,8 +141,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	option = 1;
 	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
 	UData*	udata_ptr = new UData(CLNT);
-	Kqueue::changeEvent(clnt_sockfd, EVFILT_READ, EV_ADD | EV_ENABLE, udata_ptr);
-	// Kqueue::changeEvent(clnt_sockfd, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata_ptr);
+	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
 
 /**
@@ -150,34 +151,35 @@ void  ServManager::registerNewClnt(int serv_sockfd){
  */
 void  ServManager::sockReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
+	if (cur_udata == NULL){
+		std::cout << cur_event->ident << "is already disconnected!(read)"<< std::endl;
+		return ;
+	}
 	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
-	if (rlen == -1)
-		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
-	else if (rlen == 0){
+	if (rlen == -1){
+		std::cerr << "already disconnected!"<< std::endl;
+		// throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
+	} else if (rlen == 0){
 		std::cout << "clnt sent eof. disconnecting.\n";
 		disconnectFd(cur_event);
 	}
 	else{
 		buff_[rlen] = '\0';
-		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
-    std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
-    if (!raw_data_string.compare("CGI"))
-      forkCgi();
-		//TODO: 이곳에 HTTP parse함수가 호출
-		//TODO: parse함수가 끝났는지 아닌지를 알 수 있어야 한다.
-		//parse함수가 끝났다는 건 HTTP response Class까지 완성된 상태이다.
-		//---------------test-------------
-		std::cout << "FROM CLIENT NUM " << cur_event->ident <<std::endl << raw_data_string << std::endl;
-		for (size_t i = 0; i < raw_data_ref.size(); i++){
-			std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
+		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
+		if (cur_udata->http_request_.size() == 0){
+			HttpRequest request_parser;
+			cur_udata->http_request_.push_back(request_parser);
 		}
-		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
-		std::vector<char> tmp1(tmp.begin(),tmp.end());
-		cur_udata->ret_store_ = tmp1;
-		Kqueue::changeEvent(cur_event->ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, cur_event->udata);//TODO : ReadEvent unregister 필요
-		//---------------test-------------
+		cur_udata->http_request_[cur_udata->http_request_.size() - 1].parse(raw_data_ref);
+		if (raw_data_ref.size() == 0){
+			cur_udata->http_response_.reserve(cur_udata->http_request_.size());
+			for(size_t i = 0; i < cur_udata->http_request_.size(); i++){
+				cur_udata->http_response_[i].makeResponse(cur_udata->http_request_[i]);
+			}
+			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
+			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
+		}
 	}
 }
 
@@ -187,16 +189,26 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  */
 void  ServManager::sockWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
+		if (cur_udata == NULL){
+			std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
+		return ;
+	}
 	std::vector<char>&	ret_store_ref = cur_udata->ret_store_;
 	if (!ret_store_ref.size())
     return ;
   int n = write(cur_event->ident, &ret_store_ref[0], ret_store_ref.size());
   if (n == -1){
-    std::cerr << "client write error!" << "\n";
+    std::cerr << "client write error!" << std::endl;
     disconnectFd(cur_event);
 	}
-	else
+	else{
 		ret_store_ref.erase(ret_store_ref.begin(), ret_store_ref.begin() + n);
+		if (ret_store_ref.size() == 0){
+			std::cout << "HI!!" << std::endl;
+			Kqueue::registerReadEvent(cur_event->ident, cur_udata);
+			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+		}
+	}
 }
 
 /**
@@ -213,7 +225,8 @@ void  ServManager::cgiReadable(struct kevent *cur_event){
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
 		std::cout << "CGI process sent eof, closing fd.\n";
-		disconnectFd(cur_event);
+		if (cur_event->udata != NULL)
+			disconnectFd(cur_event);
 	}
 	else{
 		buff_[rlen] = '\0';
@@ -254,55 +267,10 @@ void  ServManager::cgiWritable(struct kevent *cur_event){
 void  ServManager::disconnectFd(struct kevent *cur_event){
 	UData*	udata = (UData*)cur_event->udata;
   if (udata->fd_type_ == CLNT)
-	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << "\n";
+	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
   else if (udata->fd_type_ == CGI)
-	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << "\n";
-	delete udata;
+	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
 	close(cur_event->ident);
-}
-
-/**
- * @brief 새로운 CGI 프로세스를 생성하는 함수입니다.
- * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
- * 자식 프로세스는 주어진 CGI 스크립트를 실행합니다.
- * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
- * @todo 자식 프로세스에 대한 WRITE 이벤트를 등록해야하나?
- */
-void  ServManager::forkCgi(){
-  int   pfd[2];
-  pid_t child_pid;
-
-  if (pipe(pfd) == -1)
-    throw (std::runtime_error("pipe() Error"));
-  int flags = fcntl(pfd[0], F_GETFL, 0);
-  fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
-  UData*  ptr = new UData(CGI);
-  ptr->prog_name_ = "CGI.py";
-  Kqueue::changeEvent(pfd[0], EVFILT_READ, EV_ADD | EV_ENABLE, ptr);
-  Kqueue::changeEvent(pfd[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, ptr);
-
-  child_pid = fork();
-  if (child_pid == -1){
-    close(pfd[1]);
-    close(pfd[0]);
-    throw (std::runtime_error("fork() Error"));
-  }
-  else if (!child_pid){ //child
-    close(pfd[0]);
-    dup2(pfd[1], STDOUT_FILENO);
-    int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
-    fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
-    char* script_name = new char[ptr->prog_name_.size() + 1];
-    std::strcpy(script_name, ptr->prog_name_.c_str());
-    script_name[ptr->prog_name_.size()] = '\0';
-    char* exec_file[3];
-    exec_file[0] = (char*)"/usr/local/bin/python3";
-    exec_file[1] = script_name;
-    exec_file[2] = NULL;
-    if (execve(exec_file[0], exec_file, NULL) == -1)//envp needed
-      throw (std::runtime_error("execve() Error"));
-  }
-  else //parent
-    close(pfd[1]);
-  ptr->cgi_pid_ = child_pid;
+	delete udata;
+	cur_event->udata = NULL;
 }

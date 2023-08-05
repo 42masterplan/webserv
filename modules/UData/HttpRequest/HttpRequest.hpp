@@ -43,7 +43,7 @@ class HttpRequest{
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);
-
+		void		printBodyInfo();//for test
 	private :
 		e_method				method_;
 		std::string			path_;
@@ -61,7 +61,7 @@ class HttpRequest{
 		e_parseStatus		parse_status_;
 		e_requestError	request_error_;
 		std::string			last_header_;
-		
+
 		/* parsing functions */
 		void						parseFirstLine(std::string line);
 		void						parseHeader(std::string line);
@@ -72,7 +72,7 @@ class HttpRequest{
 		std::string			getLine(std::vector<char>& raw_data);
 		std::string			getTarget(std::string& line);
 		static const std::map<std::string, bool>	get_multiple_header();
-		int							hexToDec(const std::string& base_num); 
+		int							hexToDec(const std::string& base_num);
 };
 
 #endif

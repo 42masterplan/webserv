@@ -19,16 +19,23 @@
  * ---- 전체 파싱 끝 ----
  * getRequestError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
  * status가 FINISH인 HttpRequest에 대해 HttpResponse를 생성한 뒤 해당 HttpRequest를 vector에서 pop합니다.
- * 
+ *
  * !! chunked encoding의 경우, BODY를 받은 이후 HEADER가 들어올 수 있습니다(Trailer).
  * !! Trailer에는 Transfer-Encoding, Content-Length, Trailer가 포함되어서는 안됩니다.
- * 
+ *
  * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
-
+/*Test용 함수*/
+void	print_vec(std::vector<char>& t){
+	std::cout << "------------printvec----------" << std::endl;
+	for (size_t i = 0; i < t.size(); i++){
+		std::cout << t[i];
+	}
+	std::cout << std::endl;
+}
 // TODO: port 설정 어디에서 할 지 결정
-HttpRequest::HttpRequest(): parse_status_(FIRST), request_error_(OK) { }
+HttpRequest::HttpRequest(): content_length_(-1), parse_status_(FIRST), request_error_(OK){}
 
 const e_method&						HttpRequest::getMethod(void) const { return method_; }
 const std::string&				HttpRequest::getPath(void) const { return path_; }
@@ -45,15 +52,19 @@ const e_requestError&			HttpRequest::getRequestError(void) const { return reques
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
 		if (request_error_) {
+			std::cout << "Error"<<std::endl;
 			parse_status_ = FINISH;
 			return ;
 		}
 		switch (parse_status_) {
-			case FINISH:
+
+			case FINISH://만약 같은 클라이언트가 정상 종료 후 다시 요청을 보내면?
+				//정상 종료인데 계속 FINISH상태이면 곤란해서 다시 FIRST로 바꿔줬습니당
+				parse_status_ = FIRST;
 				return ;
 			case BODY:
 				if (!parseBody(raw_data))
-					return ;
+					return;
 				parse_status_ = FINISH;
 				break;
 			case HEADER:
@@ -68,9 +79,16 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 	}
 }
 
+//for test
+void	HttpRequest::printBodyInfo(){
+	for (size_t i = 0; i < body_.size(); i++){
+		std::cout<<body_[i];
+	}
+	std::cout << std::endl;
+}
 /**
  * @brief HTTP 메세지의 첫 번째 라인을 해석하는 함수입니다.
- * 
+ *
  * @param line string reference로, 함수 내부에서 변경됩니다.
  * @note *FORM_ERROR, METHOD_ERROR, VERSION_ERROR* 가 발생할 수 있습니다.
  * @note 정상 실행 후 parse_status_가 HEADER로 변경됩니다.
@@ -106,7 +124,7 @@ void	HttpRequest::parseFirstLine(std::string line) {
 
 /**
  * @brief HTTP 메세지의 Header 한 줄을 해석하여 key, value를 lower-case로 저장하는 함수입니다.
- * 
+ *
  * @param line
  * @note 파싱할 때 *FORM_ERROR* 가 발생할 수 있습니다.
  * @note 빈 문자열이 들어올 시 parse_status_를 BODY로 변경 및 필요한 헤더 존재여부 확인 후 종료합니다.
@@ -115,14 +133,13 @@ void	HttpRequest::parseFirstLine(std::string line) {
 void	HttpRequest::parseHeader(std::string line) {
 	std::string	key, value;
 	size_t			split_idx;
-
 	/* header 끝 */
 	if (line == "") {
 		checkHeader();
-		if (request_error_)
-			parse_status_ = FINISH;
-		else
+		if (is_chunked_ || content_length_ != -1)
 			parse_status_ = BODY;
+		else
+			parse_status_ = FINISH;
 		return ;
 	}
 
@@ -167,7 +184,7 @@ void	HttpRequest::parseHeader(std::string line) {
 
 /**
  * @brief content-type, transfer-encoding, content-length 확인하여 변수에 저장하는 함수입니다.
- * 
+ *
  * @note transfer-encoding에 chunked만 있지 않을 때 *UNIMPLEMENTED_ERROR*가 발생합니다.
  * @note content-length가 올바른 숫자가 아니거나 0보다 작을 때 *FORM_ERROR*가 발생합니다.
  * @note transfer-encoding과 content-length 둘 다 존재하지 않으면 *LENGTH_REQUIRED_ERROR*가 발생합니다.
@@ -180,7 +197,7 @@ void	HttpRequest::checkHeader(void) {
 	/* content-type */
 	if (header_.find(std::string("content-type")) != header_.end())
 		content_type_ = header_["content-type"];
-	
+
 	/* transfer-encoding */
 	if (header_.find(std::string("transfer-encoding")) != header_.end()) {
 		std::vector<std::string> list = split(header_["transfer-encoding"], ", ");
@@ -213,7 +230,8 @@ void	HttpRequest::checkHeader(void) {
  * raw_data는 content_length만큼 받지 않았으면 raw_data를 비우지 않고 false를 반환한다.
  * [chunked인 경우]
  * 1.CRLF를 찾아서 raw_data를 읽은 만큼 비워줍니다.
- * 2.
+ * 2.이후 16진수를 해석해서 그만큼 또 raw data를 비워줍니다.
+ * 3. 0이 나올 때까지 반복합니다.
  * @param raw_data 들어온 데이터를 저장하는 저장소
  * @return true 파싱이 끝남
  * @return false 파싱이 안 끝남
@@ -226,27 +244,31 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 		if (!read_state){
 			std::string ret = getLine(raw_data);
 			to_read = hexToDec(ret);
-			if (to_read < 0){
-				if (to_read == -1 || getLine(raw_data) != "")
+			if (to_read == -1){
 					request_error_ = FORM_ERROR;
-				return true;
+					return true;
 			}
 			read_state = true;
 		}
-		else if (raw_data.size() >= (size_t)to_read){
+		if (to_read == 0 && raw_data.size() >= 2){
 			read_state = false;
-			to_read = 0;
+			getLine(raw_data);
+			return true;
+		}
+		else if (to_read != 0 && raw_data.size() >= (size_t)to_read + 2){//CRLF가 있다는 보장해주기 위해서 + 2
+			read_state = false;
 			std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
 			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
-			if (getLine(raw_data) != ""){
-				request_error_ = FORM_ERROR;
+			//CRLF까지 삭제
+			to_read = 0;
+			getLine(raw_data);
+			if (request_error_)
 				return true;
-			}
 		}
-	}
-	else if ((size_t)content_length_ >= raw_data.size()){
+	} else if ((size_t)content_length_ >= raw_data.size() + 2){
 		std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
 		raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
+		getLine(raw_data);
 		return true;
 	}
 	return false;
@@ -255,7 +277,7 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 
 /**
  * @brief findCRLF()를 사용하여 CRLF을 기준으로 문자열을 반환한 뒤, raw_data에서 해당 부분을 삭제합니다.
- * 
+ *
  * @attention *raw_data에 CRLF가 존재할 때에만* 이 함수를 사용해야 합니다. 함수 실행 이전에 hasCRLF()로 확인을 요합니다.
  * @param raw_data vector<char> reference로, 함수 내부에서 변경됩니다.
  * @return std::string
@@ -277,7 +299,7 @@ std::string HttpRequest::getLine(std::vector<char>& raw_data) {
 
 /**
  * @brief line에서 공백을 기준으로 string을 분리한 뒤, 분리한 부분은 기존 line에서 삭제합니다.
- * 
+ *
  * @param line string reference로, 함수 내부에서 변경됩니다.
  * @return std::string 공백이 존재하지 않을 시 빈 문자열을 반환합니다.
  * @note *FORM_ERROR* 가 발생할 수 있습니다.
@@ -298,9 +320,9 @@ std::string	HttpRequest::getTarget(std::string& line) {
 
 /**
  * @brief rfc 2616에 존재하는 모든 헤더에 대하여 multiple value를 가지는 지 여부를 나타내는 map을 반환하는 함수
- * 
+ *
  * @note HttpRequest 클래스의 static 함수입니다.
- * @return const std::map<std::string, bool> 
+ * @return const std::map<std::string, bool>
  */
 const std::map<std::string, bool> HttpRequest::get_multiple_header() {
 	std::map<std::string, bool> map;
@@ -358,7 +380,7 @@ const std::map<std::string, bool> HttpRequest::get_multiple_header() {
 
 /**
  * @brief 16진수 string을 int로 변환하는 함수입니다.
- * 
+ *
  * @param base_num 16진수 숫자 string입니다.
  * @return int 변경완료한 함수
  * @warning

@@ -15,14 +15,10 @@ char**  Cgi::getEnvs(HttpRequest& req){
   char**  envp = new char* [header.size() + 3];
   envp[header.size() + 2] = NULL;
 
-  if (req.getMethod() == GET){
-    envp[0] = new char[11];
-    std::strcpy(envp[0], "METHOD=GET");
-  }
-  else if (req.getMethod() == POST){
-    envp[0] = new char[12];
-    std::strcpy(envp[0], "METHOD=POST");
-  }
+  if (req.getMethod() == GET)
+    envp[0] = "METHOD=GET";
+  else if (req.getMethod() == POST)
+    envp[0] = "METHOD=POST";
   std::string header_buff = "";
   std::map<std::string, std::string>::const_iterator it;
   int i = 1;
@@ -55,9 +51,14 @@ void  Cgi::forkCgi(HttpRequest& req){
   int flags = fcntl(pfd[0], F_GETFL, 0);
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
   UData*  ptr = new UData(CGI);
-  ptr->prog_name_ = "CGI.py";
+  //약식으로 CGI타입을 판별했습니다.
+  if (req.getPath().find(".php"))
+    ptr->prog_name_ = "./srcs/CGI_1.php";
+  else if (req.getPath().find(".py"))
+    ptr->prog_name_ = "./srcs/CGI_2.py";
+  else
+    throw std::runtime_error("invalid CGI path");
   Kqueue::registerReadEvent(pfd[0], ptr);
-  Kqueue::registerWriteEvent(pfd[1], ptr);
   child_pid = fork();
   if (child_pid == -1){
     close(pfd[1]);
@@ -73,13 +74,17 @@ void  Cgi::forkCgi(HttpRequest& req){
     std::strcpy(script_name, ptr->prog_name_.c_str());
     script_name[ptr->prog_name_.size()] = '\0';
     char* exec_file[3];
-    exec_file[0] = (char*)"/usr/local/bin/python3";
+    exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;
     exec_file[2] = NULL;
-    if (execve(exec_file[0], exec_file, getEnvs(req)) == -1)//envp needed
+    char** envp = getEnvs(req);
+    if (execve(exec_file[0], exec_file, envp) == -1){//envp needed
+      delete [] envp;
       throw (std::runtime_error("execve() Error"));
+    }
   }
-  else //parent
-    close(pfd[1]);
+  //parent
+  close(pfd[1]);
+  Kqueue::registerExitEvent(child_pid, ptr); 
   ptr->cgi_pid_ = child_pid;
 }

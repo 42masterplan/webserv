@@ -29,10 +29,15 @@
 /*Test용 함수*/
 void	print_vec(std::vector<char>& t){
 	std::cout << "------------printvec----------" << std::endl;
+	std::cout << "vector size:" << t.size() << std::endl;
+	for (size_t i = 0; i < t.size(); i++){
+		std::cout << "(" << (int)t[i] <<")";
+	}
+	std::cout << std::endl;
 	for (size_t i = 0; i < t.size(); i++){
 		std::cout << t[i];
 	}
-	std::cout << std::endl;
+	std::cout << "-------------------------------" <<std::endl;
 }
 // TODO: port 설정 어디에서 할 지 결정
 HttpRequest::HttpRequest(): content_length_(-1), parse_status_(FIRST), request_error_(OK){}
@@ -52,7 +57,7 @@ const e_requestError&			HttpRequest::getRequestError(void) const { return reques
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
 		if (request_error_) {
-			std::cout << "Error"<<std::endl;
+			// std::cout << "Error"<<std::endl;
 			parse_status_ = FINISH;
 			return ;
 		}
@@ -60,18 +65,21 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 
 			case FINISH://만약 같은 클라이언트가 정상 종료 후 다시 요청을 보내면?
 				//정상 종료인데 계속 FINISH상태이면 곤란해서 다시 FIRST로 바꿔줬습니당
+				// std::cout << "FiN"<<std::endl;
 				parse_status_ = FIRST;
 				return ;
 			case BODY:
-				if (!parseBody(raw_data))
+				// std::cout << "body"<<std::endl;
+				if (parseBody(raw_data))
 					return;
-				parse_status_ = FINISH;
 				break;
 			case HEADER:
+				// std::cout << "HEAD"<<std::endl;
 				if (!hasCRLF(raw_data)) return ;
 				parseHeader(getLine(raw_data));
 				break;
 			case FIRST:
+				// std::cout << "First"<<std::endl;
 				if (!hasCRLF(raw_data)) return ;
 				parseFirstLine(getLine(raw_data));
 				break;
@@ -99,6 +107,9 @@ void	HttpRequest::parseFirstLine(std::string line) {
 	std::string	target;
 	int					method;
 
+	//이전 헤더 비워줘야 다음 정상 요청일 때 날라가서 header비워줬습니다.
+	header_.clear();
+	body_.clear();
 	/* method 분리 */
 	target = getTarget(line);
 	if (request_error_) return ;
@@ -251,25 +262,31 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			read_state = true;
 		}
 		if (to_read == 0 && raw_data.size() >= 2){
+			// std::cout << "end"<<std::endl;
 			read_state = false;
 			getLine(raw_data);
-			return true;
+				//정상 요청이후 새로운 파싱할 때 이전에 저장해둔 값을 지워야만 합니다.
+			is_chunked_ = false;
+			content_length_ = -1;
+			parse_status_ = FINISH;
 		}
-		else if (to_read != 0 && raw_data.size() >= (size_t)to_read + 2){//CRLF가 있다는 보장해주기 위해서 + 2
+		if (raw_data.size() >= (size_t)to_read + 2){//CRLF가 있다는 보장해주기 위해서 + 2
 			read_state = false;
 			std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
 			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
 			//CRLF까지 삭제
 			to_read = 0;
 			getLine(raw_data);
-			if (request_error_)
+			if (request_error_  || raw_data.size() == 0)
 				return true;
 		}
-	} else if ((size_t)content_length_ >= raw_data.size() + 2){
-		std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
-		raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
+	} else if ((size_t)content_length_ + 2 >= raw_data.size()){
+		std::copy(raw_data.begin(), raw_data.begin() + content_length_,  std::back_inserter(body_));
+		raw_data.erase(raw_data.begin(),raw_data.begin() + content_length_);
 		getLine(raw_data);
-		return true;
+		parse_status_ = FINISH;
+		if (raw_data.size() == 0)
+			return true;
 	}
 	return false;
 }

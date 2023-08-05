@@ -180,6 +180,7 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			cur_udata->http_request_.push_back(request_parser);
 		}
 		cur_udata->http_request_.back().parse(raw_data_ref);
+		cur_udata->http_request_.back().printBodyInfo();
 		if (raw_data_ref.size() == 0){
 			cur_udata->http_response_.reserve(cur_udata->http_request_.size());
 			for(size_t i = 0; i < cur_udata->http_request_.size(); i++){

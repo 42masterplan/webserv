@@ -52,10 +52,15 @@ void  Cgi::forkCgi(HttpRequest& req){
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
   UData*  ptr = new UData(CGI);
   //약식으로 CGI타입을 판별했습니다.
-  if (req.getPath().find(".php"))
-    ptr->prog_name_ = "./srcs/CGI_1.php";
-  else if (req.getPath().find(".py"))
-    ptr->prog_name_ = "./srcs/CGI_2.py";
+  char* script_name;
+  if (req.getPath().find(".php")){
+    ptr->prog_name_ = "php";
+    script_name = "./srcs/CGI_1.php";
+  }
+  else if (req.getPath().find(".py")){
+    ptr->prog_name_ = "python3";
+    script_name = "./srcs/CGI_2.py";
+  }
   else
     throw std::runtime_error("invalid CGI path");
   Kqueue::registerReadEvent(pfd[0], ptr);
@@ -70,9 +75,6 @@ void  Cgi::forkCgi(HttpRequest& req){
     dup2(pfd[1], STDOUT_FILENO);
     int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
     fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
-    char* script_name = new char[ptr->prog_name_.size() + 1];
-    std::strcpy(script_name, ptr->prog_name_.c_str());
-    script_name[ptr->prog_name_.size()] = '\0';
     char* exec_file[3];
     exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;

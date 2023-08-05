@@ -89,7 +89,6 @@ void  ServManager::sockListen(){
 /**
  * @brief 코어함수로, kqueue에서 받아온 이벤트들을 하나씩 처리합니다.
  * @exception read, write이외의 이벤트가 발생했을 시 runtime_error를 throw합니다.
- * @todo CGI분기문을 추가해야 합니다.
  */
 void  ServManager::handleEvents(){
 	struct kevent*	cur_event;
@@ -112,8 +111,8 @@ void  ServManager::handleEvents(){
 			sockWritable(cur_event);
 		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_READ)
 			cgiReadable(cur_event);
-		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_WRITE)
-			cgiWritable(cur_event);
+    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
+      cgiTerminated(cur_udata);
 		else{
 			std:: cout << "????????" << cur_fd_type << "\n";
 			throw(std::runtime_error("THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
@@ -238,26 +237,19 @@ void  ServManager::cgiReadable(struct kevent *cur_event){
 }
 
 /**
- * @brief cgi 파이프가 writable할 때 호출되는 함수입니다.
- * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
+ * @brief CGI 프로세스를 회수하는 함수입니다.
+ * @param udata pid가 담긴 udata입니다.
+ * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
  */
-void  ServManager::cgiWritable(struct kevent *cur_event){
-	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
-	if (!raw_data_ref.size())
-    return ;
-  char* buff = new char[raw_data_ref.size()];
-  std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
-  int n = write(cur_event->ident, buff, raw_data_ref.size());
-  delete[] buff;
-  std::cout << "Writable\n" << std::endl;
-  if (n == -1){
-      std::cerr << "CGI write error!" << "\n";
-      disconnectFd(cur_event);
-  }
+void  ServManager::cgiTerminated(UData* udata){
+  int status;
+  Kqueue::unregisterExitEvent(udata->cgi_pid_, udata);
+  waitpid(udata->cgi_pid_, &status, 0);
+  delete udata;
+  if (WIFEXITED(status))
+    return;
   else
-      raw_data_ref.clear();
+    throw std::runtime_error("CGI terminated abnormally");
 }
 
 /**

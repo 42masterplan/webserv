@@ -1,5 +1,58 @@
 #include "HttpResponse.hpp"
 
+static LocBlock &initLocBlock(HttpRequest &req) {
+	ServBlock serv = ConfParser::getInstance().getServBlock(req.getPort(), req.getHost());
+	LocBlock loc = serv.findLocBlock(req.getPath());
+	return loc;
+}
+
+static bool isExistFile(std::string &filePath) {
+	std::ifstream file(filePath.c_str());
+	return file.good();
+}
+
+void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
+	file_path_ = loc.getCombineReturnPath();
+	if (file_path != "") {
+		res_type_ = REDIRECT;
+		location_ = file_path_;
+		Redirect::processRedirectRes(res, 301);
+		return;
+	}
+	file_path_ = loc.getCombineCgiPath();
+	if (file_path_ != "") {
+		res_type_ = CGI;
+		CGI::forkCgi(req);
+		return;
+	}
+	file_path_ = loc.getCombineUploadStorePath();
+	if (file_path_ != "" && isExistFile(file_path_)) {
+		res_type_ = UPLOAD_STORE;
+		HttpMethod::handleHttpMethod(res);
+	}
+	else {
+		res_type_ = ERROR;
+		status_code_ = 404;
+		std::vector<int> error_codes = loc.getErrorCode();
+		std::vector<int>::iterator it = std::find(numbers.begin(), numbers.end(), 404);
+		if (it != numbers.end())
+			file_path_ = getCombineErrorPath();
+		else
+			file_path_ = "";
+		HttpMethod::handleHttpMethod(res);
+	}
+	return;
+}
+
+static std::string &initLocation(LocBlock &loc) {
+//	return location;
+}
+
+HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""),  loc_block_(initLocBlock(req)), res_type_(UPLOAD_STORE), file_path_("") {
+	setFilePath(req, loc_block_);
+	
+}
+
 /**
  * @brief 반환할 ErrorLocation이 없는 경우에 사용
  * 

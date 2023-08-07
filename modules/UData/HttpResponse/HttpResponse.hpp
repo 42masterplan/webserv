@@ -3,15 +3,18 @@
 
 # include "../../config/LocationBlock/LocBlock.hpp"
 # include "../../config/ConfParser.hpp"
+# include "../.hpp" // for cgi
 
 # include "HttpRequest.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
 
 # include <iostream>
+# include <fstream>
 # include <string>
 # include <vector>
 # include <map>
+# include <algorithm>
 
 typedef enum e_res_type {
 	UPLOAD_STORE,
@@ -33,6 +36,9 @@ class HttpResponse{
 		/* methods */
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
 		void 		processRedirectRes(HttpResponse &res, int status_code);
+
+		void	setFilePath(HttpRequest &req, LocBlock &loc);
+		std::string &getFilePath(LocBlock &loc);
 		
 	private :
 		std::string 			http_version_;
@@ -45,8 +51,9 @@ class HttpResponse{
 
 		std::vector<char>	body_;
 		std::vector<char>	joined_data_;
-		LocBlock					loc_block_;
+		LocBlock					&loc_block_;
 		e_res_type				res_type_;
+		std::string				file_path_;
 };
 
 #endif

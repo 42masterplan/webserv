@@ -34,6 +34,7 @@ class HttpRequest{
 		const int&					getPort(void) const;
 		const bool&					getIsChunked(void) const;
 		const std::string&	getContentType(void) const;
+		const e_parseStatus	getParseStatus(void) const;
 
 		/* methods */
 		void		clear();

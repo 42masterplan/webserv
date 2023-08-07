@@ -51,6 +51,8 @@ class ServManager{
 		void  sockWritable(struct kevent *cur_event);
     void  cgiReadable(struct kevent *cur_event);
     void  cgiTerminated(UData* udata);
+		void	fileReadable(struct kevent *cur_event);
+		void	fileWritable(struct kevent *cur_event);
 		void  disconnectFd(struct kevent *cur_event);
 		std::vector<int> listen_ports_;
 		std::vector<int> serv_sock_fds_;

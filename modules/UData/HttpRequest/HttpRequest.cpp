@@ -273,6 +273,7 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			to_read_ = 0;
 			if (getLine(raw_data) != "")
 				request_error_ = FORM_ERROR;
+			return true;
 		}
 	} else if ((size_t)content_length_ >= raw_data.size()){
 		std::copy(raw_data.begin(), raw_data.begin() + content_length_,  std::back_inserter(body_));

@@ -205,11 +205,8 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			// errorHandler();
 			return ;
 		}
-		if (raw_data_ref.size() == 0){
-			cur_udata->http_response_.reserve(http_request_ref.size());
-			for(size_t i = 0; i < http_request_ref.size(); i++){
-				cur_udata->http_response_[i].makeResponse(http_request_ref[i]);
-			}
+		if (http_request_ref.size() != 0){
+			cur_udata->http_response_ = HttpResponse(cur_event->udata, http_request_ref[0]);
 			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
 			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
 		}
@@ -226,21 +223,22 @@ void  ServManager::sockWritable(struct kevent *cur_event){
 			std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
 		return ;
 	}
-	std::vector<char>&	ret_store_ref = cur_udata->ret_store_;
+	std::vector<char>&	ret_store_ref = cur_udata->http_response_.getBody();
 	if (!ret_store_ref.size())
-    return ;
-  int n = write(cur_event->ident, &ret_store_ref[0], ret_store_ref.size());
-  if (n == -1){
-    std::cerr << "client write error!" << std::endl;
-    disconnectFd(cur_event);
+		return ;
+	int n = write(cur_event->ident, &ret_store_ref[cur_udata->write_size_], ret_store_ref.size() - cur_udata->write_size_);
+	cur_udata->write_size_ += n;
+	if (n == -1){
+		std::cerr << "client write error!" << std::endl;
+		cur_udata->http_response_.setStatusCode(500);//this is error
+		// disconnectFd(cur_event);
+		return ;
 	}
-	else{
-		ret_store_ref.erase(ret_store_ref.begin(), ret_store_ref.begin() + n);
-		if (ret_store_ref.size() == 0){
-			std::cout << "HI!!" << std::endl;
-			Kqueue::registerReadEvent(cur_event->ident, cur_udata);
-			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
-		}
+	else if ((size_t)cur_udata->write_size_ == ret_store_ref.size()){
+		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+		if (cur_udata->http_request_.size() != 0)
+			cur_udata->http_response_ = HttpResponse(*cur_udata, http_request_[0]);
+		cur_udata->write_size_ = 0;
 	}
 }
 
@@ -293,10 +291,10 @@ void  ServManager::cgiTerminated(UData* udata){
 void  ServManager::fileReadable(struct kevent *cur_event){
 	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
 	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>& file_store_ref = cur_udata->file_read_write_store_;
+	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
 	if (read_len <= 0){
 		if (read_len == -1)
-			cur_udata->status_code_ = 500;//this is error
+			cur_udata->http_response_.setStatusCode(500);//this is error
 		Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}else{
@@ -312,13 +310,14 @@ void  ServManager::fileReadable(struct kevent *cur_event){
  */
 void	ServManager::fileWritable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char> &write_store_ref = cur_udata->file_read_write_store_;
+	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
 	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-		cur_udata->status_code_ = 201;
+		cur_udata->http_response_.setStatusCode(201);
 		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
+		cur_udata->write_size_ = 0;
 	}
 }
 

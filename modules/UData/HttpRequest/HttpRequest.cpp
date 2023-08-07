@@ -269,7 +269,7 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read_);
 			//CRLF까지 삭제
 			to_read_ = 0;
-			if (getLine(raw_data) == "")
+			if (getLine(raw_data) != "")
 				request_error_ = FORM_ERROR;
 			if (request_error_  || raw_data.size() == 0)
 				return true;
@@ -278,8 +278,7 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 		std::copy(raw_data.begin(), raw_data.begin() + content_length_,  std::back_inserter(body_));
 		raw_data.erase(raw_data.begin(),raw_data.begin() + content_length_);
 		parse_status_ = FINISH;
-		if (raw_data.size() == 0)
-			return true;
+		return true;
 	}
 	return false;
 }

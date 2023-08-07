@@ -262,8 +262,7 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			if (getLine(raw_data) != "")
 				request_error_ = FORM_ERROR;
 			parse_status_ = FINISH;
-		}
-		if (raw_data.size() >= (size_t)to_read_ + 2){//CRLF가 있다는 보장해주기 위해서 + 2
+		} else if (raw_data.size() >= (size_t)to_read_ + 2){//CRLF가 있다는 보장해주기 위해서 + 2
 			read_state_ = false;
 			std::copy(raw_data.begin(), raw_data.begin() + to_read_,  std::back_inserter(body_));
 			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read_);
@@ -271,7 +270,7 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			to_read_ = 0;
 			if (getLine(raw_data) != "")
 				request_error_ = FORM_ERROR;
-			if (request_error_  || raw_data.size() == 0)
+			if (request_error_ )
 				return true;
 		}
 	} else if ((size_t)content_length_ >= raw_data.size()){

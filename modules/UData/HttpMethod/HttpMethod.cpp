@@ -6,70 +6,63 @@ static std::string convertToStr(e_method method) {
 			return "GET";
 		case HEAD:
 			return "HEAD";
-		case POST:
-			return "POST";
 		case DELETE:
 			return "DELETE";
+		case POST:
+			return "POST";
+		case PUT:
+			return "PUT";
+		case PATCH:
+			return "PATCH";
 		default:
 			return "";
 	}
 }
 
-void HttpMethod::handleHttpMethod(UData &udata, HttpRequest &req, HttpResponse &res) {
-	e_method method = req.getMethod();
-	const std::vector<std::string> deny_method = res.getLocBlock().getDenyMethod();
+void HttpMethod::handleHttpMethod(UData &udata) {
+	e_method method = udata.http_request_[0].getMethod();
+	const std::vector<std::string> deny_method = udata.http_response_.getLocBlock().getDenyMethod();
 
 	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) == deny_method.end())
 		return res.processErrorRes(405);
 	switch(method) {
 		case GET:
-			return handleGet(req, res);
+			return handleGet(udata);
 		case HEAD:
-			return handleHead(req, res);
-		case POST:
-			return handlePost(req, res);
+			return handleGet(udata);
 		case DELETE:
-			return handleDelete(req, res);
+			return handleDelete(udata);
+		case POST:
+			return handlePost(udata);
+		case PUT:
+			return handlePost(udata);
+		case PATCH:
+			return handlePost(udata);
 		default:
 			return res.processErrorRes(405);
 	}
 }
 
-void HttpMethod::handleGet(UData &udata, HttpRequest &req, HttpResponse &res) {
-	FILE *file = fopen(res.getFilePath().c_str(), "r");
-	if (file == NULL)
-		return res.processErrorRes(404);
-	Kqueue::registerReadEvent(file, );
-
-	res.setStatusCode(200);
-	res.setStatus(STATUS[200]);
-	res.setBody();
+void HttpMethod::handleHead(UData &udata) {
+	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
+	if (fd == -1)
+		return udata.http_response_.processErrorRes(404);
+	fcntl(fd, F_SETFL, O_NONBLOCK);
+	Kqueue::registerReadEvent(fd, &udata);
+	Kqueue::unregisterWriteEvent(fd, &udata);
 }
 
-void HttpMethod::handleHead(UData &udata, HttpRequest &req, HttpResponse &res) {
-	std::ifstream in("test.txt");
-	std::vector<char> body;
-
-	if (!in)
-		res.processErrorRes(404);
-	in >> body;
-
-	res.setStatusCode(200);
-	res.setStatus(STATUS[200]);
-	res.setBody();
+void HttpMethod::handlePost(UData &udata) {
+	std::string filename = udata.http_response_.getFilePath() + MimeStore::getExtension(udata.http_request_[0].getContentType());
+	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd == -1)
+		return udata.http_response_.processErrorRes(404);
+	fcntl(fd, F_SETFL, O_NONBLOCK);
+	Kqueue::registerWriteEvent(fd, &udata);
+	Kqueue::unregisterReadEvent(fd, &udata);
 }
 
-HttpMethod::handlePost(UData &udata, HttpRequest &req, HttpResponse &res) {
-	// 확장자와 content-type 충돌 시 content-type 우선
-	std::string filename = getCombineUploadStorePath(req->getPath()) + getExtension(req->getContentType());
-	std::ofstream out(filename.c_str());
-	std::string body = req->getBody();
-
-	out.write(body.c_str(), body.size());
-	out.close();
-}
-
-HttpMethod::handleDelete(UData &udata, HttpRequest &req, HttpResponse &res) {
-	
+void HttpMethod::handleDelete(UData &udata) {
+	std::remove(udata.http_response_.getFilePath().c_str());
 }
 

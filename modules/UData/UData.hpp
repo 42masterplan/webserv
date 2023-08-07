@@ -24,7 +24,7 @@ class UData{
 		/* variables */
 		e_fd_type					fd_type_;
 		std::vector<HttpRequest>	http_request_;
-		std::vector<HttpResponse>	http_response_;
+		HttpResponse							http_response_;
 		// e_error 									error_flag_;
 		std::vector<char>					raw_data_;
 

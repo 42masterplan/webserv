@@ -11,17 +11,20 @@
 typedef enum e_method {
 	GET,
 	HEAD,
+	DELETE,
 	POST,
-	DELETE
+	PUT,
+	PATCH,
+	OTHER_METHOD
 };
 
 class HttpMethod {
 	public:
-		static void handleHttpMethod(UData &udata, HttpRequest &req, HttpResponse &res);
-		static void handleGet(UData &udata, HttpRequest &req, HttpResponse &res);
-		static void handleHead(UData &udata, HttpRequest &req, HttpResponse &res);
-		static void handlePost(UData &udata, HttpRequest &req, HttpResponse &res);
-		static void handleDelete(UData &udata, HttpRequest &req, HttpResponse &res);
+		static void handleHttpMethod(UData &udata);
+		static void handleGet(UData &udata);
+		static void handleHead(UData &udata);
+		static void handlePost(UData &udata);
+		static void handleDelete(UData &udata);
 
 	private:
 };

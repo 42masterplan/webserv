@@ -18,10 +18,11 @@ typedef enum blockType{
 
 typedef enum methodType{
 	GET,
-	POST,
 	HEAD,
-	PUT,
 	DELETE,
+	POST,
+	PUT,
+	PATCH,
 	OTHER_METHOD
 }e_method;
 //안하는 메서드들

@@ -3,14 +3,20 @@ CXX = c++
 CXXFLAGS = -std=c++98 -pedantic -Wall -Wextra -Werror -g3 -fsanitize=address
 
 #main문
-MAINSRC = main.cpp HttpRequest2.cpp
+MAINSRC = main.cpp HttpRequest.cpp ../../Tools/ParseTool.cpp
 MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
-
+CONFIGSRCS = ConfParser.cpp \
+						httpBlock/HttpBlock.cpp \
+						httpBlock/HttpBase.cpp \
+						LocationBlock/LocBlock.cpp \
+						serverBlock/ServBlock.cpp \
+						otherBlock/OtherBlock.cpp
+CONFIGOBJS = $(addprefix ../../config/, $(CONFIGSRCS:.cpp=.o))
 #클라이언트
 # CSRCS = echo_client.cpp
 # COBJS = $(CSRCS:.cpp=.o)
 
-OBJS  =  $(MAINOBJ) 
+OBJS  =  $(MAINOBJ) $(CONFIGOBJS)
 
 RM = rm -rf
 

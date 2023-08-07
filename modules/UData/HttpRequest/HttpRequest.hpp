@@ -4,7 +4,7 @@
 # include <string>
 # include <map>
 # include <vector>
-# include "../../config/Tools/ParseTool.hpp"
+# include "../../Tools/ParseTool.hpp"
 
 typedef enum parseStatusType{
 	FIRST,
@@ -43,7 +43,7 @@ class HttpRequest{
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);
-
+		void		printBodyInfo();//for test
 	private :
 		e_method				method_;
 		std::string			path_;
@@ -61,16 +61,22 @@ class HttpRequest{
 		e_parseStatus		parse_status_;
 		e_requestError	request_error_;
 		std::string			last_header_;
-		
+
+		/*body parsing member*/
+		bool read_state_;
+		int to_read_;
+
 		/* parsing functions */
 		void						parseFirstLine(std::string line);
 		void						parseHeader(std::string line);
 		void						checkHeader(void);
+		bool						parseBody(std::vector<char>& raw_data);
 
 		/* parsing utils */
 		std::string			getLine(std::vector<char>& raw_data);
 		std::string			getTarget(std::string& line);
 		static const std::map<std::string, bool>	get_multiple_header();
+		int							hexToDec(const std::string& base_num);
 };
-
+void	print_vec(std::vector<char>& t);
 #endif

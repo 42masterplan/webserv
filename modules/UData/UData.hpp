@@ -14,7 +14,8 @@ class HttpResponse;
 
 typedef enum fdType{
 	CLNT,
-	CGI
+	CGI,
+	FILETYPE
 }e_fd_type;
 
 class UData{
@@ -37,6 +38,11 @@ class UData{
 
 		/*임시 결과 저장소 for test*/
 		std::vector<char> ret_store_;//return 하는 값을 저장하는 저장소. 임시로 만듬
+		/*file*/
+		std::vector<char> file_read_write_store_;
+		int 							status_code_;
+		int								client_fd_;
+		int								write_size_;
 	private :
 		UData();
 };

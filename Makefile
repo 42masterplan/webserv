@@ -8,7 +8,6 @@ CONFIGSRCS = ConfParser.cpp \
 						httpBlock/HttpBase.cpp \
 						LocationBlock/LocBlock.cpp \
 						serverBlock/ServBlock.cpp \
-						Tools/ParseTool.cpp \
 						otherBlock/OtherBlock.cpp
 
 CONFIGOBJS = $(addprefix ./modules/config/, $(CONFIGSRCS:.cpp=.o))
@@ -29,6 +28,8 @@ UDATASRCS = UData.cpp \
 #HttpResponse/HttpResponse.cpp
 UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))
 
+TOOLSRCS = ParseTool.cpp 
+TOOLOBJS = $(addprefix ./modules/Tools/, $(TOOLSRCS:.cpp=.o))
 
 #main문
 MAINSRC = main.cpp
@@ -38,7 +39,7 @@ MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 CSRCS = echo_client.cpp
 COBJS = $(CSRCS:.cpp=.o)
 
-OBJS  =  $(CONFIGOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(MAINOBJ) 
+OBJS  =  $(CONFIGOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(TOOLOBJS) $(MAINOBJ) 
 
 RM = rm -rf
 

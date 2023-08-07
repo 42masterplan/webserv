@@ -8,7 +8,7 @@
 # include <map>
 # include <algorithm>
 # include <cmath>
-
+# include "../UData/HttpMethod/HttpMethod.hpp"
 typedef enum blockType{
 	HTTPBLOCK,
 	SERVERBLOCK,
@@ -16,15 +16,6 @@ typedef enum blockType{
 	OTHERBLOCK
 }e_block;
 
-typedef enum methodType{
-	GET,
-	HEAD,
-	DELETE,
-	POST,
-	PUT,
-	PATCH,
-	OTHER_METHOD
-}e_method;
 //안하는 메서드들
 // OPTIONS, //서버가 지원하는 메서드를 판별할 수 있는 명령
 // COPY, //

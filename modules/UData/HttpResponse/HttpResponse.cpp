@@ -1,5 +1,12 @@
 #include "HttpResponse.hpp"
 
+HttpResponse::HttpResponse(UData &udata, HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_(initLocBlock(req)), res_type_(UPLOAD_STORE), file_path_("") {
+	setFilePath(req, loc_block_);
+	
+}
+
+/* init */
+
 static LocBlock &initLocBlock(HttpRequest &req) {
 	ServBlock serv = ConfParser::getInstance().getServBlock(req.getPort(), req.getHost());
 	LocBlock loc = serv.findLocBlock(req.getPath());
@@ -11,47 +18,28 @@ static bool isExistFile(std::string &filePath) {
 	return file.good();
 }
 
-void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
-	file_path_ = loc.getCombineReturnPath();
-	if (file_path != "") {
-		res_type_ = REDIRECT;
-		location_ = file_path_;
-		Redirect::processRedirectRes(res, 301);
-		return;
-	}
-	file_path_ = loc.getCombineCgiPath();
-	if (file_path_ != "") {
-		res_type_ = CGI;
-		CGI::forkCgi(req);
-		return;
-	}
-	file_path_ = loc.getCombineUploadStorePath();
-	if (file_path_ != "" && isExistFile(file_path_)) {
-		res_type_ = UPLOAD_STORE;
-		HttpMethod::handleHttpMethod(res);
-	}
-	else {
-		res_type_ = ERROR;
-		status_code_ = 404;
-		std::vector<int> error_codes = loc.getErrorCode();
-		std::vector<int>::iterator it = std::find(numbers.begin(), numbers.end(), 404);
-		if (it != numbers.end())
-			file_path_ = getCombineErrorPath();
-		else
-			file_path_ = "";
-		HttpMethod::handleHttpMethod(res);
-	}
-	return;
+static std::string getErrorPage(LocBlock &loc, int status_code) {
+	std::vector<int> error_codes = loc.getErrorCode();
+	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
+	if (it != error_codes.end())
+		return loc.getCombineErrorPath();
+	return "";
 }
 
-static std::string &initLocation(LocBlock &loc) {
-//	return location;
+// static void handleHttpError() {
+// 	if (res.getFilePath() == "")
+// 		res.processDefaultErrorRes(res.getStatusCode());
+// 	res.processDefaultErrorRes(res.getStatusCode());
+// }
+
+void HttpResponse::processErrorRes(int status_code) {
+	status_code_ = 404;
+	file_path_ = getErrorPage(loc_block_, status_code_);
+	res_type_ = ERROR;
+	processDefaultErrorRes(status_code);
 }
 
-HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""),  loc_block_(initLocBlock(req)), res_type_(UPLOAD_STORE), file_path_("") {
-	setFilePath(req, loc_block_);
-	
-}
+
 
 /**
  * @brief 반환할 ErrorLocation이 없는 경우에 사용
@@ -59,11 +47,10 @@ HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  statu
  * @param res 채워질 HttpResponse 객체
  * @param status_code 
  */
-void HttpResponse::processDefaultErrorRes(HttpResponse &res, int status_code) {
+void HttpResponse::processDefaultErrorRes(int status_code) {
 	status_code_ = status_code;
-
-	http_version_ = "HTTP/1.1";
 	status_ = status_store_[status_code_];
+
 	std::string body = 
 	"<html><head><title>" + status_ + "</title></head><body><h1>" + status_ + "</h1></body></html>";
 	body_.insert(body_.end(), body.begin(), body.end());
@@ -78,11 +65,11 @@ void HttpResponse::processDefaultErrorRes(HttpResponse &res, int status_code) {
 	
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end()); // insert 말고 덮어써야함
 	joined_data_.insert(joined_data_.end(), body_.begin(), body_.end());
-	std::cout << std::string(res.joined_data_.begin(), res.joined_data_.end()) << "\n"; 
+	std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n"; 
 }
 
 
-void HttpResponse::processRedirectRes(HttpResponse &res, int status_code) {
+void HttpResponse::processRedirectRes(int status_code) {
 	status_code_ = status_code;
 	status_ = status_store_[status_code_];
 	
@@ -91,10 +78,48 @@ void HttpResponse::processRedirectRes(HttpResponse &res, int status_code) {
 	"Location: " + location_ + "\r\n\r\n";
 	
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end()); // insert 말고 덮어써야함
-	std::cout << std::string(res.joined_data_.begin(), res.joined_data_.end()) << "\n";
+	std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
 
-const std::vector<char>& HttpResponse::getJoinedData()const{return joined_data_;}
+
+
+
+/* getter, setter */
+
+const std::string &HttpResponse::getFilePath() const {
+	return file_path_;
+}
+
+void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
+	file_path_ = loc.getCombineReturnPath();
+	if (file_path_ != "") {
+		res_type_ = REDIRECT;
+		location_ = file_path_;
+		HttpMethod::processRedirectRes(301);
+		return;
+	}
+	file_path_ = loc.getCombineCgiPath();
+	if (file_path_ != "") {
+		res_type_ = CGI;
+		Cgi::forkCgi(req);
+		return;
+	}
+	file_path_ = loc.getCombineUploadStorePath();
+	if (file_path_ != "") {
+		res_type_ = UPLOAD_STORE;
+		HttpMethod::handleHttpMethod(req, *this);
+		return;
+	}
+	processErrorRes(404);
+	return;
+}
+
+
+
+
+const std::vector<char>& HttpResponse::getJoinedData() const {
+	return joined_data_;
+}
 
 // int main() {
 // 	HttpResponse res;

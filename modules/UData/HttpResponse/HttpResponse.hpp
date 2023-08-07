@@ -3,8 +3,9 @@
 
 # include "../../config/LocationBlock/LocBlock.hpp"
 # include "../../config/ConfParser.hpp"
-# include "../.hpp" // for cgi
+# include "../webserv/Cgi.hpp"
 
+# include "../HttpMethod/HttpMethod.hpp"
 # include "HttpRequest.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
@@ -23,7 +24,6 @@ typedef enum e_res_type {
 	ERROR
 } e_res_type;
 
-
 class HttpResponse{
 
 	public :
@@ -31,17 +31,27 @@ class HttpResponse{
 		
 		/* constructor */
 		HttpResponse();
-		HttpResponse(HttpRequest &req);
-		void		makeResponse(HttpRequest &request);
-
+		HttpResponse(UData &udata, HttpRequest &req);
 
 		/* methods */
 		void 		initStatusStore(void);
-		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
-		void 		processRedirectRes(HttpResponse &res, int status_code);
+
+		void		processErrorRes(int status_code);
+		void 		processDefaultErrorRes(int status_code);
+		void 		processRedirectRes(int status_code);
+
+
+		/* getter, setter */
 
 		void	setFilePath(HttpRequest &req, LocBlock &loc);
-		std::string &getFilePath(LocBlock &loc);
+		const std::string &getFilePath() const;
+
+		LocBlock &getLocBlock();
+
+		
+		std::vector<char>	&getBody();
+		const std::vector<char>& HttpResponse::getJoinedData() const;
+		void		setJoinedData(const std::vector<char> &joined_data);
 		
 	private :
 		std::string 			http_version_;
@@ -54,9 +64,12 @@ class HttpResponse{
 
 		std::vector<char>	body_;
 		std::vector<char>	joined_data_;
+
 		LocBlock					&loc_block_;
 		e_res_type				res_type_;
 		std::string				file_path_;
+		int								client_fd_;
+		int								write_size_;
 };
 
 #endif

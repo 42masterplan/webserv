@@ -194,14 +194,14 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			// errorHandler();
 			return ;
 		}
-		if (raw_data_ref.size() == 0){
-			cur_udata->http_response_.reserve(cur_udata->http_request_.size());
-			for(size_t i = 0; i < cur_udata->http_request_.size(); i++){
-				cur_udata->http_response_[i].makeResponse(cur_udata->http_request_[i]);
-			}
-			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
-			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
-		}
+		// while (cur_udata->http_request_.size()){
+			// for(size_t i = 0; i < cur_udata->http_request_.size(); i++){
+			HttpResponse::makeResponse(cur_udata, cur_udata->http_request_[0]);//file , client 
+			// cur_udata->http_request_.pop();
+			// }
+			// Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
+			// Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
+		// }
 	}
 }
 

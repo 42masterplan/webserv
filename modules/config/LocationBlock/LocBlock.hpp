@@ -18,7 +18,6 @@ class LocBlock : public IBlock, public HttpBase{
 public:
 	LocBlock();
 	LocBlock(std::string loc_info);
-	LocBlock();
 	virtual ~LocBlock();
 	// LocBlock& operator=(const LocBlock& obj );
 

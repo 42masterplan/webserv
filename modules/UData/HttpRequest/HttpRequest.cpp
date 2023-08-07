@@ -247,7 +247,9 @@ void	HttpRequest::checkHeader(void) {
  */
 bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 	if (is_chunked_){
-		if (!read_state_ && hasCRLF(raw_data)){
+		if (!read_state_){
+			if (hasCRLF(raw_data) == false)
+				return false;
 			std::string ret = getLine(raw_data);
 			to_read_ = hexToDec(ret);
 			if (to_read_ == -1){

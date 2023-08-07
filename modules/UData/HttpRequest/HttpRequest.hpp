@@ -62,6 +62,10 @@ class HttpRequest{
 		e_requestError	request_error_;
 		std::string			last_header_;
 
+		/*body parsing member*/
+		bool read_state_;
+		int to_read_;
+
 		/* parsing functions */
 		void						parseFirstLine(std::string line);
 		void						parseHeader(std::string line);

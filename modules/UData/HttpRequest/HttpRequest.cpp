@@ -40,7 +40,7 @@ void	print_vec(std::vector<char>& t){
 	std::cout << "-------------------------------" <<std::endl;
 }
 // TODO: port 설정 어디에서 할 지 결정
-HttpRequest::HttpRequest(): content_length_(-1), parse_status_(FIRST), request_error_(OK){}
+HttpRequest::HttpRequest(): content_length_(-1), parse_status_(FIRST), request_error_(OK),read_state_(false), to_read_(0){}
 
 const e_method&						HttpRequest::getMethod(void) const { return method_; }
 const std::string&				HttpRequest::getPath(void) const { return path_; }
@@ -249,33 +249,31 @@ void	HttpRequest::checkHeader(void) {
  * @warning body파싱중 에러가 나도 FORM ERROR로 처리하고 return true 합니다.
  */
 bool	HttpRequest::parseBody(std::vector<char>& raw_data){
-	static bool read_state = false;
-	static int to_read = 0;
 	if (is_chunked_){
-		if (!read_state){
+		if (!read_state_){
 			std::string ret = getLine(raw_data);
-			to_read = hexToDec(ret);
-			if (to_read == -1){
+			to_read_ = hexToDec(ret);
+			if (to_read_ == -1){
 					request_error_ = FORM_ERROR;
 					return true;
 			}
-			read_state = true;
+			read_state_ = true;
 		}
-		if (to_read == 0 && raw_data.size() >= 2){
+		if (to_read_ == 0 && raw_data.size() >= 2){
 			// std::cout << "end"<<std::endl;
-			read_state = false;
+			read_state_ = false;
 			getLine(raw_data);
 				//정상 요청이후 새로운 파싱할 때 이전에 저장해둔 값을 지워야만 합니다.
 			is_chunked_ = false;
 			content_length_ = -1;
 			parse_status_ = FINISH;
 		}
-		if (raw_data.size() >= (size_t)to_read + 2){//CRLF가 있다는 보장해주기 위해서 + 2
-			read_state = false;
-			std::copy(raw_data.begin(), raw_data.begin() + to_read,  std::back_inserter(body_));
-			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read);
+		if (raw_data.size() >= (size_t)to_read_ + 2){//CRLF가 있다는 보장해주기 위해서 + 2
+			read_state_ = false;
+			std::copy(raw_data.begin(), raw_data.begin() + to_read_,  std::back_inserter(body_));
+			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read_);
 			//CRLF까지 삭제
-			to_read = 0;
+			to_read_ = 0;
 			getLine(raw_data);
 			if (request_error_  || raw_data.size() == 0)
 				return true;

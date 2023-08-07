@@ -1,7 +1,7 @@
 #ifndef LOCBLOCK_HPP
 # define LOCBLOCK_HPP
 
-# include "../Tools/ParseTool.hpp"
+# include "../../Tools/ParseTool.hpp"
 # include "../otherBlock/OtherBlock.hpp"
 # include "../interface/IBlock.hpp"
 # include "../httpBlock/HttpBase.hpp"
@@ -16,6 +16,7 @@
  */
 class LocBlock : public IBlock, public HttpBase{
 public:
+	LocBlock();
 	LocBlock(std::string loc_info);
 	LocBlock();
 	virtual ~LocBlock();

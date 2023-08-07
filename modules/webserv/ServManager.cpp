@@ -89,7 +89,6 @@ void  ServManager::sockListen(){
 /**
  * @brief 코어함수로, kqueue에서 받아온 이벤트들을 하나씩 처리합니다.
  * @exception read, write이외의 이벤트가 발생했을 시 runtime_error를 throw합니다.
- * @todo CGI분기문을 추가해야 합니다.
  */
 void  ServManager::handleEvents(){
 	struct kevent*	cur_event;
@@ -112,8 +111,12 @@ void  ServManager::handleEvents(){
 			sockWritable(cur_event);
 		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_READ)
 			cgiReadable(cur_event);
-		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_WRITE)
-			cgiWritable(cur_event);
+    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
+      cgiTerminated(cur_udata);
+		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_READ)
+			fileReadable(cur_event);
+		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_WRITE)
+			fileWritable(cur_event);
 		else{
 			std:: cout << "????????" << cur_fd_type << "\n";
 			throw(std::runtime_error("THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
@@ -141,6 +144,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	option = 1;
 	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
 	UData*	udata_ptr = new UData(CLNT);
+	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
 
@@ -151,6 +155,10 @@ void  ServManager::registerNewClnt(int serv_sockfd){
  */
 void  ServManager::sockReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
+	if (cur_event->flags == EV_EOF){
+		disconnectFd(cur_event);
+		return;
+	}
 	if (cur_udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(read)"<< std::endl;
 		return ;
@@ -166,24 +174,34 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 	}
 	else{
 		buff_[rlen] = '\0';
-		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
-    std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
-    if (!raw_data_string.compare("CGI"))
-      forkCgi();
-		//TODO: 이곳에 HTTP parse함수가 호출
-		//TODO: parse함수가 끝났는지 아닌지를 알 수 있어야 한다.
-		//parse함수가 끝났다는 건 HTTP response Class까지 완성된 상태이다.
-		//---------------test-------------
-		std::cout << "FROM CLIENT NUM " << cur_event->ident <<std::endl << raw_data_string << std::endl;
-		// for (size_t i = 0; i < raw_data_ref.size(); i++){
-		// 	std::cout << (int)raw_data_ref[i] <<":" <<raw_data_ref[i] <<"|"<< std::endl;
-		// }
-		std::string tmp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 131\r\n\r\n<!DOCTYPE html><html><head><title>Example Response</title></head><body><h1>Hello, this is an example response!</h1></body></html>\r\n";
-		std::vector<char> tmp1(tmp.begin(),tmp.end());
-		cur_udata->ret_store_ = tmp1;
-		Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
-		Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
-		//---------------test-------------
+		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
+		if (cur_udata->http_request_.size() == 0 || \
+			(cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size())){
+			HttpRequest request_parser;
+			cur_udata->http_request_.push_back(request_parser);
+		}
+		cur_udata->http_request_.back().parse(raw_data_ref);
+		cur_udata->http_request_.back().printBodyInfo();
+		if (cur_udata->http_request_.back().getRequestError()){//아에 잘못 된 형식으로 메세지가 온 경우들에 대해서 Request 단에서 에러를 처리해줍니다.
+			//클라이언트 소켓 read_event 삭제 -> 파일 read_event 등록 -> 파일 read가 끝나면 그 파일을 write
+			//어떤 파일을 가져와야하는지 확인해서 그 파일을 보낼 수 있도록 한다.
+			//파일을 보내고 할 수 있는 선택 : 1. 연결을 끊는다. 또는 2.클래스에 담겨있는 정보들을 삭제한다.
+			//HTTP status code를 정한다.
+			//필요한 정보
+			//1. status code
+			//2. 해당하는 Server Block
+			//TODO : error_handler 함수 만들기
+			// errorHandler();
+			return ;
+		}
+		if (raw_data_ref.size() == 0){
+			cur_udata->http_response_.reserve(cur_udata->http_request_.size());
+			for(size_t i = 0; i < cur_udata->http_request_.size(); i++){
+				cur_udata->http_response_[i].makeResponse(cur_udata->http_request_[i]);
+			}
+			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
+			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
+		}
 	}
 }
 
@@ -242,26 +260,55 @@ void  ServManager::cgiReadable(struct kevent *cur_event){
 }
 
 /**
- * @brief cgi 파이프가 writable할 때 호출되는 함수입니다.
- * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
+ * @brief CGI 프로세스를 회수하는 함수입니다.
+ * @param udata pid가 담긴 udata입니다.
+ * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
  */
-void  ServManager::cgiWritable(struct kevent *cur_event){
-	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
-	if (!raw_data_ref.size())
-    return ;
-  char* buff = new char[raw_data_ref.size()];
-  std::copy(raw_data_ref.begin(), raw_data_ref.end(), buff);
-  int n = write(cur_event->ident, buff, raw_data_ref.size());
-  delete[] buff;
-  std::cout << "Writable\n" << std::endl;
-  if (n == -1){
-      std::cerr << "CGI write error!" << "\n";
-      disconnectFd(cur_event);
-  }
+void  ServManager::cgiTerminated(UData* udata){
+  int status;
+  Kqueue::unregisterExitEvent(udata->cgi_pid_, udata);
+  waitpid(udata->cgi_pid_, &status, 0);
+  delete udata;
+  if (WIFEXITED(status))
+    return;
   else
-      raw_data_ref.clear();
+    throw std::runtime_error("CGI terminated abnormally");
+}
+
+/**
+ * @brief 파일을 Read하는 이벤트가 발생했을 때 해당하는 파일을 Read합니다.
+ * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
+ */
+void  ServManager::fileReadable(struct kevent *cur_event){
+	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
+	UData*	cur_udata = (UData*)cur_event->udata;
+	std::vector<char>& file_store_ref = cur_udata->file_read_write_store_;
+	if (read_len <= 0){
+		if (read_len == -1)
+			cur_udata->status_code_ = 500;//this is error
+		Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
+		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
+	}else{
+		buff_[read_len] = '\0';
+		file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
+	}
+}
+
+/**
+ * @brief 파일에 Write하는 이벤트가 발생했을 때 해당하는 파일에 write합니다. 
+ * @note Post에서 사용할 예정입니다.
+ * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
+ */
+void	ServManager::fileWritable(struct kevent *cur_event){
+	UData*	cur_udata = (UData*)cur_event->udata;
+	std::vector<char> &write_store_ref = cur_udata->file_read_write_store_;
+	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
+	cur_udata->write_size_+= write_size;
+	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
+		cur_udata->status_code_ = 201;
+		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
+	}
 }
 
 /**
@@ -277,50 +324,4 @@ void  ServManager::disconnectFd(struct kevent *cur_event){
 	close(cur_event->ident);
 	delete udata;
 	cur_event->udata = NULL;
-}
-
-/**
- * @brief 새로운 CGI 프로세스를 생성하는 함수입니다.
- * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
- * 자식 프로세스는 주어진 CGI 스크립트를 실행합니다.
- * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
- * @todo 자식 프로세스에 대한 WRITE 이벤트를 등록해야하나?
- */
-void  ServManager::forkCgi(){
-  int   pfd[2];
-  pid_t child_pid;
-
-  if (pipe(pfd) == -1)
-    throw (std::runtime_error("pipe() Error"));
-  int flags = fcntl(pfd[0], F_GETFL, 0);
-  fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
-  UData*  ptr = new UData(CGI);
-  ptr->prog_name_ = "CGI.py";
-  Kqueue::registerReadEvent(pfd[0],  ptr);
-  Kqueue::registerWriteEvent(pfd[1], ptr);
-
-  child_pid = fork();
-  if (child_pid == -1){
-    close(pfd[1]);
-    close(pfd[0]);
-    throw (std::runtime_error("fork() Error"));
-  }
-  else if (!child_pid){ //child
-    close(pfd[0]);
-    dup2(pfd[1], STDOUT_FILENO);
-    int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
-    fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
-    char* script_name = new char[ptr->prog_name_.size() + 1];
-    std::strcpy(script_name, ptr->prog_name_.c_str());
-    script_name[ptr->prog_name_.size()] = '\0';
-    char* exec_file[3];
-    exec_file[0] = (char*)"/usr/local/bin/python3";
-    exec_file[1] = script_name;
-    exec_file[2] = NULL;
-    if (execve(exec_file[0], exec_file, NULL) == -1)//envp needed
-      throw (std::runtime_error("execve() Error"));
-  }
-  else //parent
-    close(pfd[1]);
-  ptr->cgi_pid_ = child_pid;
 }

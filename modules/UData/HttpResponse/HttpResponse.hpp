@@ -1,5 +1,5 @@
-#ifndef HTTP_RESPONSE_HPP
-# define HTTP_RESPONSE_HPP
+#ifndef HTTPRESPONSE_HPP
+# define HTTPRESPONSE_HPP
 
 # include "../../config/LocationBlock/LocBlock.hpp"
 # include "../../config/ConfParser.hpp"
@@ -32,8 +32,11 @@ class HttpResponse{
 		/* constructor */
 		HttpResponse();
 		HttpResponse(HttpRequest &req);
+		void		makeResponse(HttpRequest &request);
+
 
 		/* methods */
+		void 		initStatusStore(void);
 		void 		processDefaultErrorRes(HttpResponse &res, int status_code);
 		void 		processRedirectRes(HttpResponse &res, int status_code);
 

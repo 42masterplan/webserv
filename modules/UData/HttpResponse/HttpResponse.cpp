@@ -125,7 +125,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
-		HttpMethod::processRedirectRes(301);
+		// HttpMethod::processRedirectRes(301);
 		return;
 	}
 	file_path_ = loc.getCombineCgiPath();
@@ -137,7 +137,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineUploadStorePath();
 	if (file_path_ != "") {
 		res_type_ = UPLOAD_STORE;
-		HttpMethod::handleHttpMethod(req, *this);
+		// HttpMethod::handleHttpMethod(req, *this);
 		return;
 	}
 	processErrorRes(404);

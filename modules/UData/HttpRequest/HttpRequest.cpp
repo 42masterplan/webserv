@@ -241,8 +241,8 @@ void	HttpRequest::checkHeader(void) {
  * 2.이후 16진수를 해석해서 그만큼 또 raw data를 비워줍니다.
  * 3. 0이 나올 때까지 반복합니다.
  * @param raw_data 들어온 데이터를 저장하는 저장소
- * @return true 파싱이 끝남
- * @return false 파싱이 안 끝남
+ * @return true 파싱 계속 진행 가능(에러 포함: 다음 반복문에서 끝남)
+ * @return false 버퍼를 계속 받아야 진행 가능
  * @warning body파싱중 에러가 나도 FORM ERROR로 처리하고 return true 합니다.
  */
 bool	HttpRequest::parseBody(std::vector<char>& raw_data){

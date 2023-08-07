@@ -66,7 +66,7 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 			case FINISH://만약 같은 클라이언트가 정상 종료 후 다시 요청을 보내면?
 				//정상 종료인데 계속 FINISH상태이면 곤란해서 다시 FIRST로 바꿔줬습니당
 				// std::cout << "FiN"<<std::endl;
-				parse_status_ = FIRST;
+				// parse_status_ = FIRST;
 				return ;
 			case BODY:
 				// std::cout << "body"<<std::endl;
@@ -107,9 +107,6 @@ void	HttpRequest::parseFirstLine(std::string line) {
 	std::string	target;
 	int					method;
 
-	//이전 헤더 비워줘야 다음 정상 요청일 때 날라가서 header비워줬습니다.
-	header_.clear();
-	body_.clear();
 	/* method 분리 */
 	target = getTarget(line);
 	if (request_error_) return ;
@@ -263,9 +260,6 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			// std::cout << "end"<<std::endl;
 			read_state_ = false;
 			getLine(raw_data);
-				//정상 요청이후 새로운 파싱할 때 이전에 저장해둔 값을 지워야만 합니다.
-			is_chunked_ = false;
-			content_length_ = -1;
 			parse_status_ = FINISH;
 		}
 		if (raw_data.size() >= (size_t)to_read_ + 2){//CRLF가 있다는 보장해주기 위해서 + 2
@@ -278,10 +272,9 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 			if (request_error_  || raw_data.size() == 0)
 				return true;
 		}
-	} else if ((size_t)content_length_ + 2 >= raw_data.size()){
+	} else if ((size_t)content_length_ >= raw_data.size()){
 		std::copy(raw_data.begin(), raw_data.begin() + content_length_,  std::back_inserter(body_));
 		raw_data.erase(raw_data.begin(),raw_data.begin() + content_length_);
-		getLine(raw_data);
 		parse_status_ = FINISH;
 		if (raw_data.size() == 0)
 			return true;

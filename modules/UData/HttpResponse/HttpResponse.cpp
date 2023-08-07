@@ -1,5 +1,27 @@
 #include "HttpResponse.hpp"
 
+
+HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
+	if (this == &ref)
+		return *this;
+	
+	http_version_ = ref.http_version_;
+	status_code_ = ref.status_code_;
+	status_ = ref.status_;
+	content_length_ = ref.content_length_;
+	content_type_ = ref.content_type_;
+	location_ = ref.location_;
+	body_ = ref.body_;
+	joined_data_ = ref.joined_data_;
+	loc_block_ = ref.loc_block_;
+	res_type_ = ref.res_type_;
+	file_path_ = ref.file_path_;
+	client_fd_ = ref.client_fd_;
+	write_size_ = ref.write_size_;
+
+	return *this;
+}
+
 HttpResponse::HttpResponse(UData &udata, HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_(initLocBlock(req)), res_type_(UPLOAD_STORE), file_path_("") {
 	setFilePath(req, loc_block_);
 	
@@ -85,6 +107,14 @@ void HttpResponse::processRedirectRes(int status_code) {
 
 
 /* getter, setter */
+
+void HttpResponse::setStatusCode(int status_code) {
+	status_code_ = status_code;
+}
+
+std::vector<char> &HttpResponse::getBody() {
+	return body_;
+}
 
 const std::string &HttpResponse::getFilePath() const {
 	return file_path_;

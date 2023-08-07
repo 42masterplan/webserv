@@ -3,10 +3,10 @@
 
 # include "../../config/LocationBlock/LocBlock.hpp"
 # include "../../config/ConfParser.hpp"
-# include "../webserv/Cgi.hpp"
+# include "../../webserv/Cgi.hpp"
 
 # include "../HttpMethod/HttpMethod.hpp"
-# include "HttpRequest.hpp"
+# include "../HttpRequest/HttpRequest.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
 
@@ -30,8 +30,8 @@ class HttpResponse{
 		static std::map<int, std::string> status_store_;
 		
 		/* constructor */
-		HttpResponse();
 		HttpResponse(UData &udata, HttpRequest &req);
+		HttpResponse& operator=(const HttpResponse &ref);
 
 		/* methods */
 		void 		initStatusStore(void);
@@ -43,15 +43,15 @@ class HttpResponse{
 
 		/* getter, setter */
 
-		void	setFilePath(HttpRequest &req, LocBlock &loc);
-		const std::string &getFilePath() const;
+		const std::string&				getFilePath() const;
+		void											setFilePath(HttpRequest &req, LocBlock &loc);
 
-		LocBlock &getLocBlock();
+		LocBlock&									getLocBlock();
 
-		
-		std::vector<char>	&getBody();
-		const std::vector<char>& HttpResponse::getJoinedData() const;
-		void		setJoinedData(const std::vector<char> &joined_data);
+		void 											setStatusCode(int status_code);
+		std::vector<char>&				getBody();
+		const std::vector<char>& 	getJoinedData() const;
+		void											setJoinedData(const std::vector<char> &joined_data);
 		
 	private :
 		std::string 			http_version_;

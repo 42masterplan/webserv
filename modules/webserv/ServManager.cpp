@@ -163,6 +163,7 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 		std::cout << cur_event->ident << "is already disconnected!(read)"<< std::endl;
 		return ;
 	}
+
 	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1){
@@ -175,14 +176,24 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 	else{
 		buff_[rlen] = '\0';
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
-		if (cur_udata->http_request_.size() == 0 || \
-			(cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size())){
-			HttpRequest request_parser;
-			cur_udata->http_request_.push_back(request_parser);
+
+		std::vector<HttpRequest>& http_request_ref = cur_udata->http_request_;
+		if (http_request_ref.size() && (http_request_ref.back().getParseStatus() != FINISH && !http_request_ref.back().getRequestError()))
+			http_request_ref.back().parse(raw_data_ref);
+		while (http_request_ref.size() == 0 || (http_request_ref.back().getParseStatus() == FINISH && !http_request_ref.back().getRequestError())) {
+			http_request_ref.push_back(HttpRequest());
+			http_request_ref.back().parse(raw_data_ref);
 		}
-		cur_udata->http_request_.back().parse(raw_data_ref);
-		cur_udata->http_request_.back().printBodyInfo();
-		if (cur_udata->http_request_.back().getRequestError()){//아에 잘못 된 형식으로 메세지가 온 경우들에 대해서 Request 단에서 에러를 처리해줍니다.
+		// if (cur_udata->http_request_.size() == 0 || \
+		// 	(cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size())){
+		// 	HttpRequest request_parser;
+		// 	cur_udata->http_request_.push_back(request_parser);
+		// }
+		// cur_udata->http_request_.back().parse(raw_data_ref);
+		// cur_udata->http_request_.back().printBodyInfo();
+
+		if (http_request_ref.back().getRequestError()) {
+			//아에 잘못 된 형식으로 메세지가 온 경우들에 대해서 Request 단에서 에러를 처리해줍니다.
 			//클라이언트 소켓 read_event 삭제 -> 파일 read_event 등록 -> 파일 read가 끝나면 그 파일을 write
 			//어떤 파일을 가져와야하는지 확인해서 그 파일을 보낼 수 있도록 한다.
 			//파일을 보내고 할 수 있는 선택 : 1. 연결을 끊는다. 또는 2.클래스에 담겨있는 정보들을 삭제한다.
@@ -194,14 +205,14 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			// errorHandler();
 			return ;
 		}
-		// while (cur_udata->http_request_.size()){
-			// for(size_t i = 0; i < cur_udata->http_request_.size(); i++){
-			HttpResponse::makeResponse(cur_udata, cur_udata->http_request_[0]);//file , client 
-			// cur_udata->http_request_.pop();
-			// }
-			// Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
-			// Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
-		// }
+		if (raw_data_ref.size() == 0){
+			cur_udata->http_response_.reserve(http_request_ref.size());
+			for(size_t i = 0; i < http_request_ref.size(); i++){
+				cur_udata->http_response_[i].makeResponse(http_request_ref[i]);
+			}
+			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
+			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
+		}
 	}
 }
 

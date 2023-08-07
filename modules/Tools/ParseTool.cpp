@@ -1,5 +1,5 @@
 # include "ParseTool.hpp"
-# include "../otherBlock/OtherBlock.hpp"
+# include "../config/otherBlock/OtherBlock.hpp"
 /**
  * @brief 어떤 블록인지 리턴해주는 함수
  *

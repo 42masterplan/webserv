@@ -4,7 +4,7 @@
 # include <string>
 # include <map>
 # include <vector>
-# include "../../config/Tools/ParseTool.hpp"
+# include "../../Tools/ParseTool.hpp"
 
 typedef enum parseStatusType{
 	FIRST,

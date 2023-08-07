@@ -1,6 +1,6 @@
 #ifndef OTHERBLOCK_HPP
 # define OTHERBLOCK_HPP
-# include "../Tools/ParseTool.hpp"
+# include "../../Tools/ParseTool.hpp"
 # include "../interface/IBlock.hpp"
 /**
  * @brief 저희는 http, server location 블록을 제외하면 다른 블록도 블록화 해서 담아줍니다.

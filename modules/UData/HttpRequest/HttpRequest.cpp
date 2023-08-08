@@ -51,8 +51,8 @@ const int&								HttpRequest::getPort(void) const { return port_; }
 const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
 const std::string&				HttpRequest::getHost(void) const { return host_; }
-const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
-const e_requestError&			HttpRequest::getRequestError(void) const { return request_error_; }
+const e_parseStatus&		HttpRequest::getParseStatus(void) const { return parse_status_; }
+const e_requestError&	HttpRequest::getRequestError(void) const { return request_error_; }
 
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {

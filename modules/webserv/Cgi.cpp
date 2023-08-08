@@ -16,9 +16,9 @@ char**  Cgi::getEnvs(HttpRequest& req){
   envp[header.size() + 2] = NULL;
 
   if (req.getMethod() == GET)
-    envp[0] = "METHOD=GET";
+    envp[0] = (char *)"METHOD=GET";
   else if (req.getMethod() == POST)
-    envp[0] = "METHOD=POST";
+    envp[0] = (char *)"METHOD=POST";
   std::string header_buff = "";
   std::map<std::string, std::string>::const_iterator it;
   int i = 1;
@@ -55,11 +55,11 @@ void  Cgi::forkCgi(HttpRequest& req){
   char* script_name;
   if (req.getPath().find(".php")){
     ptr->prog_name_ = "php";
-    script_name = "./srcs/CGI_1.php";
+    script_name = (char *)"./srcs/CGI_1.php";
   }
   else if (req.getPath().find(".py")){
     ptr->prog_name_ = "python3";
-    script_name = "./srcs/CGI_2.py";
+    script_name = (char *)"./srcs/CGI_2.py";
   }
   else
     throw std::runtime_error("invalid CGI path");

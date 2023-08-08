@@ -37,9 +37,8 @@ class HttpRequest{
 		const bool&								getIsChunked(void) const;
 		const std::string&				getContentType(void) const;
 		const std::string&				getHost(void) const;
-		const e_parseStatus&			getParseStatus(void) const;
 		const e_requestError&			getRequestError(void) const;
-		const e_parseStatus	getParseStatus(void) const;
+		const e_parseStatus&	getParseStatus(void) const;
 
 		/* methods */
 		void		clear();

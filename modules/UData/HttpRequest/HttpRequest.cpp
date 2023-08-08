@@ -183,7 +183,11 @@ void	HttpRequest::parseHeader(std::string line) {
 		header_[key] = value;
 	else if (get_multiple_header().find(key) != get_multiple_header().end() && !get_multiple_header().at(key))
 		header_[key] = value;
-	else {
+	else if (key == "cookie") {
+		std::vector<std::string> list = split(header_[key], "; ");
+		if (std::find(list.begin(), list.end(), value) == list.end())
+			header_[key] += "; " + value;
+	} else {
 		std::vector<std::string> list = split(header_[key], ", ");
 		if (std::find(list.begin(), list.end(), value) == list.end())
 			header_[key] += ", " + value;
@@ -201,6 +205,21 @@ void	HttpRequest::checkHeader(void) {
 	/* host */
 	if (header_.find(std::string("host")) != header_.end())
 		host_ = header_["host"];
+
+	/* cookie */
+	if (header_.find(std::string("cookie")) != header_.end()) {
+		std::vector<std::string> list = split(header_["cookie"], "; ");
+		size_t	pos;
+
+		for (std::vector<std::string>::const_iterator it = list.begin(); it != list.end(); it++) {
+			if ((pos = (*it).find("=")) != std::string::npos) {
+				cookie_[(*it).substr(0, pos)] = (*it).substr(pos + 1);
+			} else {
+				request_error_ = FORM_ERROR;
+				return ;
+			}
+		}
+	}
 
 	/* content-type */
 	if (header_.find(std::string("content-type")) != header_.end())
@@ -354,6 +373,7 @@ const std::map<std::string, bool> HttpRequest::get_multiple_header() {
 	map["content-md5"] = false;
 	map["content-range"] = false;
 	map["content-type"] = false;
+	map["cookie"] = true;
 	map["date"] = false;
 	map["etag"] = false;
 	map["expect"] = true;

@@ -1,6 +1,6 @@
 #include "LocBlock.hpp"
 
-LocBlock::LocBlock():rank_(0), upload_store_(""), loc_info_(""), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
+LocBlock::LocBlock():rank_(-1), upload_store_(""), loc_info_(""), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
 
 LocBlock::LocBlock(std::string loc_info) : rank_(0), upload_store_(""), loc_info_(loc_info), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
 
@@ -26,6 +26,7 @@ LocBlock::~LocBlock(){}
 // }
 
 /*----------------getter (멤버변수 그대로 반환)---------------*/
+int LocBlock::getRank(){return rank_;}
 const std::string& LocBlock::getUploadStore()const{return upload_store_; }
 const std::string& LocBlock::getLocInfo()const{return loc_info_;}
 const int& LocBlock::getReturnCode()const{return return_code_;}

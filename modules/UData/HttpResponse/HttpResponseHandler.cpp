@@ -13,7 +13,6 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 }
 
 
-
 void	HttpResponseHandler::handleResponse(UData *udata){
 	HttpResponse &cur_response = udata->http_response_;
 	HttpRequest &cur_request = udata->http_request_[0];
@@ -22,7 +21,10 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 			break ;
 		case CGI_EXEC : Cgi::forkCgi(cur_request); //CGI이벤트 등록
 			break ;
-		case REDIRECT : //클라이언트에게 write이벤트 등록하기
+		case AUTOINDEX : 
+			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response.getFilePath().c_str());
+			break ;
+		case REDIRECT : cur_response.processRedirectRes(301);
 			break ;
 		case ERROR : //에러코드를 확인해서 해당하는 status code에 해당하는 에러페이지가 있는지 탐색-> 있다면 그 파일을 write 이벤트 등록 아니라면 default error_page 만들어서 클라이언트에게 write
 			break ;
@@ -52,13 +54,13 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	e_method method = udata.http_request_[0].getMethod();
 	const std::vector<std::string> deny_method = udata.http_response_.loc_block_.getDenyMethod();
 
-	// if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) == deny_method.end())
-		// return res.processErrorRes(405);
+	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) == deny_method.end())
+		return udata.http_response_.setStatusCode(405);
 	switch(method) {
 		case GET:
-			return handleGet(udata);
+			return handleHeadGet(udata);
 		case HEAD:
-			return handleGet(udata);
+			return handleHeadGet(udata);
 		case DELETE:
 			return handleDelete(udata);
 		case POST:
@@ -72,23 +74,16 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	}
 }
 
-void HttpResponseHandler::handleGet(UData &udata) {
-	// int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-	// if (fd == -1)
-	// 	return udata.http_response_.processErrorRes(404);
-	// fcntl(fd, F_SETFL, O_NONBLOCK);
-	// Kqueue::registerReadEvent(fd, &udata);
-	// Kqueue::unregisterWriteEvent(fd, &udata);
-	(void) udata;
-}
-
-void HttpResponseHandler::handleHead(UData &udata) {
+void HttpResponseHandler::handleHeadGet(UData &udata) {
+	std::cout << "GET!! OR HEAD" << udata.http_response_.getFilePath().c_str() << std::endl;
 	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-	if (fd == -1)
-		return udata.http_response_.processErrorRes(404);
+	if (fd == -1){
+		udata.http_response_.processErrorRes(404);
+	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);
-	Kqueue::registerReadEvent(fd, &udata);
-	Kqueue::unregisterWriteEvent(fd, &udata);
+	udata.fd_type_ = FILETYPE;
+	Kqueue::registerReadEvent(fd, &udata);//파일 ReadEvent 등록
+	Kqueue::unregisterReadEvent(udata.client_fd_, &udata);//클라이언트 Read이벤트 잠시 중단
 }
 
 void HttpResponseHandler::handlePost(UData &udata) {
@@ -97,10 +92,25 @@ void HttpResponseHandler::handlePost(UData &udata) {
 	if (fd == -1)
 		return udata.http_response_.processErrorRes(404);
 	fcntl(fd, F_SETFL, O_NONBLOCK);
-	Kqueue::registerWriteEvent(fd, &udata);
-	Kqueue::unregisterReadEvent(fd, &udata);
+	udata.fd_type_ = FILETYPE;
+	Kqueue::registerWriteEvent(fd, &udata);//파일 write 이벤트 등록
+	Kqueue::unregisterReadEvent(udata.client_fd_, &udata);//클라이언트 Read이벤트 잠시 중단
 }
 
 void HttpResponseHandler::handleDelete(UData &udata) {
 	std::remove(udata.http_response_.getFilePath().c_str());
+	
+}
+
+
+void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
+	udata.http_response_.setStatusCode(status_code);
+	int error_file_fd_;
+	if (udata.http_response_.loc_block_.getRank() == -1){
+	  std::string err_path = ConfParser::getInstance().getServBlock(udata.port_, udata.http_request_[0].getHost()).findLocBlock(udata.http_request_[0].getPath()).getCombineErrorPath();
+		error_file_fd_ = open(err_path.c_str(), O_RDONLY);
+	}
+	else {
+		udata.http_response_.getErrorPagePath(status_code);
+	}
 }

@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <iostream>
 #include <cstdio>
+#include <map>
+#include <string>
 #include "Kqueue.hpp"
 #include "../config/ConfParser.hpp"
 # include "../UData/HttpResponse/HttpResponseHandler.hpp"
@@ -54,10 +56,13 @@ class ServManager{
 		void	fileReadable(struct kevent *cur_event);
 		void	fileWritable(struct kevent *cur_event);
 		void  disconnectFd(struct kevent *cur_event);
+		std::string	createSession(void);
+
 		std::vector<int> listen_ports_;
 		std::vector<int> serv_sock_fds_;
 		/* server */
 		char          buff_[BUFF_SIZE];
+		std::map<std::string, std::string>	session;
 
     /* kqueue */
 		struct kevent event_list_[8]; //한번 감지된 이벤트의 배열 -> udata가 있는 kevent의 배열

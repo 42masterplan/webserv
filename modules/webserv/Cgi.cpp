@@ -50,7 +50,7 @@ void  Cgi::forkCgi(HttpRequest& req){
     throw (std::runtime_error("pipe() Error"));
   int flags = fcntl(pfd[0], F_GETFL, 0);
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
-  UData*  ptr = new UData(CGI);
+  UData*  ptr = new UData(CGI, 0);
   //약식으로 CGI타입을 판별했습니다.
   char* script_name;
   if (req.getPath().find(".php")){

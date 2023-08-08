@@ -131,6 +131,7 @@ void  ServManager::handleEvents(){
  * @exception accept()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  ServManager::registerNewClnt(int serv_sockfd){
+	size_t idx;
 	struct sockaddr_in	clnt_addr;
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
@@ -143,7 +144,11 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	optlen = sizeof(option);
 	option = 1;
 	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
-	UData*	udata_ptr = new UData(CLNT);
+	for (idx = 0; idx < serv_sock_fds_.size(); idx++){
+		if (serv_sock_fds_[idx] == serv_sockfd)
+			break;
+	}
+	UData*	udata_ptr = new UData(CLNT, listen_ports_[idx]);
 	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
@@ -207,8 +212,8 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 		}
 		if (http_request_ref.size() != 0){
 			HttpResponseHandler::getInstance().parseResponse(cur_udata);
-			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
-			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
+			// Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
+			// Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
 		}
 	}
 }
@@ -334,4 +339,8 @@ void  ServManager::disconnectFd(struct kevent *cur_event){
 	close(cur_event->ident);
 	delete udata;
 	cur_event->udata = NULL;
+}
+
+std::string	ServManager::createSession(void) {
+
 }

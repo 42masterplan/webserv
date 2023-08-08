@@ -16,11 +16,12 @@
 typedef enum res_type {
 	UPLOAD_STORE,
 	CGI_EXEC,
+	AUTOINDEX,
 	REDIRECT,
 	ERROR
 } e_res_type;
 
-class HttpResponse{
+class  HttpResponse{
 	public :
 		HttpResponse();
 		HttpResponse(HttpRequest &req);
@@ -41,7 +42,7 @@ class HttpResponse{
 		void											setStatusCode(int status_code);
 		std::vector<char>&				getBody();
 		const std::vector<char>& 	getJoinedData() const;
-		std::string 							getErrorPage(int status_code);
+		std::string 							getErrorPagePath(int status_code);
 		
 		std::string 			http_version_;
 		int								status_code_;

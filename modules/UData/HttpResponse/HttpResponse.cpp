@@ -41,38 +41,12 @@ bool HttpResponse::isExistFile(std::string &filePath) {
 void HttpResponse::processErrorRes(int status_code) {
 	status_code_ = status_code;
 	res_type_ = ERROR;
-	// processDefaultErrorRes(status_code);
-}
+	file_path_ = getErrorPagePath(status_code);
 
-
-
-/**
- * @brief 반환할 ErrorLocation이 없는 경우에 사용
- * 
- * @param res 채워질 HttpResponse 객체
- * @param status_code 
- */
-void HttpResponse::processDefaultErrorRes(int status_code) {
-	status_code_ = status_code;
-	status_ = status_store_[status_code_];
-
-	std::string body = 
-	"<html><head><title>" + status_ + "</title></head><body><h1>" + status_ + "</h1></body></html>";
-	body_.insert(body_.end(), body.begin(), body.end());
-
-	content_type_ = "text/html";
-	content_length_ = body.size();
 	
-	std::string header =
-	http_version_ + " " + status_ + "\r\n" +
-	"ContentType: " + content_type_ + "\r\n" +
-	"ContentLength: " + std::to_string(content_length_) + "\r\n\r\n";
-	
-	joined_data_.insert(joined_data_.end(), header.begin(), header.end()); // insert 말고 덮어써야함
-	joined_data_.insert(joined_data_.end(), body_.begin(), body_.end());
-	std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n"; 
+	// Kqueue::registerReadEvent(fd, &udata);//파일 ReadEvent 등록
+	// Kqueue::unregisterReadEvent(udata.client_fd_, &udata);//클라이언트 Read이벤트 
 }
-
 
 void HttpResponse::processRedirectRes(int status_code) {
 	status_code_ = status_code;
@@ -82,18 +56,18 @@ void HttpResponse::processRedirectRes(int status_code) {
 	http_version_ + " " + status_ + "\r\n" +
 	"Location: " + location_ + "\r\n\r\n";
 	
-	joined_data_.insert(joined_data_.end(), header.begin(), header.end()); // insert 말고 덮어써야함
+	joined_data_.clear();
+	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 	std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
 
-std::string HttpResponse::getErrorPage(int status_code){
+std::string HttpResponse::getErrorPagePath(int status_code){
 	std::vector<int> error_codes = loc_block_.getErrorCode();
 	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
 	if (it != error_codes.end())
 		return loc_block_.getCombineErrorPath();
-	return "";
+	return std::string("/var/www/errorPages/404.html");
 }
-
 
 /* getter, setter */
 
@@ -115,9 +89,9 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
-		processRedirectRes(301);
 		return;
 	}
+	//is autoindex
 	file_path_ = loc.getCombineCgiPath();
 	if (file_path_ != "") {
 		res_type_ = CGI_EXEC;
@@ -126,7 +100,6 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineUploadStorePath();
 	if (file_path_ != "") {
 		res_type_ = UPLOAD_STORE;
-		// HttpMethod::handleHttpMethod(req, *this);
 		return;
 	}
 	processErrorRes(404);

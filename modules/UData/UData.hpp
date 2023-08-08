@@ -20,7 +20,7 @@ typedef enum fdType{
 class UData{
 	public :
 		/* constructor */
-		UData(e_fd_type type);
+		UData(e_fd_type type, int port);
 		~UData();
 
 		/* variables */
@@ -41,6 +41,7 @@ class UData{
 		// int 							status_code_;
 		int								client_fd_;
 		int								write_size_;
+		int								port_;
 	private :
 		UData();
 };

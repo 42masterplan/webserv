@@ -8,7 +8,16 @@
 # include <map>
 # include <algorithm>
 # include <cmath>
-# include "../UData/HttpMethod/HttpMethod.hpp"
+typedef enum methodType{
+	GET,
+	HEAD,
+	DELETE,
+	POST,
+	PUT,
+	PATCH,
+	OTHER_METHOD
+}e_method;
+
 typedef enum blockType{
 	HTTPBLOCK,
 	SERVERBLOCK,

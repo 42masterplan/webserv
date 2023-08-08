@@ -3,18 +3,20 @@
 # include <iostream>
 # include <string>
 # include <vector>
-# include "./HttpRequest/HttpRequest.hpp"
 # include "./HttpResponse/HttpResponse.hpp"
-class HttpResponse;
+# include "./HttpRequest/HttpRequest.hpp"
+
 //OK가 HttpRequest file과 겹침
 // typedef enum errorType{
 // 	OK = 0
 // }e_error;
+
 typedef enum fdType{
 	CLNT,
 	CGI,
 	FILETYPE
 }e_fd_type;
+
 class UData{
 	public :
 		/* constructor */

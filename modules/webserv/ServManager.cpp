@@ -206,7 +206,7 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			return ;
 		}
 		if (http_request_ref.size() != 0){
-			cur_udata->http_response_ = HttpResponse(cur_event->udata, http_request_ref[0]);
+			HttpResponseHandler::getInstance().parseResponse(cur_udata);
 			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
 			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
 		}
@@ -237,7 +237,7 @@ void  ServManager::sockWritable(struct kevent *cur_event){
 	else if ((size_t)cur_udata->write_size_ == ret_store_ref.size()){
 		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
 		if (cur_udata->http_request_.size() != 0)
-			cur_udata->http_response_ = HttpResponse(*cur_udata, http_request_[0]);
+			HttpResponseHandler::getInstance().parseResponse(cur_udata);
 		cur_udata->write_size_ = 0;
 	}
 }

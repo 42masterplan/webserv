@@ -1,10 +1,9 @@
 #include "HttpResponse.hpp"
 
-
+HttpResponse::HttpResponse(){}
 HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	if (this == &ref)
 		return *this;
-	
 	http_version_ = ref.http_version_;
 	status_code_ = ref.status_code_;
 	status_ = ref.status_;
@@ -13,7 +12,6 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	location_ = ref.location_;
 	body_ = ref.body_;
 	joined_data_ = ref.joined_data_;
-	loc_block_ = ref.loc_block_;
 	res_type_ = ref.res_type_;
 	file_path_ = ref.file_path_;
 	client_fd_ = ref.client_fd_;
@@ -22,31 +20,17 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	return *this;
 }
 
-HttpResponse::HttpResponse(UData &udata, HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_(initLocBlock(req)), res_type_(UPLOAD_STORE), file_path_("") {
+HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(UPLOAD_STORE), file_path_("") {
 	setFilePath(req, loc_block_);
-	
 }
 
 /* init */
 
-static LocBlock &initLocBlock(HttpRequest &req) {
-	ServBlock serv = ConfParser::getInstance().getServBlock(req.getPort(), req.getHost());
-	LocBlock loc = serv.findLocBlock(req.getPath());
-	return loc;
-}
-
-static bool isExistFile(std::string &filePath) {
+bool HttpResponse::isExistFile(std::string &filePath) {
 	std::ifstream file(filePath.c_str());
 	return file.good();
 }
 
-static std::string getErrorPage(LocBlock &loc, int status_code) {
-	std::vector<int> error_codes = loc.getErrorCode();
-	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
-	if (it != error_codes.end())
-		return loc.getCombineErrorPath();
-	return "";
-}
 
 // static void handleHttpError() {
 // 	if (res.getFilePath() == "")
@@ -55,10 +39,9 @@ static std::string getErrorPage(LocBlock &loc, int status_code) {
 // }
 
 void HttpResponse::processErrorRes(int status_code) {
-	status_code_ = 404;
-	file_path_ = getErrorPage(loc_block_, status_code_);
+	status_code_ = status_code;
 	res_type_ = ERROR;
-	processDefaultErrorRes(status_code);
+	// processDefaultErrorRes(status_code);
 }
 
 
@@ -103,7 +86,13 @@ void HttpResponse::processRedirectRes(int status_code) {
 	std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
 
-
+std::string HttpResponse::getErrorPage(int status_code){
+	std::vector<int> error_codes = loc_block_.getErrorCode();
+	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
+	if (it != error_codes.end())
+		return loc_block_.getCombineErrorPath();
+	return "";
+}
 
 
 /* getter, setter */
@@ -122,16 +111,16 @@ const std::string &HttpResponse::getFilePath() const {
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineReturnPath();
+	(void) req;
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
-		// HttpMethod::processRedirectRes(301);
+		processRedirectRes(301);
 		return;
 	}
 	file_path_ = loc.getCombineCgiPath();
 	if (file_path_ != "") {
-		res_type_ = CGI;
-		Cgi::forkCgi(req);
+		res_type_ = CGI_EXEC;
 		return;
 	}
 	file_path_ = loc.getCombineUploadStorePath();
@@ -150,6 +139,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 const std::vector<char>& HttpResponse::getJoinedData() const {
 	return joined_data_;
 }
+
 
 // int main() {
 // 	HttpResponse res;

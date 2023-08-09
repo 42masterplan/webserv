@@ -1,6 +1,7 @@
 #include "HttpResponse.hpp"
 
 HttpResponse::HttpResponse(){}
+
 HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	if (this == &ref)
 		return *this;
@@ -64,7 +65,6 @@ void	HttpResponse::makeNoBodyResponse(int status_code){
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 }
 
-
 std::string HttpResponse::getErrorPagePath(int status_code){
 	std::vector<int> error_codes = loc_block_.getErrorCode();
 	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
@@ -74,50 +74,46 @@ std::string HttpResponse::getErrorPagePath(int status_code){
 }
 
 /* getter, setter */
+void HttpResponse::setStatusCode(int status_code) { status_code_ = status_code; }
+std::vector<char> &HttpResponse::getBody() { return body_; }
+const std::string &HttpResponse::getFilePath() const { return file_path_; }
 
-void HttpResponse::setStatusCode(int status_code) {
-	status_code_ = status_code;
-}
+const bool& HttpResponse::isFolder(const std::string& file_path_) const {
+  struct stat path_info;
 
-std::vector<char> &HttpResponse::getBody() {
-	return body_;
-}
-
-const std::string &HttpResponse::getFilePath() const {
-	return file_path_;
+  if (stat(file_path_.c_str(), &path_info) != 0)
+    throw std::runtime_error("stat() ERROR");
+  if (S_ISDIR(path_info.st_mode))
+    return true;
+  return false;
 }
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineReturnPath();
-	(void) req;
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
 		processRedirectRes(loc.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다.
 		return;
 	}
-	//is autoindex
+  else if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
+    res_type_ = AUTOINDEX;
+    return;
+  }
 	file_path_ = loc.getCombineCgiPath();
-	if (file_path_ != "") {
+	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;
 		return;
 	}
 	file_path_ = loc.getCombineUploadStorePath();
-	if (file_path_ == "" && 3 <= req.getMethod() && req.getMethod() <= 5) {//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러
+	if (file_path_ == "" && 3 <= req.getMethod() && req.getMethod() <= 5){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러
 		res_type_ = ERROR;
 		setErrorCodePath(500);
 		return;
-	} else 
-	return;
+	}
 }
 
-
-
-
-const std::vector<char>& HttpResponse::getJoinedData() const {
-	return joined_data_;
-}
-
+const std::vector<char>& HttpResponse::getJoinedData() const { return joined_data_; }
 
 // int main() {
 // 	HttpResponse res;

@@ -3,6 +3,7 @@
 
 # include "../../config/ConfParser.hpp"
 # include "../HttpRequest/HttpRequest.hpp"
+# include "../webserv/AutoIndex.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
 
@@ -12,6 +13,9 @@
 # include <vector>
 # include <map>
 # include <algorithm>
+/* stat func */
+# include <dirent.h>
+# include <sys/stat.h>
 
 typedef enum res_type {
 	METHOD_TYPE,
@@ -30,6 +34,7 @@ class  HttpResponse{
 		bool isExistFile(std::string &filePath);
 		/* methods */
 		// void 		initStatusStore(void);
+    const bool& isFolder(const std::string& file_path_) const;
 		void		setErrorCodePath(int status_code);
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);

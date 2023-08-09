@@ -149,6 +149,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 			break;
 	}
 	UData*	udata_ptr = new UData(CLNT, listen_ports_[idx]);
+	std::cout << "my_port:::" <<  listen_ports_[idx] << std::endl;
 	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
@@ -241,8 +242,9 @@ void  ServManager::sockWritable(struct kevent *cur_event){
 	}
 	else if ((size_t)cur_udata->write_size_ == ret_store_ref.size()){
 		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
-		if (cur_udata->http_request_.size() != 0)
+		if (cur_udata->http_request_.size() != 0) //TODO:  클라이언트 ReadEvent를 Unregister하는게 두번째의 경우는 이미 unregister되어 있기 때문에 같은 함수를 호출하면 이미 안 된 이벤트를 다시 unregister 한다는게 이상하다.
 			HttpResponseHandler::getInstance().parseResponse(cur_udata);
+		//라고 생각했었는데, 이미 disable된 이벤트를 다시 disable해도 문제가 없다는 것을 보고 상관없음을 알았다. 확인은 필요할듯?
 		cur_udata->write_size_ = 0;
 	}
 }
@@ -298,9 +300,9 @@ void  ServManager::fileReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
 	if (read_len <= 0){
-		if (read_len == -1)
-			cur_udata->http_response_.setStatusCode(500);//this is error
 		Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
+		if (read_len == -1)
+			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}else{
 		buff_[read_len] = '\0';
@@ -319,7 +321,8 @@ void	ServManager::fileWritable(struct kevent *cur_event){
 	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-		cur_udata->http_response_.setStatusCode(201);
+		//파일에 다 썼기 때문에 여기서 HTTP_RESPONSE를 만들었습니다.
+		cur_udata->http_response_.makeNoBodyResponse(201);
 		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 		cur_udata->write_size_ = 0;
@@ -342,5 +345,5 @@ void  ServManager::disconnectFd(struct kevent *cur_event){
 }
 
 std::string	ServManager::createSession(void) {
-
+	return "";
 }

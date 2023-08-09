@@ -8,17 +8,17 @@ class HttpResponseHandler{
 	public:
 		static HttpResponseHandler&	getInstance();
 		void	parseResponse(UData *udata);
-		std::string getErrorPage(int status_code);
 		std::string convertToStr(e_method method);
 		void	handleResponse(UData *udata);
 		void	errorCallBack(UData &udata, int status_code);
+		void	RegisterClientWriteEvent(UData &udata);
+		void	RegisterFileWriteEvent(int file_fd, UData &udata);
+		void	RegisterFileReadEvent(int file_fd, UData &udata);
 	private:
 		void	handleHttpMethod(UData &udata);
 		void	handleHeadGet(UData &udata);
-		void	handleHead(UData &udata);
 		void	handlePost(UData &udata);
 		void	handleDelete(UData &udata);
-
 };
 
 #endif

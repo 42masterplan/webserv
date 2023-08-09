@@ -16,11 +16,11 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	file_path_ = ref.file_path_;
 	client_fd_ = ref.client_fd_;
 	write_size_ = ref.write_size_;
-
+	loc_block_ = ref.loc_block_;
 	return *this;
 }
 
-HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(UPLOAD_STORE), file_path_("") {
+HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
 	setFilePath(req, loc_block_);
 }
 
@@ -31,21 +31,10 @@ bool HttpResponse::isExistFile(std::string &filePath) {
 	return file.good();
 }
 
-
-// static void handleHttpError() {
-// 	if (res.getFilePath() == "")
-// 		res.processDefaultErrorRes(res.getStatusCode());
-// 	res.processDefaultErrorRes(res.getStatusCode());
-// }
-
-void HttpResponse::processErrorRes(int status_code) {
+void HttpResponse::setErrorCodePath(int status_code) {
 	status_code_ = status_code;
 	res_type_ = ERROR;
 	file_path_ = getErrorPagePath(status_code);
-
-	
-	// Kqueue::registerReadEvent(fd, &udata);//파일 ReadEvent 등록
-	// Kqueue::unregisterReadEvent(udata.client_fd_, &udata);//클라이언트 Read이벤트 
 }
 
 void HttpResponse::processRedirectRes(int status_code) {
@@ -58,8 +47,23 @@ void HttpResponse::processRedirectRes(int status_code) {
 	
 	joined_data_.clear();
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
-	std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
+	// std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
+
+/**
+ * @brief 에러가 나지 않고 POST에 성공했을 때 등에만 사용한다.보낼 body가 있을 대 사용해서는 안된다.
+ * 
+ * @param status_code 
+ */
+void	HttpResponse::makeNoBodyResponse(int status_code){
+	status_code_ = status_code;
+	status_ = status_store_[status_code_];
+	std::string header =
+	http_version_ + " " + status_ + "\r\n\r\n";
+	joined_data_.clear();
+	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
+}
+
 
 std::string HttpResponse::getErrorPagePath(int status_code){
 	std::vector<int> error_codes = loc_block_.getErrorCode();
@@ -89,6 +93,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
+		processRedirectRes(loc.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다.
 		return;
 	}
 	//is autoindex
@@ -98,11 +103,11 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return;
 	}
 	file_path_ = loc.getCombineUploadStorePath();
-	if (file_path_ != "") {
-		res_type_ = UPLOAD_STORE;
+	if (file_path_ == "" && 3 <= req.getMethod() && req.getMethod() <= 5) {//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러
+		res_type_ = ERROR;
+		setErrorCodePath(500);
 		return;
-	}
-	processErrorRes(404);
+	} else 
 	return;
 }
 

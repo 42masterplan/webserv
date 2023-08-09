@@ -92,7 +92,6 @@ const std::string &HttpResponse::getFilePath() const { return file_path_; }
 
 bool HttpResponse::isFolder(const std::string& file_path_) const {
   struct stat path_info;
-
   if (stat(file_path_.c_str(), &path_info) != 0)
     throw std::runtime_error("stat() ERROR");
   if (S_ISDIR(path_info.st_mode))
@@ -102,7 +101,10 @@ bool HttpResponse::isFolder(const std::string& file_path_) const {
 
 void  HttpResponse::setFileSize(const std::string& file_path_) {
   struct stat file_stat;
-
+  if (file_path_ == ""){
+    file_size_ = 0; //TODO: -1로 초기화할까 합니다.
+    return;
+  }
   if (stat(file_path_.c_str(), &file_stat) != 0)
     throw std::runtime_error("stat() ERROR");
   file_size_ = file_stat.st_size;

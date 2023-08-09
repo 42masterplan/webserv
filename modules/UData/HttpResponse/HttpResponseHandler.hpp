@@ -9,6 +9,7 @@ class HttpResponseHandler{
 		static HttpResponseHandler&	getInstance();
 		void	parseResponse(UData *udata);
 		std::string convertToStr(e_method method);
+		bool 	isDenyMethod(UData &udata, e_method method);
 		void	handleResponse(UData *udata);
 		void	errorCallBack(UData &udata, int status_code);
 		void	RegisterClientWriteEvent(UData &udata);

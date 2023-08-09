@@ -1,5 +1,5 @@
-#ifndef HTTPRESPONSE_HPP
-# define HTTPRESPONSE_HPP
+#ifndef HTTP_RESPONSE_HPP
+# define HTTP_RESPONSE_HPP
 
 # include "../../config/ConfParser.hpp"
 # include "../HttpRequest/HttpRequest.hpp"
@@ -16,6 +16,8 @@
 /* stat func */
 # include <dirent.h>
 # include <sys/stat.h>
+
+# define DEFAULT_ERROR_PATH "/var/www/errorPages/404.html"
 
 typedef enum res_type {
 	METHOD_TYPE,
@@ -35,7 +37,7 @@ class  HttpResponse{
 		/* methods */
 		// void 		initStatusStore(void);
     bool isFolder(const std::string& file_path_) const;
-		void		setErrorCodePath(int status_code);
+		void		processErrorRes(int status_code);
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);
 		void		makeNoBodyResponse(int status_code);
@@ -47,7 +49,7 @@ class  HttpResponse{
 		void											setStatusCode(int status_code);
 		std::vector<char>&				getBody();
 		const std::vector<char>& 	getJoinedData() const;
-		std::string 							getErrorPagePath(int status_code);
+		std::string 							getErrorPath(int status_code);
 		
 		std::string 			http_version_;
 		int								status_code_;

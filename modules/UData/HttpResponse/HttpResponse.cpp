@@ -32,10 +32,10 @@ bool HttpResponse::isExistFile(std::string &filePath) {
 	return file.good();
 }
 
-void HttpResponse::setErrorCodePath(int status_code) {
+void HttpResponse::processErrorRes(int status_code) {
 	status_code_ = status_code;
 	res_type_ = ERROR;
-	file_path_ = getErrorPagePath(status_code);
+	file_path_ = getErrorPath(status_code);
 }
 
 void HttpResponse::processRedirectRes(int status_code) {
@@ -65,12 +65,12 @@ void	HttpResponse::makeNoBodyResponse(int status_code){
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 }
 
-std::string HttpResponse::getErrorPagePath(int status_code){
+std::string HttpResponse::getErrorPath(int status_code){
 	std::vector<int> error_codes = loc_block_.getErrorCode();
 	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
 	if (it != error_codes.end())
 		return loc_block_.getCombineErrorPath();
-	return std::string("/var/www/errorPages/404.html");
+	return std::string(DEFAULT_ERROR_PATH);
 }
 
 /* getter, setter */
@@ -88,6 +88,13 @@ bool HttpResponse::isFolder(const std::string& file_path_) const {
   return false;
 }
 
+static bool isUploadMethod(HttpRequest &req) {
+	const e_method method = req.getMethod();
+	if (method == POST || method == PUT || method == PATCH)
+		return true;
+	return false;
+}
+
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineReturnPath();
 	if (file_path_ != "") {
@@ -96,7 +103,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		processRedirectRes(loc.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다.
 		return;
 	}
-  else if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
+  if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
     res_type_ = AUTOINDEX;
     return;
   }
@@ -106,9 +113,9 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return;
 	}
 	file_path_ = loc.getCombineUploadStorePath();
-	if (file_path_ == "" && 3 <= req.getMethod() && req.getMethod() <= 5){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러
+	if (isUploadMethod(req) && file_path_ == ""){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
 		res_type_ = ERROR;
-		setErrorCodePath(500);
+		processErrorRes(404);
 		return;
 	}
 }

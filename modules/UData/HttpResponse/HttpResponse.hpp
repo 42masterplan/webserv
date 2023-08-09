@@ -17,7 +17,7 @@
 # include <dirent.h>
 # include <sys/stat.h>
 
-# define DEFAULT_ERROR_PATH "/var/www/errorPages/404.html"
+# define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
 
 typedef enum res_type {
 	METHOD_TYPE,
@@ -41,6 +41,7 @@ class  HttpResponse{
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);
 		void		makeNoBodyResponse(int status_code);
+		void		makeBodyResponse(int status_code, int content_length);
 		/* getter, setter */
 
 		const std::string&				getFilePath() const;

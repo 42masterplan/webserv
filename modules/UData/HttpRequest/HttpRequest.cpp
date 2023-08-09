@@ -108,6 +108,7 @@ void	HttpRequest::parseFirstLine(std::string line) {
 	std::vector<const char*> methods(method_tmp, method_tmp + 6);
 	std::string	target;
 	int					method;
+	double			version;
 
 	/* method 분리 */
 	target = getTarget(line);
@@ -124,11 +125,22 @@ void	HttpRequest::parseFirstLine(std::string line) {
 	if (request_error_) return ;
   path_ = target;
 
-	/* version */
-	if (line != "HTTP/1.1") {
+	/* version 확인 */
+	if (line.find("HTTP/", 0, 5) == std::string::npos) {
+		request_error_ = FORM_ERROR;
+		return ;
+	}
+	std::stringstream ss(line.substr(5));
+	ss >> version;
+	if (ss.tellg() != -1) {
+		request_error_ = FORM_ERROR;
+		return ;
+	}
+	if (version < 1.1) {
 		request_error_ = VERSION_ERROR;
 		return ;
 	}
+	
 	parse_status_ = HEADER;
 }
 

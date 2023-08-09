@@ -272,20 +272,24 @@ void  ServManager::cgiReadable(struct kevent *cur_event){
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
     std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
     std::cout << "FROM CGI PROC\n" << raw_data_string << "\n";
-    waitpid(-1, NULL, 0);
 	}
 }
 
 /**
  * @brief CGI 프로세스를 회수하는 함수입니다.
- * @param udata pid가 담긴 udata입니다.
+ * @param udata pid가 담긴 udata입니다. 이후 CLNT용으로 전환됩니다.
  * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
  */
 void  ServManager::cgiTerminated(UData* udata){
   int status;
   Kqueue::unregisterExitEvent(udata->cgi_pid_, udata);
+  Kqueue::registerReadEvent(udata->client_fd_, udata);
+  //TODO: 자식 프로세스의 fd[0]을 unregister해야할까요? 어차피 종료된 프로세스인데..
+  //그렇게 한다면 udata에 자식 프로세스 fd도 들고있어야 합니다.
   waitpid(udata->cgi_pid_, &status, 0);
-  delete udata;
+  udata->fd_type_ = CLNT;
+  udata->prog_name_ = "";
+  udata->cgi_pid_ = 0;
   if (WIFEXITED(status))
     return;
   else

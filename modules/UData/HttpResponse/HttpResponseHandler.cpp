@@ -23,12 +23,7 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 	switch(cur_response.res_type_){
 		case METHOD_TYPE : handleHttpMethod(*udata);
 			break ;
-		case CGI_EXEC : Cgi::forkCgi(cur_request); //CGI이벤트 등록 
-    /*
-    1. 호출 클라이언트 udata 인자로 받아서 fd_type CGI로 변경 후 사용
-    2. CGI종료 시 다시 udata fd_type 클라이언트로 변경하며 CGI사용 자원 초기화
-    */
-		//TODO: 클라이언트 fd를 알고 있어야해요!! CGI 처리를 끝내고 그곳에서 클라이언트 이벤트를 등록할 꺼라서 개인적으로 같은 UDATA 새로 안 만들고 같은 Udata 써도 문제 없을 것 같아보여요
+		case CGI_EXEC : Cgi::forkCgi(cur_request, udata);
 			break ;
 		case AUTOINDEX : //TODO: 이거 이벤트 어디서 등록할까요?
 		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
@@ -64,7 +59,7 @@ std::string HttpResponseHandler::convertToStr(e_method method) {
 
 bool HttpResponseHandler::isDenyMethod(UData &udata, e_method method) {
 	const std::vector<std::string> deny_method = udata.http_response_.loc_block_.getDenyMethod();
-	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) == deny_method.end())//메서드 deny
+	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) != deny_method.end())//메서드 deny
 		return true;
 	return false;
 }
@@ -131,7 +126,7 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
 		if (status_code != 500 && error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
 			return errorCallBack(udata, 500);
-		RegisterFileWriteEvent(error_file_fd_, udata);
+		RegisterFileReadEvent(error_file_fd_, udata);
 	}
 	//에러페이지기 설정되지 않는 경우가 존재하려나?
 	else 

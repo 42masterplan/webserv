@@ -65,6 +65,17 @@ void	HttpResponse::makeNoBodyResponse(int status_code){
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 }
 
+void	HttpResponse::makeBodyResponse(int status_code, int content_length){
+	status_code_ = status_code;
+	status_ = status_store_[status_code_];
+	std::string header =
+	http_version_ + " " + status_ + "\r\n"+
+	"content_length: " + std::to_string(content_length) + "\r\n\r\n";
+	joined_data_.clear();
+	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
+}
+
+
 std::string HttpResponse::getErrorPath(int status_code){
 	std::vector<int> error_codes = loc_block_.getErrorCode();
 	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	

@@ -39,7 +39,7 @@ class HttpRequest{
 		const std::string&				getHost(void) const;
 		const e_requestError&			getRequestError(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
-
+		void											setPort(int port);
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);

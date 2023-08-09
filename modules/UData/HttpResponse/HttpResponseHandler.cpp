@@ -9,6 +9,7 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	//아래 switch case에서 해당하는 이벤트 등록
+	std::cout << udata->http_response_.res_type_ << std::endl;
 	handleResponse(udata);
 }
 
@@ -55,9 +56,10 @@ std::string HttpResponseHandler::convertToStr(e_method method) {
 void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	e_method method = udata.http_request_[0].getMethod();
 	const std::vector<std::string> deny_method = udata.http_response_.loc_block_.getDenyMethod();
-
+	
 	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) == deny_method.end())//메서드 deny
 		return errorCallBack(udata, 405);
+	std::cout << "HI" <<std::endl;
 	switch(method) {
 		case GET:
 			return handleHeadGet(udata);

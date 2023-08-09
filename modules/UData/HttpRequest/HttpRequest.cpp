@@ -26,6 +26,7 @@
  * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
+HttpRequest::HttpRequest():content_length_(-1), parse_status_(FIRST), request_error_(OK),read_state_(false), to_read_(0){}
 /*Test용 함수*/
 void	print_vec(std::vector<char>& t){
 	std::cout << "------------printvec----------" << std::endl;
@@ -39,8 +40,7 @@ void	print_vec(std::vector<char>& t){
 	}
 	std::cout << "-------------------------------" <<std::endl;
 }
-// TODO: port 설정 어디에서 할 지 결정
-HttpRequest::HttpRequest(): content_length_(-1), parse_status_(FIRST), request_error_(OK),read_state_(false), to_read_(0){}
+
 
 const e_method&						HttpRequest::getMethod(void) const { return method_; }
 const std::string&				HttpRequest::getPath(void) const { return path_; }
@@ -53,6 +53,8 @@ const std::string&				HttpRequest::getContentType(void) const { return content_t
 const std::string&				HttpRequest::getHost(void) const { return host_; }
 const e_parseStatus&		HttpRequest::getParseStatus(void) const { return parse_status_; }
 const e_requestError&	HttpRequest::getRequestError(void) const { return request_error_; }
+
+void	HttpRequest::setPort(int port){port_ = port;}
 
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {

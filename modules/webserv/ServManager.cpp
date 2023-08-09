@@ -188,6 +188,7 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			http_request_ref.back().parse(raw_data_ref);
 		while (http_request_ref.size() == 0 || (http_request_ref.back().getParseStatus() == FINISH && !http_request_ref.back().getRequestError())) {
 			http_request_ref.push_back(HttpRequest());
+			http_request_ref.back().setPort(cur_udata->port_);
 			http_request_ref.back().parse(raw_data_ref);
 		}
 		// if (cur_udata->http_request_.size() == 0 || \

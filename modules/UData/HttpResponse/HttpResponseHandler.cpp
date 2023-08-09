@@ -119,14 +119,14 @@ void HttpResponseHandler::handleDelete(UData &udata) {
  * @param status_code 설정하고 싶은 status code
  */
 void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
-	std::cout << "statusCode :" << status_code << std::endl;
 	udata.http_response_.processErrorRes(status_code);
-	int error_fd ;
+	int error_file_fd_ ;
+	std::cout << "ERROR file PATH" <<udata.http_response_.getFilePath() <<std::endl;
 	if (udata.http_response_.getFilePath() != ""){
-		error_fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-		if (status_code != 500 && error_fd == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
+		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
+		if (status_code != 500 && error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
 			return errorCallBack(udata, 500);
-		RegisterFileReadEvent(error_fd, udata);
+		RegisterFileReadEvent(error_file_fd_, udata);
 	}
 	//에러페이지기 설정되지 않는 경우가 존재하려나?
 	else 

@@ -224,25 +224,54 @@ void  ServManager::sockWritable(struct kevent *cur_event){
 		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
 		return ;
 	}
-	std::vector<char>&	ret_store_ref = cur_udata->http_response_.getBody();
-	if (!ret_store_ref.size())
-		return ;
-	int n = write(cur_event->ident, &ret_store_ref[cur_udata->write_size_], ret_store_ref.size() - cur_udata->write_size_);
-	cur_udata->write_size_ += n;
-	if (n == -1){
-		std::cerr << "client write error!" << std::endl;
-		cur_udata->http_response_.setStatusCode(500);//this is error
-		// disconnectFd(cur_event);
-		return ;
-	}
-	else if ((size_t)cur_udata->write_size_ == ret_store_ref.size()){
-		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+
+	std::vector<char>&	first_response_ref = cur_udata->http_response_.getJoinedData();
+	std::vector<char>&	second_response_ref = cur_udata->http_response_.getBody();
+	int n;
+	if (first_response_ref.size()){//여기가 첫번째 요청을 보내는 곳
+	// std::cout << "first"<<std::endl;
+		// print_vec(first_response_ref);
+		n = write(cur_event->ident, &first_response_ref[cur_udata->write_size_], first_response_ref.size() - cur_udata->write_size_);
+		cur_udata->write_size_ += n;
+		std::cout <<"Write size" <<cur_udata->write_size_  <<std::endl;
+		if (n == -1){
+			std::cerr << "client write error!" << std::endl;
+			cur_udata->http_response_.setStatusCode(500);//this is error
+			// disconnectFd(cur_event);
+			cur_udata->write_size_ = 0;
+			return ;
+		}
+		else if ((size_t)cur_udata->write_size_ == first_response_ref.size()){	
+			std::cout << "FIRST END" <<std::endl;
+			first_response_ref.clear();
+			std::cout << "--------------response size::"<<first_response_ref.size() <<std::endl;
+			cur_udata->write_size_ = 0;
+		}
+		
+	}else { //두번째 body를 보내는 분기입니다.
+		n = write(cur_event->ident, &second_response_ref[cur_udata->write_size_], second_response_ref.size() - cur_udata->write_size_);
+			cur_udata->write_size_ += n;
+		if (n == -1){
+			std::cerr << "client write error!" << std::endl;
+			cur_udata->http_response_.setStatusCode(500);//this is error
+			// disconnectFd(cur_event);
+			return ;
+		}
+		else if ((size_t)cur_udata->write_size_ == second_response_ref.size() || second_response_ref.size() == 0){	
+			std::cout << "SECOND END" <<std::endl;
+			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
+		}
 		if (cur_udata->http_request_.size() != 0) //TODO:  클라이언트 ReadEvent를 Unregister하는게 두번째의 경우는 이미 unregister되어 있기 때문에 같은 함수를 호출하면 이미 안 된 이벤트를 다시 unregister 한다는게 이상하다.
 			HttpResponseHandler::getInstance().parseResponse(cur_udata);
-		//라고 생각했었는데, 이미 disable된 이벤트를 다시 disable해도 문제가 없다는 것을 보고 상관없음을 알았다. 확인은 필요할듯?
+			//라고 생각했었는데, 이미 disable된 이벤트를 다시 disable해도 문제가 없다는 것을 보고 상관없음을 알았다. 확인은 필요할듯?
+		else 
+				Kqueue::registerReadEvent(cur_event->ident, cur_udata);
 		cur_udata->write_size_ = 0;
 	}
 }
+	// std::cout << "write size::" << cur_udata->write_size_  << std::endl;
+
 
 /**
  * @brief cgi 파이프가 readable할 때 호출되는 함수입니다.
@@ -310,11 +339,13 @@ void  ServManager::fileReadable(struct kevent *cur_event){
 		cur_udata->fd_type_= CLNT;
 		if (read_len == -1)
 			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		// std::cout << file_store_ref.size();
 		cur_udata->http_response_.makeBodyResponse(200, file_store_ref.size());//////
 		std::cout << "Read Done" << std::endl;
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
-	} 
-}
+	}
+} 
+
 
 /**
  * @brief 파일에 Write하는 이벤트가 발생했을 때 해당하는 파일에 write합니다. 

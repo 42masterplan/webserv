@@ -3,7 +3,7 @@
 
 # include "../../config/ConfParser.hpp"
 # include "../HttpRequest/HttpRequest.hpp"
-# include "../webserv/AutoIndex.hpp"
+# include "../../webserv/AutoIndex.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
 
@@ -34,7 +34,7 @@ class  HttpResponse{
 		bool isExistFile(std::string &filePath);
 		/* methods */
 		// void 		initStatusStore(void);
-    const bool& isFolder(const std::string& file_path_) const;
+    bool isFolder(const std::string& file_path_) const;
 		void		setErrorCodePath(int status_code);
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);

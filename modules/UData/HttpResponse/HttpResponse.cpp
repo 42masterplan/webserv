@@ -78,7 +78,7 @@ void HttpResponse::setStatusCode(int status_code) { status_code_ = status_code; 
 std::vector<char> &HttpResponse::getBody() { return body_; }
 const std::string &HttpResponse::getFilePath() const { return file_path_; }
 
-const bool& HttpResponse::isFolder(const std::string& file_path_) const {
+bool HttpResponse::isFolder(const std::string& file_path_) const {
   struct stat path_info;
 
   if (stat(file_path_.c_str(), &path_info) != 0)

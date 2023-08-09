@@ -5,13 +5,14 @@
 # include <stdlib.h>
 # include <stdio.h>
 # include <sys/stat.h>
+# include <vector>
 
 /**
  * @brief 오토인덱싱 기능을 제공하는 정적 클래스입니다.
  */
 class AutoIndex {
   public:
-    static std::string        getDirectoryListing(const char* input_dir);
+    static std::vector<char>  getDirectoryListing(const char* input_dir);
   private:
     AutoIndex();
     ~AutoIndex();

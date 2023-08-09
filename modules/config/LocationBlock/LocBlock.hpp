@@ -49,6 +49,7 @@ public:
 	/* 사용자가 호출하지 않는 public 함수 (재귀 템플릿 때문에 public.) */
 	void	makeBlock(std::string line, std::ifstream& input, int& line_len_);
 	std::map<std::string, std::string>& getDirStore();
+	int getRank();
 private:
 	void	parseLocDirective();
 	void	parseReturn(std::string ret_line);

@@ -38,12 +38,14 @@ class HttpRequest{
 		const std::string&				getContentType(void) const;
 		const std::string&				getHost(void) const;
 		const e_requestError&			getRequestError(void) const;
-		const e_parseStatus&	getParseStatus(void) const;
+		const e_parseStatus&			getParseStatus(void) const;
+		void											setPort(int port);
 
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);
 		void		printBodyInfo();//for test
+
 	private :
 		e_method				method_;
 		std::string			path_;
@@ -56,13 +58,14 @@ class HttpRequest{
 		int							content_length_;
 		std::string			content_type_;
 		std::string			host_;
+		std::map<std::string, std::string>	cookie_;
 
 		/* parsing */
 		e_parseStatus		parse_status_;
 		e_requestError	request_error_;
 		std::string			last_header_;
 
-		/*body parsing member*/
+		/* body parsing member */
 		bool read_state_;
 		int to_read_;
 
@@ -71,6 +74,7 @@ class HttpRequest{
 		void						parseHeader(std::string line);
 		void						checkHeader(void);
 		bool						parseBody(std::vector<char>& raw_data);
+		bool						parseChunkedBody(std::vector<char>& raw_data);
 
 		/* parsing utils */
 		std::string			getLine(std::vector<char>& raw_data);

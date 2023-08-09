@@ -1,13 +1,16 @@
 #include "ServManager.hpp"
 
+ServManager::ServManager(){}
+
 /**
  * @brief 싱글톤 패턴을 위해서 static 변수를 반환합니다.
- * @return ConfParser& 싱글톤 패턴을 위해서 static 변수를 반환합니다.
+ * @return ServManager& 싱글톤 패턴을 위해서 static 변수를 반환합니다.
  */
 ServManager& ServManager::getInstance(){
 	static ServManager serv_manager;
 	return serv_manager;
 }
+
 
 /**
  * @brief ServManager 소멸자입니다. 서버 소켓을 닫습니다.
@@ -19,8 +22,10 @@ ServManager::~ServManager() {
 	}
 }
 
+
 /**
- * @brief 서버를 초기화 하는 함수로, 서버소켓 생성, 초기화, bind, listen의 과정으로 서버를 초기화합니다.
+ * @brief 
+ * 
  */
 void  ServManager::serverInit(){
 	listen_ports_ = ConfParser::getInstance().getListenPorts();
@@ -31,6 +36,7 @@ void  ServManager::serverInit(){
 		std::cout << "listen:::::"<<listen_ports_[i] << std::endl;
 	}
 }
+
 
 /**
  * @brief 메인로직을 구성하는 함수로, kqueue를 시작하고 무한루프를 돌면서 이벤트를 감지->처리합니다.
@@ -43,7 +49,6 @@ void  ServManager::launchServer(){
 	}
 }
 
-ServManager::ServManager(){}
 
 /**
  * @brief 서버소켓을 초기화합니다. SO_REUSEADDR로 포트를 재사용하게 해주었습니다.
@@ -58,6 +63,7 @@ void  ServManager::sockInit(){
 		throw(std::runtime_error("Socket opt Change ERROR!!"));
 	serv_sock_fds_.push_back(serv_sockfd);
 }
+
 
 /**
  * @brief 서버의 serv_addr_ 변수를 초기화하고 bind()를 호출합니다.
@@ -74,6 +80,7 @@ void  ServManager::sockBind(int port){
 		throw(std::runtime_error("BIND() ERROR"));
 }
 
+
 /**
  * @brief listen()함수에 서버소켓과 15칸의 연결대기큐 사이즈 인자를 주어 호출합니다.
  * @note 여기서 서버 fd를 non-blocking으로 바꿔줍니다.
@@ -84,7 +91,6 @@ void  ServManager::sockListen(){
 		throw(std::runtime_error("LISTEN() ERROR"));
 	fcntl(serv_sock_fds_[serv_sock_fds_.size() - 1], F_SETFL, O_NONBLOCK);
 }
-
 
 /**
  * @brief 코어함수로, kqueue에서 받아온 이벤트들을 하나씩 처리합니다.
@@ -106,21 +112,19 @@ void  ServManager::handleEvents(){
 		else if (cur_event->udata == NULL)
 			continue;
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_READ)
-			sockReadable(cur_event);
+			EventHandler::getInstance().sockReadable(cur_event);
 		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_WRITE)
-			sockWritable(cur_event);
+			EventHandler::getInstance().sockWritable(cur_event);
 		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_READ)
-			cgiReadable(cur_event);
+			EventHandler::getInstance().cgiReadable(cur_event);
     else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
-      cgiTerminated(cur_udata);
+      EventHandler::getInstance().cgiTerminated(cur_udata);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_READ)
-			fileReadable(cur_event);
+			EventHandler::getInstance().fileReadable(cur_event);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_WRITE)
-			fileWritable(cur_event);
-		else{
-			std:: cout << "????????" << cur_fd_type << "\n";
-			throw(std::runtime_error("THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
-		}
+			EventHandler::getInstance().fileWritable(cur_event);
+		else
+			throw(std::runtime_error("????????THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
 	}
 }
 
@@ -131,207 +135,42 @@ void  ServManager::handleEvents(){
  * @exception accept()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  ServManager::registerNewClnt(int serv_sockfd){
+	size_t idx;
 	struct sockaddr_in	clnt_addr;
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
 	int									option;
-	socklen_t						optlen;
+	socklen_t						option_len;
 	if (clnt_sockfd == -1)
 		throw(std::runtime_error("ACCEPT() ERROR"));
-	std::cout << "Connected Client : " << clnt_sockfd << std::endl;
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
-	optlen = sizeof(option);
+	option_len = sizeof(option);
 	option = 1;
-	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
-	UData*	udata_ptr = new UData(CLNT);
+	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, option_len);
+	for (idx = 0; idx < serv_sock_fds_.size(); idx++){
+		if (serv_sock_fds_[idx] == serv_sockfd)
+			break;
+	}
+	UData*	udata_ptr = new UData(CLNT, listen_ports_[idx]);
+	std::cout << "Connected Client : " << clnt_sockfd << std::endl;
+	std::cout << "my_port:::" <<  listen_ports_[idx] << std::endl;
 	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
 
-/**
- * @brief 클라이언트 소켓이 readable할 때 호출되는 함수입니다.
- * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
- * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
- */
-void  ServManager::sockReadable(struct kevent *cur_event){
-	UData*	cur_udata = (UData*)cur_event->udata;
-	if (cur_event->flags == EV_EOF){
-		disconnectFd(cur_event);
-		return;
-	}
-	if (cur_udata == NULL){
-		std::cout << cur_event->ident << "is already disconnected!(read)"<< std::endl;
-		return ;
-	}
+std::string	ServManager::createSession(void) {
+	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const int					length = 16;
+  std::string				random_str;
 
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
-	if (rlen == -1){
-		std::cerr << "already disconnected!"<< std::endl;
-		// throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
-	} else if (rlen == 0){
-		std::cout << "clnt sent eof. disconnecting.\n";
-		disconnectFd(cur_event);
-	}
-	else{
-		buff_[rlen] = '\0';
-		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
-
-		std::vector<HttpRequest>& http_request_ref = cur_udata->http_request_;
-		if (http_request_ref.size() && (http_request_ref.back().getParseStatus() != FINISH && !http_request_ref.back().getRequestError()))
-			http_request_ref.back().parse(raw_data_ref);
-		while (http_request_ref.size() == 0 || (http_request_ref.back().getParseStatus() == FINISH && !http_request_ref.back().getRequestError())) {
-			http_request_ref.push_back(HttpRequest());
-			http_request_ref.back().parse(raw_data_ref);
-		}
-		// if (cur_udata->http_request_.size() == 0 || \
-		// 	(cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size())){
-		// 	HttpRequest request_parser;
-		// 	cur_udata->http_request_.push_back(request_parser);
-		// }
-		// cur_udata->http_request_.back().parse(raw_data_ref);
-		// cur_udata->http_request_.back().printBodyInfo();
-
-		if (http_request_ref.back().getRequestError()) {
-			//아에 잘못 된 형식으로 메세지가 온 경우들에 대해서 Request 단에서 에러를 처리해줍니다.
-			//클라이언트 소켓 read_event 삭제 -> 파일 read_event 등록 -> 파일 read가 끝나면 그 파일을 write
-			//어떤 파일을 가져와야하는지 확인해서 그 파일을 보낼 수 있도록 한다.
-			//파일을 보내고 할 수 있는 선택 : 1. 연결을 끊는다. 또는 2.클래스에 담겨있는 정보들을 삭제한다.
-			//HTTP status code를 정한다.
-			//필요한 정보
-			//1. status code
-			//2. 해당하는 Server Block
-			//TODO : error_handler 함수 만들기
-			// errorHandler();
-			return ;
-		}
-		if (http_request_ref.size() != 0){
-			HttpResponseHandler::getInstance().parseResponse(cur_udata);
-			Kqueue::registerWriteEvent(cur_event->ident, cur_event->udata);
-			Kqueue::unregisterReadEvent(cur_event->ident, cur_event->udata);//TODO: 나중에 Write Event가 끝나고 Udata delete 필요
+  srand(static_cast<unsigned int>(time(NULL)));
+	while (true) {
+		random_str = "";
+	  for (int i = 0; i < length; ++i)
+	      random_str += characters[rand() % characters.length()];
+		if (session.find(random_str) == session.end()) {
+			session[random_str] = "user" + intToString(session.size());
 		}
 	}
-}
-
-/**
- * @brief 클라이언트 소켓이 writable할 때 호출되는 함수입니다.
- * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
- */
-void  ServManager::sockWritable(struct kevent *cur_event){
-	UData*	cur_udata = (UData*)cur_event->udata;
-		if (cur_udata == NULL){
-			std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
-		return ;
-	}
-	std::vector<char>&	ret_store_ref = cur_udata->http_response_.getBody();
-	if (!ret_store_ref.size())
-		return ;
-	int n = write(cur_event->ident, &ret_store_ref[cur_udata->write_size_], ret_store_ref.size() - cur_udata->write_size_);
-	cur_udata->write_size_ += n;
-	if (n == -1){
-		std::cerr << "client write error!" << std::endl;
-		cur_udata->http_response_.setStatusCode(500);//this is error
-		// disconnectFd(cur_event);
-		return ;
-	}
-	else if ((size_t)cur_udata->write_size_ == ret_store_ref.size()){
-		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
-		if (cur_udata->http_request_.size() != 0)
-			HttpResponseHandler::getInstance().parseResponse(cur_udata);
-		cur_udata->write_size_ = 0;
-	}
-}
-
-/**
- * @brief cgi 파이프가 readable할 때 호출되는 함수입니다.
- * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
- * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
- */
-void  ServManager::cgiReadable(struct kevent *cur_event){
-	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
-	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
-	if (rlen == -1)
-		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
-	else if (rlen == 0){
-		std::cout << "CGI process sent eof, closing fd.\n";
-		if (cur_event->udata != NULL)
-			disconnectFd(cur_event);
-	}
-	else{
-		buff_[rlen] = '\0';
-		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
-    std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
-    std::cout << "FROM CGI PROC\n" << raw_data_string << "\n";
-    waitpid(-1, NULL, 0);
-	}
-}
-
-/**
- * @brief CGI 프로세스를 회수하는 함수입니다.
- * @param udata pid가 담긴 udata입니다.
- * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
- */
-void  ServManager::cgiTerminated(UData* udata){
-  int status;
-  Kqueue::unregisterExitEvent(udata->cgi_pid_, udata);
-  waitpid(udata->cgi_pid_, &status, 0);
-  delete udata;
-  if (WIFEXITED(status))
-    return;
-  else
-    throw std::runtime_error("CGI terminated abnormally");
-}
-
-/**
- * @brief 파일을 Read하는 이벤트가 발생했을 때 해당하는 파일을 Read합니다.
- * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
- */
-void  ServManager::fileReadable(struct kevent *cur_event){
-	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
-	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
-	if (read_len <= 0){
-		if (read_len == -1)
-			cur_udata->http_response_.setStatusCode(500);//this is error
-		Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
-		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
-	}else{
-		buff_[read_len] = '\0';
-		file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
-	}
-}
-
-/**
- * @brief 파일에 Write하는 이벤트가 발생했을 때 해당하는 파일에 write합니다. 
- * @note Post에서 사용할 예정입니다.
- * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
- */
-void	ServManager::fileWritable(struct kevent *cur_event){
-	UData*	cur_udata = (UData*)cur_event->udata;
-	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
-	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
-	cur_udata->write_size_+= write_size;
-	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-		cur_udata->http_response_.setStatusCode(201);
-		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
-		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
-		cur_udata->write_size_ = 0;
-	}
-}
-
-/**
- * @brief fd 연결을 끊는 함수
- * @param cur_event 해당되는 이벤트 구조체
- */
-void  ServManager::disconnectFd(struct kevent *cur_event){
-	UData*	udata = (UData*)cur_event->udata;
-  if (udata->fd_type_ == CLNT)
-	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
-  else if (udata->fd_type_ == CGI)
-	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
-	close(cur_event->ident);
-	delete udata;
-	cur_event->udata = NULL;
+	return random_str;
 }

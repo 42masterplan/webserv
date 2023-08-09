@@ -26,6 +26,7 @@ LocBlock::~LocBlock(){}
 // }
 
 /*----------------getter (멤버변수 그대로 반환)---------------*/
+int LocBlock::getRank(){return rank_;}
 const std::string& LocBlock::getUploadStore()const{return upload_store_; }
 const std::string& LocBlock::getLocInfo()const{return loc_info_;}
 const int& LocBlock::getReturnCode()const{return return_code_;}

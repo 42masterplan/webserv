@@ -6,8 +6,10 @@
 
 class StatusMsgStore {
 	public:
-		static void initStatusMsgStore();
-		static std::string getStatusMsg(int status_msg_code);
+		StatusMsgStore();
+
+		void initStatusMsgStore();
+		std::string getStatusMsg(int status_msg_code);
 
 		static std::map<int, std::string> status_msg_store_;
 };

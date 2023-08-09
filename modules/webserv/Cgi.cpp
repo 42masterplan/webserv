@@ -40,9 +40,10 @@ char**  Cgi::getEnvs(HttpRequest& req){
  * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
  * 자식 프로세스는 주어진 Cgi 스크립트를 실행합니다.
  * @param req CGI 프로세스를 생성할 HttpRequest 클래스 인스턴스 레퍼런스입니다.
+ * @param ptr 호출한 클라이언트가 사용하는 udata입니다. CGI타입으로 변경됩니다.
  * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
  */
-void  Cgi::forkCgi(HttpRequest& req){
+void  Cgi::forkCgi(HttpRequest& req, UData* ptr){
   int   pfd[2];
   pid_t child_pid;
 
@@ -50,8 +51,6 @@ void  Cgi::forkCgi(HttpRequest& req){
     throw (std::runtime_error("pipe() Error"));
   int flags = fcntl(pfd[0], F_GETFL, 0);
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
-  UData*  ptr = new UData(CGI);
-  //약식으로 CGI타입을 판별했습니다.
   char* script_name;
   if (req.getPath().find(".php")){
     ptr->prog_name_ = "php";
@@ -63,7 +62,9 @@ void  Cgi::forkCgi(HttpRequest& req){
   }
   else
     throw std::runtime_error("invalid CGI path");
+  ptr->fd_type_ = CGI;
   Kqueue::registerReadEvent(pfd[0], ptr);
+  Kqueue::unregisterReadEvent(ptr->client_fd_, ptr);
   child_pid = fork();
   if (child_pid == -1){
     close(pfd[1]);

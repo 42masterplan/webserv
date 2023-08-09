@@ -160,6 +160,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
  * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  ServManager::sockReadable(struct kevent *cur_event){
+	std::cout << "SOCKREADABLE" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_event->flags == EV_EOF){
 		disconnectFd(cur_event);
@@ -225,6 +226,7 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  ServManager::sockWritable(struct kevent *cur_event){
+	std::cout << "SOCKWritable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 		if (cur_udata == NULL){
 			std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
@@ -301,15 +303,23 @@ void  ServManager::cgiTerminated(UData* udata){
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
 void  ServManager::fileReadable(struct kevent *cur_event){
+	std::cout << "FILE READable" << std::endl;
 	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
-	if (read_len <= 0){
-		Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
+	if (read_len < BUFF_SIZE){
+		std::cout << "read_len" << read_len <<std::endl;
+		std::cout << "WHIWHIWH"<<std::endl;
+		close(cur_event->ident);
+		// Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
+		cur_udata->fd_type_= CLNT;
 		if (read_len == -1)
 			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
-		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
+		cur_udata->http_response_.makeBodyResponse(200, file_store_ref.size());//////
+		std::cout << "Read Done" << std::endl;
+		// Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}else{
+		std::cout << "Buff::" << buff_<<std::endl;
 		buff_[read_len] = '\0';
 		file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
 	}
@@ -321,6 +331,7 @@ void  ServManager::fileReadable(struct kevent *cur_event){
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
 void	ServManager::fileWritable(struct kevent *cur_event){
+		std::cout << "FILE WRITEable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
 	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);

@@ -18,6 +18,7 @@
 # include <sys/stat.h>
 
 # define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
+# define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
 
 typedef enum res_type {
 	METHOD_TYPE,

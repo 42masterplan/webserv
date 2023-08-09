@@ -38,7 +38,7 @@
 class ServManager{
 	public :
 		static ServManager& getInstance();
-		static const int BUFF_SIZE = 1024;
+		static const int BUFF_SIZE = 5000;
 		          ~ServManager();
 		void      serverInit();
 		void      launchServer();

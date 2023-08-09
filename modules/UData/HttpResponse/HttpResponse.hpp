@@ -18,7 +18,6 @@
 # include <sys/stat.h>
 
 # define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
-# define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
 
 typedef enum res_type {
 	METHOD_TYPE,
@@ -48,9 +47,10 @@ class  HttpResponse{
 		const std::string&				getFilePath() const;
 		void											setFilePath(HttpRequest &req, LocBlock &loc);
 
+    void                      setFileSize(const std::string& file_path_);
 		void											setStatusCode(int status_code);
 		std::vector<char>&				getBody();
-		const std::vector<char>& 	getJoinedData() const;
+		std::vector<char>& 	getJoinedData() ;
 		std::string 							getErrorPath(int status_code);
 		
 		std::string 			http_version_;
@@ -70,6 +70,8 @@ class  HttpResponse{
 		int								client_fd_;
 		int								write_size_;
 	private :
+
+    unsigned long     file_size_;
 };
 
 #endif

@@ -60,6 +60,7 @@ class ServManager{
 
 		std::vector<int> listen_ports_;
 		std::vector<int> serv_sock_fds_;
+
 		/* server */
 		char          buff_[BUFF_SIZE];
 		std::map<std::string, std::string>	session;

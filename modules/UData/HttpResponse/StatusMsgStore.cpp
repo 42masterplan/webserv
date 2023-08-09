@@ -1,6 +1,11 @@
 #include "StatusMsgStore.hpp"
 #include <iostream>
 
+
+StatusMsgStore::StatusMsgStore() {
+	this->initStatusMsgStore();
+}
+
 std::map<int, std::string> StatusMsgStore::status_msg_store_;
 
 void StatusMsgStore::initStatusMsgStore() {
@@ -21,7 +26,6 @@ void StatusMsgStore::initStatusMsgStore() {
 	status_msg_store_[502] = "502 Bad Gateway";
 	status_msg_store_[503] = "503 Service Unavailable";
 }
-
 
 std::string StatusMsgStore::getStatusMsg(int status_msg_code) {
 	return status_msg_store_[status_msg_code];

@@ -26,10 +26,8 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 		case CGI_EXEC : Cgi::forkCgi(cur_request, udata);
 			break ;
 		case AUTOINDEX : //TODO: 이거 이벤트 어디서 등록할까요?
-		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod())){
-				std::cout << ">>>>" << std::endl;
+		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
 			  return errorCallBack(*udata, 405);
-			}
 			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response.getFilePath().c_str());
 			break ;
 		case REDIRECT : RegisterClientWriteEvent(*udata);
@@ -61,13 +59,9 @@ std::string HttpResponseHandler::convertToStr(e_method method) {
 
 bool HttpResponseHandler::isDenyMethod(UData &udata, e_method method) {
 	const std::vector<std::string> deny_method = udata.http_response_.loc_block_.getDenyMethod();
-	for (size_t i =0;i < deny_method.size();i++) {
-		std::cout << "ERRPR:::"<< deny_method[i] << convertToStr(method)<<std::endl;
-	}
 	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) != deny_method.end())//메서드 deny
 		return true;
 	return false;
-
 }
 
 void HttpResponseHandler::handleHttpMethod(UData &udata) {
@@ -127,13 +121,12 @@ void HttpResponseHandler::handleDelete(UData &udata) {
 void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 	std::cout << "statusCode :" << status_code << std::endl;
 	udata.http_response_.processErrorRes(status_code);
-	int error_file_fd_ ;
-	std::cout << "ERROR file PATH" <<udata.http_response_.getFilePath() <<std::endl;
+	int error_fd ;
 	if (udata.http_response_.getFilePath() != ""){
-		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-		if (status_code != 500 && error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
+		error_fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
+		if (status_code != 500 && error_fd == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
 			return errorCallBack(udata, 500);
-		RegisterFileWriteEvent(error_file_fd_, udata);
+		RegisterFileReadEvent(error_fd, udata);
 	}
 	//에러페이지기 설정되지 않는 경우가 존재하려나?
 	else 

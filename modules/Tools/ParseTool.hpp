@@ -114,4 +114,7 @@ bool					insensitiveCompare(std::string str1, std::string str2);
 std::vector<std::string>	split(std::string input, std::string delimiter);
 
 
+std::string		intToString(int num);
+
+
 #endif

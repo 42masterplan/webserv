@@ -263,3 +263,28 @@ std::vector<std::string>	split(std::string input, std::string delimiter) {
 		result.push_back(input);
   return result;
 }
+
+/**
+ * @brief int를 string으로 변환해줍니다.
+ * 
+ * @param num 
+ * @return std::string 
+ */
+std::string	intToString(int num) {
+	std::string	result;
+  bool	is_negative = false;
+
+	if (num < 0) {
+    is_negative = true;
+		result += '-';
+  }
+	do {
+		if (is_negative)
+			result += static_cast<char>('0' - num % 10);
+		else
+			result += static_cast<char>('0' + num % 10);
+      num /= 10;
+  } while (num > 0);
+
+  return result;
+}

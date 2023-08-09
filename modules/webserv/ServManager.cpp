@@ -136,14 +136,14 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
 	int									option;
-	socklen_t						optlen;
+	socklen_t						option_len;
 	if (clnt_sockfd == -1)
 		throw(std::runtime_error("ACCEPT() ERROR"));
 	std::cout << "Connected Client : " << clnt_sockfd << std::endl;
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
-	optlen = sizeof(option);
+	option_len = sizeof(option);
 	option = 1;
-	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, optlen);
+	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, option_len);
 	for (idx = 0; idx < serv_sock_fds_.size(); idx++){
 		if (serv_sock_fds_[idx] == serv_sockfd)
 			break;
@@ -160,7 +160,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
  * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  ServManager::sockReadable(struct kevent *cur_event){
-	std::cout << "SOCKREADABLE" << std::endl;
+	std::cout << "SOCK Readable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_event->flags == EV_EOF){
 		disconnectFd(cur_event);
@@ -192,14 +192,6 @@ void  ServManager::sockReadable(struct kevent *cur_event){
 			http_request_ref.back().setPort(cur_udata->port_);
 			http_request_ref.back().parse(raw_data_ref);
 		}
-		// if (cur_udata->http_request_.size() == 0 || \
-		// 	(cur_udata->http_request_.back().getParseStatus() == FINISH && cur_udata->raw_data_.size())){
-		// 	HttpRequest request_parser;
-		// 	cur_udata->http_request_.push_back(request_parser);
-		// }
-		// cur_udata->http_request_.back().parse(raw_data_ref);
-		// cur_udata->http_request_.back().printBodyInfo();
-
 		if (http_request_ref.back().getRequestError()) {
 			//아에 잘못 된 형식으로 메세지가 온 경우들에 대해서 Request 단에서 에러를 처리해줍니다.
 			//클라이언트 소켓 read_event 삭제 -> 파일 read_event 등록 -> 파일 read가 끝나면 그 파일을 write
@@ -226,10 +218,10 @@ void  ServManager::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  ServManager::sockWritable(struct kevent *cur_event){
-	std::cout << "SOCKWritable" << std::endl;
+	std::cout << "SOCK Writable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
-		if (cur_udata == NULL){
-			std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
+	if (cur_udata == NULL){
+		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
 		return ;
 	}
 	std::vector<char>&	ret_store_ref = cur_udata->http_response_.getBody();
@@ -307,9 +299,12 @@ void  ServManager::fileReadable(struct kevent *cur_event){
 	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
+	// std::cout << "Buff::" << buff_<<std::endl;
+	buff_[read_len] = '\0';
+	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
+	// std::cout << cur_udata->http_response_.getBody().size();
+	// std::cout << "read_len" << read_len <<std::endl;
 	if (read_len < BUFF_SIZE){
-		std::cout << "read_len" << read_len <<std::endl;
-		std::cout << "WHIWHIWH"<<std::endl;
 		close(cur_event->ident);
 		// Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
 		cur_udata->fd_type_= CLNT;
@@ -317,12 +312,8 @@ void  ServManager::fileReadable(struct kevent *cur_event){
 			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		cur_udata->http_response_.makeBodyResponse(200, file_store_ref.size());//////
 		std::cout << "Read Done" << std::endl;
-		// Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
-	}else{
-		std::cout << "Buff::" << buff_<<std::endl;
-		buff_[read_len] = '\0';
-		file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
-	}
+		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
+	} 
 }
 
 /**
@@ -331,7 +322,7 @@ void  ServManager::fileReadable(struct kevent *cur_event){
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
 void	ServManager::fileWritable(struct kevent *cur_event){
-		std::cout << "FILE WRITEable" << std::endl;
+	std::cout << "FILE WRITEable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
 	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
@@ -339,6 +330,7 @@ void	ServManager::fileWritable(struct kevent *cur_event){
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
 		//파일에 다 썼기 때문에 여기서 HTTP_RESPONSE를 만들었습니다.
 		cur_udata->http_response_.makeNoBodyResponse(201);
+		cur_udata->fd_type_ = CLNT;
 		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 		cur_udata->write_size_ = 0;
@@ -361,5 +353,18 @@ void  ServManager::disconnectFd(struct kevent *cur_event){
 }
 
 std::string	ServManager::createSession(void) {
-	return "";
+	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const int					length = 16;
+  std::string				random_str;
+
+  srand(static_cast<unsigned int>(time(NULL)));
+	while (true) {
+		random_str = "";
+	  for (int i = 0; i < length; ++i)
+	      random_str += characters[rand() % characters.length()];
+		if (session.find(random_str) == session.end()) {
+			session[random_str] = "user" + intToString(session.size());
+		}
+	}
+	return random_str;
 }

@@ -23,6 +23,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
 	setFilePath(req, loc_block_);
+  setFileSize(file_path_);
 }
 
 /* init */
@@ -99,6 +100,14 @@ bool HttpResponse::isFolder(const std::string& file_path_) const {
   return false;
 }
 
+void  HttpResponse::setFileSize(const std::string& file_path_) {
+  struct stat file_stat;
+
+  if (stat(file_path_.c_str(), &file_stat) != 0)
+    throw std::runtime_error("stat() ERROR");
+  file_size_ = file_stat.st_size;
+}
+
 static bool isUploadMethod(HttpRequest &req) {
 	const e_method method = req.getMethod();
 	if (method == POST || method == PUT || method == PATCH)
@@ -112,7 +121,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
 		processRedirectRes(loc.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다.
-		return;
+		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
 	}
   if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
     res_type_ = AUTOINDEX;
@@ -131,7 +140,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	}
 }
 
-const std::vector<char>& HttpResponse::getJoinedData() const { return joined_data_; }
+std::vector<char>& HttpResponse::getJoinedData(){ return joined_data_; }
 
 // int main() {
 // 	HttpResponse res;

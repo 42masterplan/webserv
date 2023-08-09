@@ -9,6 +9,8 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	//아래 switch case에서 해당하는 이벤트 등록
+	std::cout << udata->http_response_.loc_block_.getCombineLocPath() <<std::endl;
+
 	std::cout << udata->http_response_.res_type_ << std::endl;
 	handleResponse(udata);
 }
@@ -109,6 +111,7 @@ void HttpResponseHandler::handleDelete(UData &udata) {
  * @param status_code 설정하고 싶은 status code
  */
 void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
+	std::cout << "statusCode :" << status_code << std::endl;
 	udata.http_response_.setErrorCodePath(status_code);
 	int error_file_fd_ ;
 	if (udata.http_response_.getFilePath() != ""){
@@ -118,7 +121,8 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 		RegisterFileWriteEvent(error_file_fd_, udata);
 	}
 	//에러페이지기 설정되지 않는 경우가 존재하려나?
-	std::cout << "NO ERORRPAGE!!" << std::endl;
+	else 
+		std::cout << "NO ERORRPAGE!!" << std::endl;
 }
 
 void	HttpResponseHandler::RegisterClientWriteEvent(UData &udata){

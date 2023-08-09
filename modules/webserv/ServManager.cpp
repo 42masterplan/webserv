@@ -242,9 +242,9 @@ void  ServManager::sockWritable(struct kevent *cur_event){
 			return ;
 		}
 		else if ((size_t)cur_udata->write_size_ == first_response_ref.size()){	
-			std::cout << "FIRST END" <<std::endl;
+			std::cout << "HEADER END" <<std::endl;
 			first_response_ref.clear();
-			std::cout << "--------------response size::"<<first_response_ref.size() <<std::endl;
+			std::cout << "--------------HEAD size::"<<first_response_ref.size() <<std::endl;
 			cur_udata->write_size_ = 0;
 		}
 		
@@ -258,7 +258,8 @@ void  ServManager::sockWritable(struct kevent *cur_event){
 			return ;
 		}
 		else if ((size_t)cur_udata->write_size_ == second_response_ref.size() || second_response_ref.size() == 0){	
-			std::cout << "SECOND END" <<std::endl;
+			std::cout << "BODY END" << std::endl;
+			std::cout << "--------------BODY size::"<<second_response_ref.size() <<std::endl;
 			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
 			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
 		}
@@ -333,14 +334,17 @@ void  ServManager::fileReadable(struct kevent *cur_event){
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
 	// std::cout << cur_udata->http_response_.getBody().size();
 	// std::cout << "read_len" << read_len <<std::endl;
-	if (read_len < BUFF_SIZE){
+	if (cur_udata->http_response_.file_size_ < (unsigned long)read_len)
+		return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+	cur_udata->http_response_.file_size_ -= read_len;
+	if (cur_udata->http_response_.file_size_ == 0){
 		close(cur_event->ident);
 		// Kqueue::unregisterReadEvent(cur_event->ident, cur_udata);
 		cur_udata->fd_type_= CLNT;
 		if (read_len == -1)
 			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		// std::cout << file_store_ref.size();
-		cur_udata->http_response_.makeBodyResponse(200, file_store_ref.size());//////
+		cur_udata->http_response_.makeBodyResponse(200, file_store_ref.size());
 		std::cout << "Read Done" << std::endl;
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}

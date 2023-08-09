@@ -69,9 +69,9 @@ class  HttpResponse{
 		std::string				file_path_;
 		int								client_fd_;
 		int								write_size_;
-	private :
-
     unsigned long     file_size_;
+		StatusMsgStore		status_msg_store_;
+	private :
 };
 
 #endif

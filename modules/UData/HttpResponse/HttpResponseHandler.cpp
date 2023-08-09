@@ -9,9 +9,9 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	//아래 switch case에서 해당하는 이벤트 등록
-	std::cout << udata->http_response_.loc_block_.getCombineLocPath() <<std::endl;
+	// std::cout << udata->http_response_.loc_block_.getCombineLocPath() <<std::endl;
 
-	std::cout << udata->http_response_.res_type_ << std::endl;
+	// std::cout << udata->http_response_.res_type_ << std::endl;
 	handleResponse(udata);
 }
 
@@ -69,7 +69,6 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	if(isDenyMethod(udata, method))
 		return errorCallBack(udata, 405);
 
-	std::cout << "HI" <<std::endl;
 	switch(method) {
 		case GET:
 			return handleHeadGet(udata);
@@ -93,6 +92,7 @@ void HttpResponseHandler::handleHeadGet(UData &udata) {
 	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
 	if (fd == -1)
 		return errorCallBack(udata, 404);
+	udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 	RegisterFileReadEvent(fd, udata);
 }
 
@@ -101,6 +101,7 @@ void HttpResponseHandler::handlePost(UData &udata) {
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		return errorCallBack(udata, 500);
+	udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 	RegisterFileWriteEvent(fd, udata);
 }
 
@@ -126,6 +127,7 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
 		if (status_code != 500 && error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
 			return errorCallBack(udata, 500);
+		udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 		RegisterFileReadEvent(error_file_fd_, udata);
 	}
 	//에러페이지기 설정되지 않는 경우가 존재하려나?

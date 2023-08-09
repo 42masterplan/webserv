@@ -14,6 +14,7 @@
 #include "Kqueue.hpp"
 #include "../config/ConfParser.hpp"
 # include "../UData/HttpResponse/HttpResponseHandler.hpp"
+# include "EventHandler.hpp"
 /**
  * @brief kqueue using echo server
  * @details <kqueue 동작 로직>
@@ -38,7 +39,6 @@
 class ServManager{
 	public :
 		static ServManager& getInstance();
-		static const int BUFF_SIZE = 5000;
 		          ~ServManager();
 		void      serverInit();
 		void      launchServer();
@@ -49,12 +49,7 @@ class ServManager{
 		void  sockListen();
 		void  handleEvents();
 		void  registerNewClnt(int serv_sockfd);
-		void  sockReadable(struct kevent *cur_event);
-		void  sockWritable(struct kevent *cur_event);
-    void  cgiReadable(struct kevent *cur_event);
-    void  cgiTerminated(UData* udata);
-		void	fileReadable(struct kevent *cur_event);
-		void	fileWritable(struct kevent *cur_event);
+
 		void  disconnectFd(struct kevent *cur_event);
 		std::string	createSession(void);
 
@@ -62,7 +57,7 @@ class ServManager{
 		std::vector<int> serv_sock_fds_;
 
 		/* server */
-		char          buff_[BUFF_SIZE];
+
 		std::map<std::string, std::string>	session;
 
     /* kqueue */

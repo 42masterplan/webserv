@@ -17,7 +17,8 @@ WEBSERVSRCS = Kqueue.cpp \
 							WebServ.cpp \
 							ServManager.cpp \
 							AutoIndex.cpp  \
-							Cgi.cpp
+							Cgi.cpp \
+							EventHandler.cpp
 
 
 WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
@@ -29,6 +30,7 @@ UDATASRCS = UData.cpp \
 						HttpResponse/MimeStore.cpp \
 						HttpResponse/StatusMsgStore.cpp \
 						HttpResponse/HttpResponseHandler.cpp
+
 #HttpResponse/HttpResponse.cpp
 UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))
 

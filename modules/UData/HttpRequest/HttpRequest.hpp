@@ -40,6 +40,7 @@ class HttpRequest{
 		const e_requestError&			getRequestError(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
 		void											setPort(int port);
+
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);
@@ -73,6 +74,7 @@ class HttpRequest{
 		void						parseHeader(std::string line);
 		void						checkHeader(void);
 		bool						parseBody(std::vector<char>& raw_data);
+		bool						parseChunkedBody(std::vector<char>& raw_data);
 
 		/* parsing utils */
 		std::string			getLine(std::vector<char>& raw_data);

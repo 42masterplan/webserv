@@ -106,12 +106,12 @@ bool HttpResponse::isFolder(const std::string& file_path_) const {
 void  HttpResponse::setFileSize(const std::string& file_path_) {
   struct stat file_stat;
   if (file_path_ == ""){
-    file_size_ = 0; //TODO: -1로 초기화할까 합니다.
+    file_size_ = -1;
     return;
   }
   if (stat(file_path_.c_str(), &file_stat) != 0)
     throw std::runtime_error("stat() ERROR");
-  file_size_ = file_stat.st_size;
+  file_size_ = static_cast<long>(file_stat.st_size);
 }
 
 static bool isUploadMethod(HttpRequest &req) {

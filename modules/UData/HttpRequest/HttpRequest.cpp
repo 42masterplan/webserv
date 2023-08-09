@@ -26,7 +26,10 @@
  * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
-HttpRequest::HttpRequest():content_length_(-1), parse_status_(FIRST), request_error_(OK),read_state_(false), to_read_(0){}
+
+HttpRequest::HttpRequest(): path_(""), content_length_(-1), content_type_(""), host_(""), \
+parse_status_(FIRST), request_error_(OK), last_header_(""), read_state_(false), to_read_(0) { }
+
 /*Test용 함수*/
 void	print_vec(std::vector<char>& t){
 	std::cout << "------------printvec----------" << std::endl;
@@ -41,7 +44,6 @@ void	print_vec(std::vector<char>& t){
 	std::cout << "-------------------------------" <<std::endl;
 }
 
-
 const e_method&						HttpRequest::getMethod(void) const { return method_; }
 const std::string&				HttpRequest::getPath(void) const { return path_; }
 const std::map<std::string, std::string>&	HttpRequest::getHeader(void) const { return header_; }
@@ -51,37 +53,39 @@ const int&								HttpRequest::getPort(void) const { return port_; }
 const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
 const std::string&				HttpRequest::getHost(void) const { return host_; }
-const e_parseStatus&		HttpRequest::getParseStatus(void) const { return parse_status_; }
-const e_requestError&	HttpRequest::getRequestError(void) const { return request_error_; }
+const e_requestError&			HttpRequest::getRequestError(void) const { return request_error_; }
+const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
+void											HttpRequest::setPort(int port) { port_ = port; }
 
-void	HttpRequest::setPort(int port){port_ = port;}
-
+/**
+ * @brief HttpRequest를 파싱하는 함수입니다.
+ * request_error_가 발생하거나 parse_status_가 FINISH가 되기 전까지
+ * raw_data에 있는 값을 가지고 최대한 파싱을 진행합니다.
+ * 
+ * @param raw_data 
+ * @note request_error_가 발생하면 parse_status_는 FINISH가 됩니다.
+ */
 void HttpRequest::parse(std::vector<char>& raw_data) {
 	while (true) {
 		if (request_error_) {
-			// std::cout << "Error"<<std::endl;
 			parse_status_ = FINISH;
 			return ;
 		}
 		switch (parse_status_) {
-
-			case FINISH://만약 같은 클라이언트가 정상 종료 후 다시 요청을 보내면?
-				//정상 종료인데 계속 FINISH상태이면 곤란해서 다시 FIRST로 바꿔줬습니당
-				// std::cout << "FiN"<<std::endl;
-				// parse_status_ = FIRST;
+			case FINISH:
 				return ;
+
 			case BODY:
-				// std::cout << "body"<<std::endl;
 				if (!parseBody(raw_data))
 					return;
 				break;
+
 			case HEADER:
-				// std::cout << "HEAD"<<std::endl;
 				if (!hasCRLF(raw_data)) return ;
 				parseHeader(getLine(raw_data));
 				break;
+
 			case FIRST:
-				// std::cout << "First"<<std::endl;
 				if (!hasCRLF(raw_data)) return ;
 				parseFirstLine(getLine(raw_data));
 				break;
@@ -96,6 +100,7 @@ void	HttpRequest::printBodyInfo(){
 	}
 	std::cout << std::endl;
 }
+
 /**
  * @brief HTTP 메세지의 첫 번째 라인을 해석하는 함수입니다.
  *
@@ -155,6 +160,7 @@ void	HttpRequest::parseFirstLine(std::string line) {
 void	HttpRequest::parseHeader(std::string line) {
 	std::string	key, value;
 	size_t			split_idx;
+
 	/* header 끝 */
 	if (line == "") {
 		checkHeader();
@@ -177,6 +183,7 @@ void	HttpRequest::parseHeader(std::string line) {
 		header_[last_header_] += line;
 		return ;
 	}
+
 	/* 새로운 헤더 */
 	split_idx = line.find(':');
 	if (split_idx == std::string::npos) {
@@ -192,6 +199,7 @@ void	HttpRequest::parseHeader(std::string line) {
 	lowerString(key);
 	lowerString(value);
 	trimSidesSpace(value);
+
 	last_header_ = key;
 	if (header_.find(key) == header_.end())
 		header_[key] = value;
@@ -268,47 +276,20 @@ void	HttpRequest::checkHeader(void) {
 /**
  * @brief Body를 받는 함수
  * [chunked가 아닌 경우]
- * raw_data는 content_length만큼 받지 않았으면 raw_data를 비우지 않고 false를 반환한다.
+ * raw_data_는 content_length만큼 받지 않았으면 raw_data_를 비우지 않고 false를 반환한다.
  * [chunked인 경우]
- * 1.CRLF를 찾아서 raw_data를 읽은 만큼 비워줍니다.
- * 2.이후 16진수를 해석해서 그만큼 또 raw data를 비워줍니다.
+ * 1. CRLF를 찾아서 raw_data를 읽은 만큼 비워줍니다.
+ * 2. 이후 16진수를 해석해서 그만큼 또 raw_data_를 비워줍니다.
  * 3. 0이 나올 때까지 반복합니다.
  * @param raw_data 들어온 데이터를 저장하는 저장소
  * @return true 파싱 계속 진행 가능(에러 포함: 다음 반복문에서 끝남)
  * @return false 버퍼를 계속 받아야 진행 가능
- * @warning body파싱중 에러가 나도 FORM ERROR로 처리하고 return true 합니다.
+ * @warning body 파싱 중 에러가 나도 FORM ERROR로 처리하고 return true 합니다.
  */
 bool	HttpRequest::parseBody(std::vector<char>& raw_data){
-	if (is_chunked_){
-		if (!read_state_){
-			if (hasCRLF(raw_data) == false)
-				return false;
-			std::string ret = getLine(raw_data);
-			to_read_ = hexToDec(ret);
-			if (to_read_ == -1){
-					request_error_ = FORM_ERROR;
-					return true;
-			}
-			read_state_ = true;
-		}
-		if (to_read_ == 0 && raw_data.size() >= 2){
-			// std::cout << "end"<<std::endl;
-			read_state_ = false;
-			if (getLine(raw_data) != "")
-				request_error_ = FORM_ERROR;
-			parse_status_ = FINISH;
-			return true;
-		} else if (raw_data.size() >= (size_t)to_read_ + 2){//CRLF가 있다는 보장해주기 위해서 + 2
-			read_state_ = false;
-			std::copy(raw_data.begin(), raw_data.begin() + to_read_,  std::back_inserter(body_));
-			raw_data.erase(raw_data.begin(),raw_data.begin() + to_read_);
-			//CRLF까지 삭제
-			to_read_ = 0;
-			if (getLine(raw_data) != "")
-				request_error_ = FORM_ERROR;
-			return true;
-		}
-	} else if ((size_t)content_length_ >= raw_data.size()){
+	if (is_chunked_)
+		return parseChunkedBody(raw_data);
+	else if ((size_t)content_length_ >= raw_data.size()){
 		std::copy(raw_data.begin(), raw_data.begin() + content_length_,  std::back_inserter(body_));
 		raw_data.erase(raw_data.begin(),raw_data.begin() + content_length_);
 		parse_status_ = FINISH;
@@ -317,6 +298,51 @@ bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 	return false;
 }
 
+/**
+ * @brief Chunked Body를 받는 함수
+ * 1. CRLF를 찾아서 raw_data를 읽은 만큼 비워줍니다.
+ * 2. 이후 16진수를 해석해서 그만큼 또 raw_data_를 비워줍니다.
+ * 3. 0이 나올 때까지 반복합니다.
+ * 
+ * @param raw_data 
+ * @return true 파싱 계속 진행 가능(에러 포함: 다음 반복문에서 끝남)
+ * @return false 버퍼를 계속 받아야 진행 가능
+ */
+bool HttpRequest::parseChunkedBody(std::vector<char>& raw_data) {
+	/* to_read_ 받아야 함 */
+	if (!read_state_) {
+		if (hasCRLF(raw_data) == false)
+			return false;
+
+		std::string ret = getLine(raw_data);
+		to_read_ = hexToDec(ret);
+		if (to_read_ == -1) {
+			request_error_ = FORM_ERROR;
+			return true;
+		}
+		read_state_ = true;
+	}
+
+	/* to_read_ 확정된 후 */
+	if (to_read_ == 0 && raw_data.size() >= 2) {
+		if (getLine(raw_data) != "")
+			request_error_ = FORM_ERROR;
+
+		read_state_ = false;
+		parse_status_ = FINISH;
+		return true;
+	} else if (raw_data.size() >= (size_t)to_read_ + 2) { // CRLF 보장을 위해 + 2
+		std::copy(raw_data.begin(), raw_data.begin() + to_read_, std::back_inserter(body_));
+		raw_data.erase(raw_data.begin(), raw_data.begin() + to_read_);
+		to_read_ = 0;
+		read_state_ = false;
+
+		if (getLine(raw_data) != "")
+			request_error_ = FORM_ERROR;
+		return true;
+	}
+	return false;
+}
 
 /**
  * @brief findCRLF()를 사용하여 CRLF을 기준으로 문자열을 반환한 뒤, raw_data에서 해당 부분을 삭제합니다.

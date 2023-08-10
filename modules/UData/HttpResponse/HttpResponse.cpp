@@ -73,8 +73,11 @@ void	HttpResponse::makeBodyResponse(int status_code, int content_length){
 	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	// status_ = status_store_[status_code_];
+	
+	// TODO: 변수에 있는 값들 추가한 헤더 만들기
 	std::string header =
-	http_version_ + " " + status_ + "\r\n"+
+	http_version_ + " " + status_ + "\r\n"+ 
+	"Content-Type: text/html; charset=utf-8\r\n"+
 	"content-length: " + std::to_string(content_length) + "\r\n\r\n";
 	joined_data_.clear();
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
@@ -122,17 +125,17 @@ static bool isUploadMethod(HttpRequest &req) {
 }
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
-	file_path_ = loc.getCombineReturnPath();
-	if (file_path_ != "") {
-		res_type_ = REDIRECT;
-		location_ = file_path_;
-		processRedirectRes(loc.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다.
-		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
-	}
+	file_path_ = loc.getCombineLocPath();
   if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
     res_type_ = AUTOINDEX;
     return;
   }
+	file_path_ = loc.getReturnPath();
+	if (file_path_ != "") {
+		res_type_ = REDIRECT;
+		location_ = file_path_;
+		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
+	}
 	file_path_ = loc.getCombineCgiPath();
 	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;

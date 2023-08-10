@@ -6,6 +6,7 @@ HttpResponseHandler& HttpResponseHandler::getInstance(){
 }
 
 void	HttpResponseHandler::parseResponse(UData *udata){
+	std::cout <<"PARSE RESPONSE!!!!!!" <<std::endl;
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	//아래 switch case에서 해당하는 이벤트 등록
@@ -19,7 +20,6 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 void	HttpResponseHandler::handleResponse(UData *udata){
 	HttpResponse &cur_response = udata->http_response_;
 	HttpRequest &cur_request = udata->http_request_[0];
-		
 	switch(cur_response.res_type_){
 		case METHOD_TYPE : handleHttpMethod(*udata);
 			break ;
@@ -29,8 +29,15 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
 			  return errorCallBack(*udata, 405);
 			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response.getFilePath().c_str());
+      cur_response.makeBodyResponse(200, cur_response.body_.size());
+			if (cur_response.body_.size() != 0)
+      	RegisterClientWriteEvent(*udata);
+			else 
+				errorCallBack(*udata, 404);
 			break ;
-		case REDIRECT : RegisterClientWriteEvent(*udata);
+		case REDIRECT : 
+		cur_response.processRedirectRes(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			RegisterClientWriteEvent(*udata);
 			break ;
 		case ERROR : errorCallBack(*udata, udata->http_response_.status_code_);
 		//에러코드를 확인해서 해당하는 status code에 해당하는 에러페이지가 있는지 탐색-> 있다면 그 파일을 write 이벤트 등록 아니라면 default error_page 만들어서 클라이언트에게 write
@@ -57,18 +64,29 @@ std::string HttpResponseHandler::convertToStr(e_method method) {
 	}
 }
 
+/**
+ * @brief deny_method vector가 채워져 있으면 그 메서드만 사용이 가능한 method입니다.
+ * 따라서 default.conf파일을 볼 때 GET요청에 대해서는 auto index를 반환해야만 합니다.!
+ * @param udata 
+ * @param method 
+ * @return true 
+ * @return false 
+ */
 bool HttpResponseHandler::isDenyMethod(UData &udata, e_method method) {
 	const std::vector<std::string> deny_method = udata.http_response_.loc_block_.getDenyMethod();
+	if (deny_method.size() == 0)
+		return false;
 	if (std::find(deny_method.begin(), deny_method.end(), convertToStr(method)) != deny_method.end())//메서드 deny
-		return true;
-	return false;
+		return false;
+	return true;
 }
 
 void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	const e_method method = udata.http_request_[0].getMethod();
+	std::cout << "handle METHOD!!!!" << std::endl;
 	if(isDenyMethod(udata, method))
 		return errorCallBack(udata, 405);
-
+	std::cout << "METHOD!!" << (int)method << std::endl;
 	switch(method) {
 		case GET:
 			return handleHeadGet(udata);
@@ -97,6 +115,7 @@ void HttpResponseHandler::handleHeadGet(UData &udata) {
 }
 
 void HttpResponseHandler::handlePost(UData &udata) {
+	std::cout << "POST!!!!!!!"<<std::endl;
 	std::string filename = udata.http_response_.getFilePath() + MimeStore::getExtension(udata.http_request_[0].getContentType());
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)

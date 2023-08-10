@@ -27,7 +27,7 @@
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
-HttpRequest::HttpRequest(): path_(""), content_length_(-1), content_type_(""), host_(""), \
+HttpRequest::HttpRequest(): path_(""), is_chunked_(false), content_length_(-1), content_type_(""), host_(""), \
 parse_status_(FIRST), request_error_(OK), last_header_(""), read_state_(false), to_read_(0) { }
 
 /*Test용 함수*/

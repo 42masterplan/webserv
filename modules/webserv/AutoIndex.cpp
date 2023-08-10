@@ -85,23 +85,24 @@ std::vector<char>  AutoIndex::getDirectoryListing(const char* input_dir){
   std::string   form = autoindex_template_;
   struct dirent *ent;
   struct stat   file_stat;
-
+  std::vector<char> ret;
+  std::cout << "디렉토리::"<<input_dir << std::endl;
   dir = opendir(input_dir);
   if (!dir)
-    throw std::runtime_error("opendir() ERROR");
+    return ret;
   ent = readdir(dir);
   if (!ent)
-    throw std::runtime_error("readdir() ERROR");
+    return ret;
   while (ent){
     std::string file_path = input_dir;
     file_path += ent->d_name;
     if (stat(file_path.c_str(), &file_stat) == -1)
-      throw std::runtime_error("stat() ERROR");
+      return ret;
     std::string file_size = std::to_string(file_stat.st_size);
     form += getFileTemplate(ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
     ent = readdir(dir);
   }
   form += "    </table>\n</body>\n</html>";
-  std::vector<char> ret(form.begin(), form.end());
+  ret = std::vector<char>(form.begin(), form.end());
   return (ret);
 }

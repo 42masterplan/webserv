@@ -54,12 +54,12 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 
 void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata){
 	int n;
-	n = write(cur_event->ident, &to_write[cur_udata->write_size_], to_write.size() - cur_udata->write_size_);
+	n = write(cur_udata->client_fd_, &to_write[cur_udata->write_size_], to_write.size() - cur_udata->write_size_);
 		cur_udata->write_size_ += n;
 	if (n == -1){
 		cur_udata->write_size_ = 0;
 		to_write.clear();
-		HttpResponseHandler::getInstance().errorCallBack(cur_udata, 500);
+		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		return ;
 	}
 	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
@@ -68,13 +68,13 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 		cur_udata->write_size_ = 0;
 		}else{
 			std::cout << "BODY END" << std::endl;
-			std::cout << "--------------BODY size::"<<body_ref.size() <<std::endl;
-			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+			std::cout << "--------------BODY size::"<<to_write.size() <<std::endl;
+			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
 			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
 			if (cur_udata->http_request_.size() != 0)
 				HttpResponseHandler::getInstance().parseResponse(cur_udata);
 			else
-					Kqueue::registerReadEvent(cur_event->ident, cur_udata);
+					Kqueue::registerReadEvent(cur_udata->client_fd_, cur_udata);
 			cur_udata->write_size_ = 0;
 		}
 	}

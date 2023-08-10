@@ -18,7 +18,7 @@ public:
 
 private:
 	EventHandler();
-	void	writeToclient(std::vector<char> &to_write, bool is_body);
+	void	writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata);
 	char          buff_[BUFF_SIZE];
 };
 

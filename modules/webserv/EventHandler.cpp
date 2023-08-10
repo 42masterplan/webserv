@@ -37,18 +37,46 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	else{
 		buff_[rlen] = '\0';
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
-		std::vector<HttpRequest>& http_request_ref = cur_udata->http_request_;
-		if (http_request_ref.size() && (http_request_ref.back().getParseStatus() != FINISH && !http_request_ref.back().getRequestError()))
-			http_request_ref.back().parse(raw_data_ref);
-		while (http_request_ref.size() == 0 || (http_request_ref.back().getParseStatus() == FINISH && !http_request_ref.back().getRequestError())) {
-			http_request_ref.push_back(HttpRequest());
-			http_request_ref.back().setPort(cur_udata->port_);
-			http_request_ref.back().parse(raw_data_ref);
+		std::vector<HttpRequest>& request_ref = cur_udata->http_request_;
+		if (request_ref.size() && (request_ref.back().getParseStatus() != FINISH && !request_ref.back().getRequestError()))
+			request_ref.back().parse(raw_data_ref);
+		while (request_ref.size() == 0 || (request_ref.back().getParseStatus() == FINISH && !request_ref.back().getRequestError())) {
+			request_ref.push_back(HttpRequest());
+			request_ref.back().setPort(cur_udata->port_);
+			request_ref.back().parse(raw_data_ref);
 		}
-		if (http_request_ref.back().getRequestError())
+		if (request_ref.back().getRequestError())
 			 return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
-		if (http_request_ref.size() != 0)
+		if (request_ref.size() != 0)
 			HttpResponseHandler::getInstance().parseResponse(cur_udata);
+	}
+}
+
+void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata){
+	int n;
+	n = write(cur_udata->client_fd_, &to_write[cur_udata->write_size_], to_write.size() - cur_udata->write_size_);
+		cur_udata->write_size_ += n;
+	if (n == -1){
+		cur_udata->write_size_ = 0;
+		to_write.clear();
+		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		return ;
+	}
+	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
+		if (is_body != true){
+		to_write.clear();
+		cur_udata->write_size_ = 0;
+		}else{
+			std::cout << "BODY END" << std::endl;
+			std::cout << "--------------BODY size::"<<to_write.size() <<std::endl;
+			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
+			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
+			if (cur_udata->http_request_.size() != 0)
+				HttpResponseHandler::getInstance().parseResponse(cur_udata);
+			else
+					Kqueue::registerReadEvent(cur_udata->client_fd_, cur_udata);
+			cur_udata->write_size_ = 0;
+		}
 	}
 }
 
@@ -65,42 +93,12 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 		return ;
 	}
 
-	std::vector<char>&	first_response_ref = cur_udata->http_response_.getJoinedData();
-	std::vector<char>&	second_response_ref = cur_udata->http_response_.getBody();
-	int n;
-	if (first_response_ref.size()){//여기가 첫번째 요청을 보내는 곳
-		n = write(cur_event->ident, &first_response_ref[cur_udata->write_size_], first_response_ref.size() - cur_udata->write_size_);
-		cur_udata->write_size_ += n;
-		if (n == -1){
-			cur_udata->http_response_.setStatusCode(500);//this is error
-			cur_udata->write_size_ = 0;
-			return ;
-		}
-		else if ((size_t)cur_udata->write_size_ == first_response_ref.size()){	
-			first_response_ref.clear();
-			cur_udata->write_size_ = 0;
-		}
+	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
+	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
+	if (head_ref.size()){//여기가 첫번째 요청을 보내는 곳
+		writeToclient(head_ref, false, cur_udata);
 	}else { //두번째 body를 보내는 분기입니다.
-		n = write(cur_event->ident, &second_response_ref[cur_udata->write_size_], second_response_ref.size() - cur_udata->write_size_);
-			cur_udata->write_size_ += n;
-		if (n == -1){
-			std::cerr << "client write error!" << std::endl;
-			cur_udata->http_response_.setStatusCode(500);//this is error
-			// disconnectFd(cur_event);
-			return ;
-		}
-		else if ((size_t)cur_udata->write_size_ == second_response_ref.size() || second_response_ref.size() == 0){	
-			std::cout << "BODY END" << std::endl;
-			std::cout << "--------------BODY size::"<<second_response_ref.size() <<std::endl;
-			Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
-			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
-		}
-		if (cur_udata->http_request_.size() != 0) //TODO:  클라이언트 ReadEvent를 Unregister하는게 두번째의 경우는 이미 unregister되어 있기 때문에 같은 함수를 호출하면 이미 안 된 이벤트를 다시 unregister 한다는게 이상하다.
-			HttpResponseHandler::getInstance().parseResponse(cur_udata);
-			//라고 생각했었는데, 이미 disable된 이벤트를 다시 disable해도 문제가 없다는 것을 보고 상관없음을 알았다. 확인은 필요할듯?
-		else 
-				Kqueue::registerReadEvent(cur_event->ident, cur_udata);
-		cur_udata->write_size_ = 0;
+		writeToclient(body_ref, true, cur_udata);
 	}
 }
 
@@ -174,11 +172,11 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 		cur_udata->http_response_.makeBodyResponse(200, file_store_ref.size());
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}
-} 
+}
 
 
 /**
- * @brief 파일에 Write하는 이벤트가 발생했을 때 해당하는 파일에 write합니다. 
+ * @brief 파일에 Write하는 이벤트가 발생했을 때 해당하는 파일에 write합니다.
  * @note Post에서 사용할 예정입니다.
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */

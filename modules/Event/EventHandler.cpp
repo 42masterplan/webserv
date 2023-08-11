@@ -16,7 +16,7 @@ EventHandler& EventHandler::getInstance(){
  * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  EventHandler::sockReadable(struct kevent *cur_event){
-	// std::cout << "SOCK Readable" << std::endl;
+	std::cout << "SOCK Readable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_event->flags == EV_EOF){
 		disconnectFd(cur_event);
@@ -46,7 +46,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 			request_ref.back().setPort(cur_udata->port_);
 			request_ref.back().parse(raw_data_ref);
 		}
-		switch (request_ref.back().getRequestError())
+		switch (request_ref.back().getRequestError()) 
 		{
 			case (OK) : 
 				break;
@@ -104,11 +104,8 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
-	else if (rlen == 0){
+	else if (rlen == 0)
 		std::cout << "CGI process sent eof, closing fd.\n";
-		if (cur_event->udata != NULL)
-			disconnectFd(cur_event);
-	}
 	else{
 		buff_[rlen] = '\0';
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
@@ -125,8 +122,8 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
  */
 void  EventHandler::cgiTerminated(UData* udata){
   int status;
-  Kqueue::unregisterExitEvent(udata->cgi_pid_, udata);
-  Kqueue::registerReadEvent(udata->client_fd_, udata);
+  Kqueue::registerWriteEvent(udata->client_fd_, udata);
+
   //TODO: 자식 프로세스의 fd[0]을 unregister해야할까요? 어차피 종료된 프로세스인데.. 그렇게 한다면 udata에 자식 프로세스 fd도 들고있어야 합니다.
   waitpid(udata->cgi_pid_, &status, 0);
   udata->fd_type_ = CLNT;
@@ -134,8 +131,8 @@ void  EventHandler::cgiTerminated(UData* udata){
   udata->cgi_pid_ = 0;
   if (WIFEXITED(status))
     return;
-  else
-    throw std::runtime_error("CGI terminated abnormally");
+  // else
+  //   throw std::runtime_error("CGI terminated abnormally");
 }
 
 
@@ -154,7 +151,6 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
 	// print_vec(file_store_ref);
 	cur_udata->http_response_.file_size_ -= read_len;
-	std::cout << "파일 사이즈 ::" <<cur_udata->http_response_.file_size_ <<std::endl;
 	if (cur_udata->http_response_.file_size_ == 0){
 		
 		close(cur_event->ident);
@@ -198,8 +194,8 @@ void  EventHandler::disconnectFd(struct kevent *cur_event){
   else if (udata->fd_type_ == CGI)
 	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
 	close(cur_event->ident);
-	delete udata;
-	cur_event->udata = NULL;
+	// delete udata;
+	// cur_event->udata = NULL;
 }
 
 
@@ -217,15 +213,12 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
 		cur_udata->write_size_ = 0;
 		if (is_body != true){
-			
 			std::cout << "헤더 보냈어요" <<std::endl;
-			print_vec(to_write);
+			// print_vec(to_write);
 			to_write.clear();
 		}
 		else{
 			std::cout << "바디 보냈어요" <<std::endl;
-			print_vec(to_write);
-			// std::cout << "SECONDE DONE"<<std::endl;
 			// print_vec(to_write);
 			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
 			cur_udata->http_request_.erase(cur_udata->http_request_.begin());

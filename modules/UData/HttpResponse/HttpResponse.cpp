@@ -130,11 +130,6 @@ static bool isUploadMethod(HttpRequest &req) {
 }
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
-	file_path_ = loc.getCombineLocPath();
-  if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
-    res_type_ = AUTOINDEX;
-    return;
-  }
 	file_path_ = loc.getReturnPath();
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
@@ -142,6 +137,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
 	}
 	file_path_ = loc.getCombineCgiPath();
+	std::cout << "CGI 파일이에용오오오오오오오오:::"<<file_path_<<std::endl;
 	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;
 		return;
@@ -149,9 +145,14 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineUploadStorePath();
 	if (isUploadMethod(req) && file_path_ == ""){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
 		res_type_ = ERROR;
-		processErrorRes(404);
+		processErrorRes(405);
 		return;
 	}
+	file_path_ = loc.getCombineLocPath();
+  if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
+    res_type_ = AUTOINDEX;
+    return;
+  }
 }
 
 std::vector<char>& HttpResponse::getJoinedData(){ return joined_data_; }

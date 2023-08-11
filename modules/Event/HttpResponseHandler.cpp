@@ -15,12 +15,12 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 
 void	HttpResponseHandler::handleResponse(UData *udata){
 	HttpResponse &cur_response = udata->http_response_;
-	HttpRequest &cur_request = udata->http_request_[0];
+	// HttpRequest &cur_request = udata->http_request_[0];
 	std::cout << "RESTYPE: " << static_cast<int>(cur_response.res_type_) << std::endl;
 	switch(cur_response.res_type_){
 		case METHOD_TYPE : handleHttpMethod(*udata);
 			break ;
-		case CGI_EXEC : Cgi::forkCgi(cur_request, udata);
+		case CGI_EXEC : Cgi::forkCgi(udata);
 			break ;
 		case AUTOINDEX : //TODO: 이거 이벤트 어디서 등록할까요?
 		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
@@ -83,7 +83,6 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	std::cout << "handle METHOD!!!!" << std::endl;
 	if(isDenyMethod(udata, method))
 		return errorCallBack(udata, 405);
-	std::cout << "METHOD!!" << (int)method << std::endl;
 	switch(method) {
 		case GET:
 			return handleGet(udata);

@@ -43,7 +43,7 @@ char**  Cgi::getEnvs(HttpRequest& req){
  * @param ptr 호출한 클라이언트가 사용하는 udata입니다. CGI타입으로 변경됩니다.
  * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
  */
-void  Cgi::forkCgi(HttpRequest& req, UData* ptr){
+void  Cgi::forkCgi(UData* ptr){
   int   pfd[2];
   pid_t child_pid;
 
@@ -52,11 +52,12 @@ void  Cgi::forkCgi(HttpRequest& req, UData* ptr){
   int flags = fcntl(pfd[0], F_GETFL, 0);
   fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
   char* script_name;
-  if (req.getPath().find(".php")){
+  std::string cgi_path = ptr->http_response_.file_path_;
+  if (cgi_path.find(".php")){
     ptr->prog_name_ = "php";
     script_name = (char *)"./srcs/CGI_1.php";
   }
-  else if (req.getPath().find(".py")){
+  else if (cgi_path.find(".py")){
     ptr->prog_name_ = "python3";
     script_name = (char *)"./srcs/CGI_2.py";
   }
@@ -73,14 +74,14 @@ void  Cgi::forkCgi(HttpRequest& req, UData* ptr){
   }
   else if (!child_pid){ //child
     close(pfd[0]);
-    dup2(pfd[1], STDOUT_FILENO);
+    dup2(pfd[1], STDOUT_FILENO);//TODO: 여기 제대로 안됨>!>!>!
     int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
     fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
     char* exec_file[3];
     exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;
     exec_file[2] = NULL;
-    char** envp = getEnvs(req);
+    char** envp = getEnvs(ptr->http_request_[0]);
     if (execve(exec_file[0], exec_file, envp) == -1){//envp needed
       delete [] envp;
       throw (std::runtime_error("execve() Error"));

@@ -21,7 +21,7 @@
  */
 class Cgi{
   public:
-    static void   forkCgi(HttpRequest& req, UData* ptr);
+    static void   forkCgi(UData* ptr);
   private:
     Cgi();
     ~Cgi();

@@ -51,6 +51,7 @@ LocBlock ServBlock::findLocBlock(std::string path){
 	int ret = -1;
 	for (size_t i = 0;i < serv_index_store.size(); i++){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
+		loc_store_[ret].printInfo();
 		if (ret != -1)
 			return (loc_store_[ret]);
 	}
@@ -134,17 +135,16 @@ std::map<std::string, std::string>& ServBlock::getDirStore(){return (serv_direct
  * @return int 몇번 째 블록을 보면 되는지 확인합니다.
  */
 int ServBlock::untilFindLoc(const std::string& path, const std::string& root, const std::string& index){
+	std::string con_path = path + index;
 	for (size_t i = 0; i < loc_store_.size(); i++){
 		std::string troot = root;
 		if (loc_store_[i].getRoot() != "")
 			troot = loc_store_[i].getRoot();
 		std::string loc_info = loc_store_[i].getLocInfo();
-		std::string con_path = path + index;
-
 		if (loc_info.find("/.") != std::string::npos){
 			for(int j = con_path.size() - 1; j >= 0; j--){
 				if (con_path[j] == '.'){
-					std::cout << "|"<< con_path.substr(j) <<"|" <<  loc_info.substr(loc_info.find("/.") + 2) << "|\n";
+					// std::cout << "|"<< con_path.substr(j) <<"|" <<  loc_info.substr(loc_info.find("/.") + 2) << "|\n";
 					if (con_path.substr(j + 1) == loc_info.substr(loc_info.find("/.") + 2)){
 						loc_store_[i].setCombinePath(troot + path + index);
 						loc_store_[i].setHighPriorityRoot(troot);
@@ -154,16 +154,17 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 				}
 			}
 		}
-		else if (con_path.find(loc_info) == 0){
+		if (con_path.find(loc_info) == 0){
 			const std::vector<std::string>& loc_index_store = loc_store_[i].getIndex();
-			if (loc_index_store.size() <= 1 && loc_index_store[0]  == ""){
-				loc_store_[i].setCombinePath(troot + path + index);
+			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){
+				loc_store_[i].setCombinePath(troot + "/" + index);
 				loc_store_[i].setHighPriorityRoot(troot);
 				return i;
 			}
 			else {
 				for (size_t j = 0; j < loc_index_store.size(); j++){
-					int ret = untilFindLoc(troot, path, loc_index_store[j]);
+					loc_store_[i].setCombinePath(troot + path + loc_index_store[j]);
+					int ret = untilFindLoc("/", troot,loc_index_store[j]);
 					if (ret != -1)
 						return(ret);
 				}

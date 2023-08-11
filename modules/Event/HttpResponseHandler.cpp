@@ -9,10 +9,6 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 	std::cout <<"PARSE RESPONSE!!!!!!" <<std::endl;
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
-	//아래 switch case에서 해당하는 이벤트 등록
-	// std::cout << udata->http_response_.loc_block_.getCombineLocPath() <<std::endl;
-
-	// std::cout << udata->http_response_.res_type_ << std::endl;
 	handleResponse(udata);
 }
 

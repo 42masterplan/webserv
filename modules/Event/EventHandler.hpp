@@ -6,8 +6,9 @@ class EventHandler
 {
 public:
 	static const int BUFF_SIZE = 5000;
-	static EventHandler&	getInstance();
+
 	~EventHandler();
+	static EventHandler&	getInstance();
 	void  sockReadable(struct kevent *cur_event);
 	void  sockWritable(struct kevent *cur_event);
   void  cgiReadable(struct kevent *cur_event);
@@ -17,9 +18,11 @@ public:
 	void  disconnectFd(struct kevent *cur_event);
 
 private:
+	char          buff_[BUFF_SIZE];
+
 	EventHandler();
 	void	writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata);
-	char          buff_[BUFF_SIZE];
+	void	fileErrorCallBack(struct kevent *cur_event);
 };
 
 #endif

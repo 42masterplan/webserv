@@ -1,5 +1,6 @@
 
 # include "EventHandler.hpp"
+EventHandler::~EventHandler(){}
 /**
  * @brief 싱글톤 패턴을 위해서 static 변수를 반환합니다.
  * @return event_handler& 싱글톤 패턴을 위해서 static 변수를 반환합니다.
@@ -52,33 +53,6 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	}
 }
 
-void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata){
-	int n;
-	n = write(cur_udata->client_fd_, &to_write[cur_udata->write_size_], to_write.size() - cur_udata->write_size_);
-		cur_udata->write_size_ += n;
-	if (n == -1){
-		cur_udata->write_size_ = 0;
-		to_write.clear();
-		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
-		return ;
-	}
-	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
-		if (is_body != true){
-		to_write.clear();
-		cur_udata->write_size_ = 0;
-		}else{
-			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
-			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
-			if (cur_udata->http_request_.size() != 0 && cur_udata->http_request_[0].getParseStatus() == FINISH)
-				HttpResponseHandler::getInstance().parseResponse(cur_udata);
-			else
-				Kqueue::registerReadEvent(cur_udata->client_fd_, cur_udata);
-			cur_udata->write_size_ = 0;
-		}
-	}
-}
-
-
 /**
  * @brief 클라이언트 소켓이 writable할 때 호출되는 함수입니다.
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
@@ -93,11 +67,10 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 
 	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
 	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
-	if (head_ref.size()){//여기가 첫번째 요청을 보내는 곳
+	if (head_ref.size())//여기가 첫번째 요청을 보내는 곳
 		writeToclient(head_ref, false, cur_udata);
-	}else { //두번째 body를 보내는 분기입니다.
+	else  //두번째 body를 보내는 분기입니다.
 		writeToclient(body_ref, true, cur_udata);
-	}
 }
 
 
@@ -157,17 +130,14 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
-	std::cout << "read_len:" << read_len << std::endl;
+	if (read_len == -1 || cur_udata->http_response_.file_size_ < static_cast<long>(read_len))//읽고 있는 파일을 삭제하는 경우 또는 파일크기보다 갑자기 더 큰게 읽히면 에러로 처리
+		return fileErrorCallBack(cur_event);
 	buff_[read_len] = '\0';
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
-	if (cur_udata->http_response_.file_size_ < static_cast<long>(read_len))
-		return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 	cur_udata->http_response_.file_size_ -= read_len;
 	if (cur_udata->http_response_.file_size_ == 0){
 		close(cur_event->ident);
 		cur_udata->fd_type_= CLNT;
-		if (read_len == -1)
-			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		cur_udata->http_response_.makeBodyResponse(cur_udata->http_response_.status_code_, file_store_ref.size());
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}
@@ -179,15 +149,17 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
  * @note Post에서 사용할 예정입니다.
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
-void	EventHandler::fileWritable(struct kevent *cur_event){
+void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 어디서 처리할지 정하기.
 	UData*	cur_udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
 	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
+	if (write_size == -1) //실패하면 코드가 이상하긴 하다.
+		return fileErrorCallBack(cur_event);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
 		cur_udata->http_response_.makeNoBodyResponse(201);
 		cur_udata->fd_type_ = CLNT;
-		Kqueue::unregisterWriteEvent(cur_event->ident, cur_udata);
+		close(cur_event->ident);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 		cur_udata->write_size_ = 0;
 	}
@@ -209,5 +181,37 @@ void  EventHandler::disconnectFd(struct kevent *cur_event){
 	cur_event->udata = NULL;
 }
 
-EventHandler::~EventHandler(){}
+
+void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata){
+	int n;
+	int w_size = cur_udata->write_size_;
+	n = write(cur_udata->client_fd_, &to_write[w_size], to_write.size() - w_size);
+		cur_udata->write_size_ += n;
+	if (n == -1){
+		cur_udata->write_size_ = 0;
+		to_write.clear();
+		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		return ;
+	}
+	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
+		if (is_body != true){
+		to_write.clear();
+		cur_udata->write_size_ = 0;
+		}else{
+			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
+			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
+			if (cur_udata->http_request_.size() != 0 && cur_udata->http_request_[0].getParseStatus() == FINISH)
+				HttpResponseHandler::getInstance().parseResponse(cur_udata);
+			else
+				Kqueue::registerReadEvent(cur_udata->client_fd_, cur_udata);
+			cur_udata->write_size_ = 0;
+		}
+	}
+}
+
+void	EventHandler::fileErrorCallBack(struct kevent *cur_event){
+	close(cur_event->ident);
+	HttpResponseHandler::getInstance().errorCallBack(*(UData *)(cur_event->udata), 500);
+}
+
 EventHandler::EventHandler(){}

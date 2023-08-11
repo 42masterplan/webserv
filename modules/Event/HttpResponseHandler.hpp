@@ -16,7 +16,8 @@ class HttpResponseHandler{
 		void	RegisterFileReadEvent(int file_fd, UData &udata);
 	private:
 		void	handleHttpMethod(UData &udata);
-		void	handleHeadGet(UData &udata);
+		void	handleGet(UData &udata);
+		void	handleHead(UData &udata);
 		void	handlePost(UData &udata);
 		void	handleDelete(UData &udata);
 };

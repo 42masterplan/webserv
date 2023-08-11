@@ -31,13 +31,13 @@ HttpRequest::HttpRequest(): path_(""), is_chunked_(false), content_length_(-1), 
 parse_status_(FIRST), request_error_(OK), last_header_(""), read_state_(false), to_read_(0) { }
 
 /*Test용 함수*/
-void	print_vec(std::vector<char>& t){
+void	print_vec(const std::vector<char>& t){
 	std::cout << "------------printvec----------" << std::endl;
 	std::cout << "vector size:" << t.size() << std::endl;
-	for (size_t i = 0; i < t.size(); i++){
-		std::cout << "(" << (int)t[i] <<")";
-	}
-	std::cout << std::endl;
+	// for (size_t i = 0; i < t.size(); i++){
+	// 	std::cout << "(" << (int)t[i] <<")";
+	// }
+	// std::cout << std::endl;
 	for (size_t i = 0; i < t.size(); i++){
 		std::cout << t[i];
 	}

@@ -23,7 +23,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 		return;
 	}
 	if (cur_udata == NULL){
-		std::cout << cur_event->ident << "is already disconnected!(read)"<< std::endl;
+		std::cout << cur_event->ident << "is already disconnected!(read)" << std::endl;
 		return ;
 	}
 
@@ -32,7 +32,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	if (rlen == -1)
 		std::cerr << "already disconnected!"<< std::endl;
 	else if (rlen == 0){
-		std::cout << "clnt sent eof. disconnecting." <<std::endl;
+		std::cout << "clnt sent eof. disconnecting." << std::endl;
 		disconnectFd(cur_event);
 	}
 	else{
@@ -46,8 +46,21 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 			request_ref.back().setPort(cur_udata->port_);
 			request_ref.back().parse(raw_data_ref);
 		}
-		if (request_ref.back().getRequestError())
-			 return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		switch (request_ref.back().getRequestError())
+		{
+			case (OK) : 
+				break;
+			case (FORM_ERROR) :
+				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 404);
+			case (METHOD_ERROR) :
+				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 405);
+			case (VERSION_ERROR) :
+				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 505);
+			case (UNIMPLEMENTED_ERROR) :
+				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 501);
+			case (LENGTH_REQUIRED_ERROR) :
+				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 411);
+		}
 		if (request_ref.size() != 0 && request_ref.front().getParseStatus() == FINISH)
 			HttpResponseHandler::getInstance().parseResponse(cur_udata);
 	}
@@ -58,7 +71,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  EventHandler::sockWritable(struct kevent *cur_event){
-	// std::cout << "SOCK Writable" << std::endl;
+	std::cout << "SOCK Writable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
@@ -67,6 +80,11 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 
 	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
 	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
+	// std::cout << "머리야~~"<<std::endl;
+	// // print_vec(head_ref);
+	// std::cout << "바디야~"<<std::endl;
+	// // print_vec(body_ref);
+	// std::cout << "끝이야~" <<std::endl;
 	if (head_ref.size())//여기가 첫번째 요청을 보내는 곳
 		writeToclient(head_ref, false, cur_udata);
 	else  //두번째 body를 보내는 분기입니다.
@@ -126,7 +144,7 @@ void  EventHandler::cgiTerminated(UData* udata){
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
 void  EventHandler::fileReadable(struct kevent *cur_event){
-	// std::cout << "FILE READable" << std::endl;
+	std::cout << "FILE READable" << std::endl;
 	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
@@ -134,8 +152,11 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 		return fileErrorCallBack(cur_event);
 	buff_[read_len] = '\0';
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
+	// print_vec(file_store_ref);
 	cur_udata->http_response_.file_size_ -= read_len;
+	std::cout << "파일 사이즈 ::" <<cur_udata->http_response_.file_size_ <<std::endl;
 	if (cur_udata->http_response_.file_size_ == 0){
+		
 		close(cur_event->ident);
 		cur_udata->fd_type_= CLNT;
 		cur_udata->http_response_.makeBodyResponse(cur_udata->http_response_.status_code_, file_store_ref.size());
@@ -186,7 +207,7 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 	int n;
 	int w_size = cur_udata->write_size_;
 	n = write(cur_udata->client_fd_, &to_write[w_size], to_write.size() - w_size);
-		cur_udata->write_size_ += n;
+	cur_udata->write_size_ += n;
 	if (n == -1){
 		cur_udata->write_size_ = 0;
 		to_write.clear();
@@ -194,17 +215,24 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 		return ;
 	}
 	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
-		if (is_body != true){
-		to_write.clear();
 		cur_udata->write_size_ = 0;
-		}else{
+		if (is_body != true){
+			
+			std::cout << "헤더 보냈어요" <<std::endl;
+			print_vec(to_write);
+			to_write.clear();
+		}
+		else{
+			std::cout << "바디 보냈어요" <<std::endl;
+			print_vec(to_write);
+			// std::cout << "SECONDE DONE"<<std::endl;
+			// print_vec(to_write);
 			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
 			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
 			if (cur_udata->http_request_.size() != 0 && cur_udata->http_request_[0].getParseStatus() == FINISH)
 				HttpResponseHandler::getInstance().parseResponse(cur_udata);
 			else
 				Kqueue::registerReadEvent(cur_udata->client_fd_, cur_udata);
-			cur_udata->write_size_ = 0;
 		}
 	}
 }

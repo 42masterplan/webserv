@@ -23,8 +23,8 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
   try{
-	setFilePath(req, loc_block_);
-  setFileSize(file_path_);
+		setFilePath(req, loc_block_);
+		setFileSize(file_path_);
   }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.
     res_type_ = ERROR;
 		processErrorRes(404);
@@ -78,7 +78,7 @@ void	HttpResponse::makeBodyResponse(int status_code, int content_length){
 	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	// status_ = status_store_[status_code_];
-	
+	std::cout << "여기 왔다~~"<<std::endl;
 	// TODO: 변수에 있는 값들 추가한 헤더 만들기
 	std::string header =
 	http_version_ + " " + status_ + "\r\n"+ 

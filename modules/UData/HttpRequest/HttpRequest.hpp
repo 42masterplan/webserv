@@ -82,5 +82,5 @@ class HttpRequest{
 		static const std::map<std::string, bool>	get_multiple_header();
 		int							hexToDec(const std::string& base_num);
 };
-void	print_vec(std::vector<char>& t);
+void	print_vec(const std::vector<char>& t);
 #endif

@@ -6,7 +6,7 @@ HttpResponseHandler& HttpResponseHandler::getInstance(){
 }
 
 void	HttpResponseHandler::parseResponse(UData *udata){
-	std::cout <<"PARSE RESPONSE!!!!!!" <<std::endl;
+	std::cout << "PARSE RESPONSE!!!!!!" << std::endl;
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	handleResponse(udata);
@@ -16,6 +16,7 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 void	HttpResponseHandler::handleResponse(UData *udata){
 	HttpResponse &cur_response = udata->http_response_;
 	HttpRequest &cur_request = udata->http_request_[0];
+	std::cout << "RESTYPE: " << static_cast<int>(cur_response.res_type_) << std::endl;
 	switch(cur_response.res_type_){
 		case METHOD_TYPE : handleHttpMethod(*udata);
 			break ;
@@ -85,9 +86,9 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	std::cout << "METHOD!!" << (int)method << std::endl;
 	switch(method) {
 		case GET:
-			return handleHeadGet(udata);
+			return handleGet(udata);
 		case HEAD:
-			return handleHeadGet(udata);
+			return handleHead(udata);
 		case DELETE:
 			return handleDelete(udata);
 		case POST:
@@ -101,8 +102,8 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	}
 }
 
-void HttpResponseHandler::handleHeadGet(UData &udata) {
-	std::cout << "GET!! OR HEAD" << udata.http_response_.getFilePath().c_str() << std::endl;
+void HttpResponseHandler::handleGet(UData &udata) {
+	std::cout << "GET!" << udata.http_response_.getFilePath().c_str() << std::endl;
 	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
 	if (fd == -1)
 		return errorCallBack(udata, 404);
@@ -110,8 +111,17 @@ void HttpResponseHandler::handleHeadGet(UData &udata) {
 	RegisterFileReadEvent(fd, udata);
 }
 
+void HttpResponseHandler::handleHead(UData &udata) {
+	std::cout << "HEAD!!" << udata.http_response_.getFilePath().c_str() << std::endl;
+	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
+	if (fd == -1)
+		udata.http_response_.processErrorRes(404);
+	udata.http_response_.setFileSize(udata.http_response_.getFilePath());
+	RegisterClientWriteEvent(udata);
+}
+
 void HttpResponseHandler::handlePost(UData &udata) {
-	std::cout << "POST!!!!!!!"<<std::endl;
+	std::cout << "POST!!!!!!!" << std::endl;
 	std::string filename = udata.http_response_.getFilePath() + MimeStore::getExtension(udata.http_request_[0].getContentType());
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
@@ -135,17 +145,24 @@ void HttpResponseHandler::handleDelete(UData &udata) {
  * @param status_code 설정하고 싶은 status code
  */
 void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
+	std::cout << "\n\nSTATCODE: " << status_code << "\n\n";
 	udata.http_response_.processErrorRes(status_code);
 	int error_file_fd_ ;
-	std::cout << "ERROR file PATH" <<udata.http_response_.getFilePath() <<std::endl;
-	if (udata.http_response_.getFilePath() != ""){
+	std::cout << "ERROR file PATH " <<udata.http_response_.getFilePath() <<std::endl;
+	if (udata.http_request_[0].getMethod() == HEAD){
+			udata.http_response_.processErrorRes(status_code);
+			udata.http_response_.setFileSize(udata.http_response_.getFilePath());
+			udata.http_response_.makeBodyResponse(status_code, udata.http_response_.file_size_);
+			RegisterClientWriteEvent(udata);
+	}
+	else if (udata.http_response_.getFilePath() != ""){
 		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-		if (status_code != 500 && error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
+		if (error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
 			return errorCallBack(udata, 500);
 		udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 		RegisterFileReadEvent(error_file_fd_, udata);
 	}
-	//에러페이지기 설정되지 않는 경우가 존재하려나?
+	//에러페이지가 설정되지 않는 경우가 존재하려나?
 	else 
 		std::cout << "NO ERORRPAGE!!" << std::endl;
 }

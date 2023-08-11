@@ -1,5 +1,5 @@
 #include "MimeStore.hpp"
-#include <iostream>
+
 
 std::map<std::string, std::string> MimeStore::mime_store_;
 

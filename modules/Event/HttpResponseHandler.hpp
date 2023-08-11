@@ -1,9 +1,8 @@
 #ifndef HTTPRESPONSEHANDLER_HPP
 # define HTTPRESPONSEHANDLER_HPP
-# include "../UData.hpp"
-# include "../../config/ConfParser.hpp"
-# include "../../webserv/Cgi.hpp"
-# include "../../webserv/AutoIndex.hpp"
+# include "../UData/UData.hpp"
+# include "../config/ConfParser.hpp"
+# include "Cgi.hpp"
 class HttpResponseHandler{
 	public:
 		static HttpResponseHandler&	getInstance();

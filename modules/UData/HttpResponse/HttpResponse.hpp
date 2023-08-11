@@ -3,7 +3,7 @@
 
 # include "../../config/ConfParser.hpp"
 # include "../HttpRequest/HttpRequest.hpp"
-# include "../../webserv/AutoIndex.hpp"
+# include "AutoIndex.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
 

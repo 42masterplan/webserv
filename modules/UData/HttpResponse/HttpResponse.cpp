@@ -22,8 +22,13 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 }
 
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
+  try{
 	setFilePath(req, loc_block_);
   setFileSize(file_path_);
+  }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.
+    res_type_ = ERROR;
+		processErrorRes(404);
+  }
 }
 
 /* init */
@@ -99,7 +104,7 @@ const std::string &HttpResponse::getFilePath() const { return file_path_; }
 
 bool HttpResponse::isFolder(const std::string& file_path_) const {
   struct stat path_info;
-  if (stat(file_path_.c_str(), &path_info) != 0)
+  if (stat(file_path_.c_str(), &path_info) != 0) //오토인덱스이면서 없는 폴더 혹은 파일일 때.
     throw std::runtime_error("stat() ERROR");
   if (S_ISDIR(path_info.st_mode))
     return true;

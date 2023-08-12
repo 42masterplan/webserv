@@ -71,7 +71,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  EventHandler::sockWritable(struct kevent *cur_event){
-	std::cout << "SOCK Writable" << std::endl;
+	// std::cout << "SOCK Writable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
@@ -80,11 +80,6 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 
 	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
 	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
-	// std::cout << "머리야~~"<<std::endl;
-	// // print_vec(head_ref);
-	// std::cout << "바디야~"<<std::endl;
-	// // print_vec(body_ref);
-	// std::cout << "끝이야~" <<std::endl;
 	if (head_ref.size())//여기가 첫번째 요청을 보내는 곳
 		writeToclient(head_ref, false, cur_udata);
 	else  //두번째 body를 보내는 분기입니다.
@@ -100,17 +95,24 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 void  EventHandler::cgiReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
 	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
-
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
-	else if (rlen == 0)
-		std::cout << "CGI process sent eof, closing fd.\n";
+	else if (rlen == 0){
+		std::cout << "CGI process sent eof.\n";
+    disconnectFd(cur_event);
+    // std::cout << "\nRAW_DATA\n ";
+    // print_vec(raw_data_ref);
+    // std::cout << std::endl;
+  }
 	else{
+    // std::cout << "\nCGI HAS BEEN READ - SIZE: " << rlen << std::endl;
+    // std::cout << "BUFFER:" << buff_ << "\n-------------------\n" << std::endl;
 		buff_[rlen] = '\0';
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
-    std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
-    std::cout << "FROM CGI PROC\n" << raw_data_string << "\n";
+    // std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
+    // std::cout << "FROM CGI PROC" << raw_data_string << "\n";
+    // Kqueue::unregisterReadEvent(cur_udata->client_fd_, cur_udata);//클라이언트 Read이벤트 잠시 중단
 	}
 }
 
@@ -123,16 +125,19 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 void  EventHandler::cgiTerminated(UData* udata){
   int status;
   Kqueue::registerWriteEvent(udata->client_fd_, udata);
-
+	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
   //TODO: 자식 프로세스의 fd[0]을 unregister해야할까요? 어차피 종료된 프로세스인데.. 그렇게 한다면 udata에 자식 프로세스 fd도 들고있어야 합니다.
+  HttpResponse &cur_response = udata->http_response_;
+  cur_response.body_ = udata->raw_data_;
+  cur_response.makeBodyResponse(200, cur_response.body_.size());
   waitpid(udata->cgi_pid_, &status, 0);
   udata->fd_type_ = CLNT;
   udata->prog_name_ = "";
   udata->cgi_pid_ = 0;
   if (WIFEXITED(status))
     return;
-  // else
-  //   throw std::runtime_error("CGI terminated abnormally");
+  else
+    throw std::runtime_error("CGI terminated abnormally");
 }
 
 
@@ -192,10 +197,8 @@ void  EventHandler::disconnectFd(struct kevent *cur_event){
   if (udata->fd_type_ == CLNT)
 	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
   else if (udata->fd_type_ == CGI)
-	  std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
+	  std::cout << "CGI FD DISCONNECTED: " << cur_event->ident << std::endl;
 	close(cur_event->ident);
-	// delete udata;
-	// cur_event->udata = NULL;
 }
 
 
@@ -214,12 +217,10 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 		cur_udata->write_size_ = 0;
 		if (is_body != true){
 			std::cout << "헤더 보냈어요" <<std::endl;
-			// print_vec(to_write);
 			to_write.clear();
 		}
 		else{
 			std::cout << "바디 보냈어요" <<std::endl;
-			// print_vec(to_write);
 			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
 			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
 			if (cur_udata->http_request_.size() != 0 && cur_udata->http_request_[0].getParseStatus() == FINISH)

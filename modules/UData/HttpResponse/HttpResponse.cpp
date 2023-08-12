@@ -137,7 +137,6 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
 	}
 	file_path_ = loc.getCombineCgiPath();
-	std::cout << "CGI 파일이에용오오오오오오오오:::"<<file_path_<<std::endl;
 	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;
 		return;

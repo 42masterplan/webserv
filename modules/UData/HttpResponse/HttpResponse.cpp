@@ -144,14 +144,16 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineUploadStorePath();
 	if (isUploadMethod(req) && file_path_ == ""){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
 		res_type_ = ERROR;
-		processErrorRes(405);
+		processErrorRes(404);
 		return;
 	}
 	file_path_ = loc.getCombineLocPath();
+	std::cout <<"file -------"<< req.getPath()<< "|" << file_path_ << std::endl;
   if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
     res_type_ = AUTOINDEX;
     return;
   }
+	
 }
 
 std::vector<char>& HttpResponse::getJoinedData(){ return joined_data_; }

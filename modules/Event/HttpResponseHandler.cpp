@@ -36,7 +36,10 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 		cur_response.processRedirectRes(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			RegisterClientWriteEvent(*udata);
 			break ;
-		case ERROR : errorCallBack(*udata, udata->http_response_.status_code_);
+		case ERROR : 
+			if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
+			  return errorCallBack(*udata, 405);
+			errorCallBack(*udata, udata->http_response_.status_code_);
 		//에러코드를 확인해서 해당하는 status code에 해당하는 에러페이지가 있는지 탐색-> 있다면 그 파일을 write 이벤트 등록 아니라면 default error_page 만들어서 클라이언트에게 write
 			break ;
 	}

@@ -156,15 +156,22 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 		}
 		if (con_path.find(loc_info) == 0){
 			const std::vector<std::string>& loc_index_store = loc_store_[i].getIndex();
+			std::string left_path = con_path.substr(loc_info.size());
+			if (left_path.find("/") == std::string::npos)
+						left_path = "/" + left_path;
+			std::cout << "@@@@left_path:" << left_path<< std::endl;
+			if (left_path == "")
+				left_path = "/";
 			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){
-				loc_store_[i].setCombinePath(troot + "/" + index);
+				loc_store_[i].setCombinePath(troot + left_path);
 				loc_store_[i].setHighPriorityRoot(troot);
 				return i;
 			}
 			else {
 				for (size_t j = 0; j < loc_index_store.size(); j++){
 					loc_store_[i].setCombinePath(troot + path + loc_index_store[j]);
-					int ret = untilFindLoc("/", troot,loc_index_store[j]);
+					
+					int ret = untilFindLoc(left_path, troot, loc_index_store[j]);
 					if (ret != -1)
 						return(ret);
 				}

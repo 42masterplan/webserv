@@ -51,7 +51,7 @@ LocBlock ServBlock::findLocBlock(std::string path){
 	int ret = -1;
 	for (size_t i = 0;i < serv_index_store.size(); i++){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
-		loc_store_[ret].printInfo();
+		// loc_store_[ret].printInfo();
 		if (ret != -1)
 			return (loc_store_[ret]);
 	}
@@ -159,7 +159,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			std::string left_path = con_path.substr(loc_info.size());
 			if (left_path.find("/") == std::string::npos)
 						left_path = "/" + left_path;
-			std::cout << "@@@@left_path:" << left_path<< std::endl;
+			// std::cout << "@@@@left_path:" << left_path<< std::endl;
 			if (left_path == "")
 				left_path = "/";
 			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){

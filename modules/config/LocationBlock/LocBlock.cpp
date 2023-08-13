@@ -1,8 +1,8 @@
 #include "LocBlock.hpp"
 
-LocBlock::LocBlock():rank_(0), upload_store_(""), loc_info_(""), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
+LocBlock::LocBlock():rank_(0), upload_store_(""), loc_info_(""), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""),is_error_(false){}
 
-LocBlock::LocBlock(std::string loc_info) : rank_(0), upload_store_(""), loc_info_(loc_info), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
+LocBlock::LocBlock(std::string loc_info) : rank_(0), upload_store_(""), loc_info_(loc_info), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""), is_error_(false){}
 
 LocBlock::~LocBlock(){}
 // LocBlock& LocBlock::operator=(const LocBlock& obj){
@@ -108,7 +108,7 @@ const std::string& LocBlock::getCombineLocPath()const{return (combined_path_);}
 /*--------setter-------------*/
 void	LocBlock::setCombinePath(std::string combine_path){combined_path_ = combine_path;}
 void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_ = root;}
-
+void LocBlock::setError(){is_error_ = true;}
 /**
  * @brief 반환된 블럭이 에러인지 아닌지 여부 확인
  *
@@ -116,9 +116,7 @@ void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_
  * @return false 에러 블럭이 아닙니다.
  */
 bool LocBlock::isErrorBlock()const{
-	if (combined_path_ == "")
-		return true;
-	return false;
+	return is_error_;
 }
 
 /**

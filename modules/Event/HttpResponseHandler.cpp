@@ -15,6 +15,8 @@ void	HttpResponseHandler::parseResponse(UData *udata){
 
 void	HttpResponseHandler::handleResponse(UData *udata){
 	HttpResponse &cur_response = udata->http_response_;
+	if (cur_response.loc_block_.isErrorBlock() == true)
+		return errorCallBack(*udata, 404);
 	// HttpRequest &cur_request = udata->http_request_[0];
 	std::cout << "RESTYPE: " << static_cast<int>(cur_response.res_type_) << std::endl;
 	switch(cur_response.res_type_){

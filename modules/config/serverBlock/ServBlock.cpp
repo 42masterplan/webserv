@@ -51,12 +51,14 @@ LocBlock ServBlock::findLocBlock(std::string path){
 	int ret = -1;
 	for (size_t i = 0;i < serv_index_store.size(); i++){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
-		// loc_store_[ret].printInfo();
+		if (ret != -1)
+			loc_store_[ret].printInfo();
 		if (ret != -1)
 			return (loc_store_[ret]);
 	}
 	LocBlock ret_loc("");
 	ret_loc.setInherit(*this);
+	ret_loc.setError();
 	return ret_loc;
 }
 

@@ -52,8 +52,10 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 				break;
 			case (FORM_ERROR) :
 				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 404);
-			case (METHOD_ERROR) :
+			case (METHOD_ERROR) :{
+				std::cout <<"TODO::  설마 여기서?"<<std::endl;
 				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 405);
+			}
 			case (VERSION_ERROR) :
 				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 505);
 			case (UNIMPLEMENTED_ERROR) :

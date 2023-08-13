@@ -136,6 +136,7 @@ std::map<std::string, std::string>& ServBlock::getDirStore(){return (serv_direct
  */
 int ServBlock::untilFindLoc(const std::string& path, const std::string& root, const std::string& index){
 	std::string con_path = path + index;
+	std::cout << "CON PATH" <<con_path <<std::endl;
 	for (size_t i = 0; i < loc_store_.size(); i++){
 		std::string troot = root;
 		if (loc_store_[i].getRoot() != "")
@@ -159,7 +160,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			std::string left_path = con_path.substr(loc_info.size());
 			if (left_path.find("/") == std::string::npos)
 						left_path = "/" + left_path;
-			// std::cout << "@@@@left_path:" << left_path<< std::endl;
+			std::cout << "@@@@left_path:" << left_path<< std::endl;
 			if (left_path == "")
 				left_path = "/";
 			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){
@@ -169,8 +170,9 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			}
 			else {
 				for (size_t j = 0; j < loc_index_store.size(); j++){
+					if (left_path ==("/" + loc_index_store[j] ))
+						left_path = "/";
 					loc_store_[i].setCombinePath(troot + path + loc_index_store[j]);
-					
 					int ret = untilFindLoc(left_path, troot, loc_index_store[j]);
 					if (ret != -1)
 						return(ret);

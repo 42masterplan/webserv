@@ -27,7 +27,7 @@ $(NAME) : $(CONFIGOBJS) $(TOOLOBJS)
 
 clean:
 		$(RM) $(CONFIGOBJS)
-		$(RM) $(COBJS)
+		$(RM) $(TOOLOBJS)
 
 fclean: clean
 		$(RM) $(NAME)

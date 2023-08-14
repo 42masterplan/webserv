@@ -241,7 +241,7 @@ void	HttpRequest::checkHeader(void) {
 				return ;
 			}
 		}
-		if (cookie_.find())
+		// if (cookie_.find())
 	}
 
 	/* content-type */

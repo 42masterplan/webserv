@@ -106,6 +106,7 @@ void  HttpResponse::setFileSize(const std::string& file_path_) {
   }
   if (stat(file_path_.c_str(), &file_stat) != 0)
     throw std::runtime_error("stat() ERROR");
+	std::cout << "파일 크기 만드는중 ~~" << file_stat.st_size <<std::endl;
   file_size_ = static_cast<long>(file_stat.st_size);
 }
 

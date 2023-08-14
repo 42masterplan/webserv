@@ -73,7 +73,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  EventHandler::sockWritable(struct kevent *cur_event){
-	// std::cout << "SOCK Writable" << std::endl;
+	std::cout << "SOCK Writable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
@@ -82,8 +82,8 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 
 	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
 	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
-	if (head_ref.size())//여기가 첫번째 요청을 보내는 곳
-		writeToclient(head_ref, false, cur_udata);
+	if (head_ref.size()) //여기가 첫번째 요청을 보내는 곳
+	writeToclient(head_ref, false, cur_udata);
 	else  //두번째 body를 보내는 분기입니다.
 		writeToclient(body_ref, true, cur_udata);
 }
@@ -149,12 +149,11 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 	std::vector<char>& file_store_ref = cur_udata->http_response_.getBody();
 	if (read_len == -1 || cur_udata->http_response_.file_size_ < static_cast<long>(read_len))//읽고 있는 파일을 삭제하는 경우 또는 파일크기보다 갑자기 더 큰게 읽히면 에러로 처리
 		return fileErrorCallBack(cur_event);
-	buff_[read_len] = '\0';
+	// buff_[read_len] = '\0';
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
 	// print_vec(file_store_ref);
 	cur_udata->http_response_.file_size_ -= read_len;
-	if (cur_udata->http_response_.file_size_ == 0){
-		
+	if (cur_udata->http_response_.file_size_ == 0){	
 		close(cur_event->ident);
 		cur_udata->fd_type_= CLNT;
 		cur_udata->http_response_.makeBodyResponse(cur_udata->http_response_.status_code_, file_store_ref.size());
@@ -202,11 +201,16 @@ void  EventHandler::disconnectFd(struct kevent *cur_event){
 void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata){
 	int n;
 	int w_size = cur_udata->write_size_;
+	if (to_write.size() < (size_t) w_size){
+		std::cout << "말이 안돼!" <<std::endl;
+		return ;
+	}
 	n = write(cur_udata->client_fd_, &to_write[w_size], to_write.size() - w_size);
 	cur_udata->write_size_ += n;
 	if (n == -1){
 		cur_udata->write_size_ = 0;
 		to_write.clear();
+		Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
 		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		return ;
 	}

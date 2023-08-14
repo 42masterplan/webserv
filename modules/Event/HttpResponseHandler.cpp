@@ -108,6 +108,8 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 
 void HttpResponseHandler::handleGet(UData &udata) {
 	std::cout << "GET!" << udata.http_response_.getFilePath().c_str() << std::endl;
+	if (udata.http_response_.isFolder(udata.http_response_.getFilePath().c_str()) == true)
+		return errorCallBack(udata, 404);
 	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
 	if (fd == -1)
 		return errorCallBack(udata, 404);
@@ -149,7 +151,7 @@ void HttpResponseHandler::handleDelete(UData &udata) {
  * @param status_code 설정하고 싶은 status code
  */
 void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
-	std::cout << "\n\nSTATCODE: " << status_code << "\n\n";
+	std::cout << "에러 콜백 : STATUS CODE: " << status_code << "\n\n";
 	udata.http_response_.processErrorRes(status_code);
 	int error_file_fd_ ;
 	std::cout << "ERROR file PATH " <<udata.http_response_.getFilePath() <<std::endl;

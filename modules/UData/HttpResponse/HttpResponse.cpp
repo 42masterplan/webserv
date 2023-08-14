@@ -61,27 +61,10 @@ void HttpResponse::processRedirectRes(int status_code) {
 	// std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
 
-/**
- * @brief 에러가 나지 않고 POST에 성공했을 때 등에만 사용한다.보낼 body가 있을 대 사용해서는 안된다.
- * 
- * @param status_code 
- */
-void	HttpResponse::makeNoBodyResponse(int status_code){
-	status_code_ = status_code;
-	status_ = status_msg_store_.getStatusMsg(status_code_);
-	// status_ = status_store_[status_code_];
-	std::string header =
-	http_version_ + " " + status_ + "\r\n" +
-	"Content-Type: text/html; charset=utf-8\r\n"+
-	"content-length: 0\r\n\r\n";
-	joined_data_.clear();
-	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
-}
 
 void	HttpResponse::makeBodyResponse(int status_code, int content_length){
 	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
-	// status_ = status_store_[status_code_];
 	std::cout << "여기 왔다~~"<<std::endl;
 	// TODO: 변수에 있는 값들 추가한 헤더 만들기
 	std::string header =
@@ -154,7 +137,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return;
 	}
 	file_path_ = loc.getCombineLocPath();
-	std::cout <<"file -------"<< req.getPath()<< "|" << file_path_ << std::endl;
+	// std::cout <<"file -------"<< req.getPath()<< "|" << file_path_ << std::endl;
   if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
     res_type_ = AUTOINDEX;
     return;

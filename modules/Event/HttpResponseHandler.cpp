@@ -24,7 +24,7 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 			break ;
 		case CGI_EXEC : Cgi::forkCgi(udata);
 			break ;
-		case AUTOINDEX : //TODO: 이거 이벤트 어디서 등록할까요?
+		case AUTOINDEX :
 		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
 			  return errorCallBack(*udata, 405);
 			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response.getFilePath().c_str());
@@ -136,7 +136,7 @@ void HttpResponseHandler::handlePost(UData &udata) {
 
 void HttpResponseHandler::handleDelete(UData &udata) {
 	std::remove(udata.http_response_.getFilePath().c_str());
-	udata.http_response_.makeNoBodyResponse(200);
+	udata.http_response_.makeBodyResponse(200, 0);
 	//삭제에 성공하던 실패하던 같은 코드를 내보낸다.
 	//TODO:delete 성공했을 때 header와 body를 만들어서 메세지를 만든 후에 아래 이벤트를 등록한다.
 	RegisterClientWriteEvent(udata);

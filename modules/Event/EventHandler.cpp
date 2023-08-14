@@ -16,7 +16,7 @@ EventHandler& EventHandler::getInstance(){
  * @exception read()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  EventHandler::sockReadable(struct kevent *cur_event){
-	std::cout << "SOCK Readable" << std::endl;
+	// std::cout << "SOCK Readable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	if (cur_event->flags == EV_EOF){
 		disconnectFd(cur_event);
@@ -36,7 +36,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 		disconnectFd(cur_event);
 	}
 	else{
-		buff_[rlen] = '\0';
+		// buff_[rlen] = '\0';
 		// std::cout <<"들어온 버퍼::" << buff_ <<"|"<< std::endl;
 		// std::cout << "그래서 저장된 raw_data:"<<std::endl;
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
@@ -49,16 +49,13 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 			request_ref.back().setPort(cur_udata->port_);
 			request_ref.back().parse(raw_data_ref);
 		}
-		switch (request_ref.back().getRequestError()) 
-		{
+		switch (request_ref.back().getRequestError()){
 			case (OK) : 
 				break;
 			case (FORM_ERROR) :
 				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 404);
-			case (METHOD_ERROR) :{
-				std::cout <<"TODO::  설마 여기서?"<<std::endl;
+			case (METHOD_ERROR) :
 				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 405);
-			}
 			case (VERSION_ERROR) :
 				return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 505);
 			case (UNIMPLEMENTED_ERROR) :
@@ -106,9 +103,6 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	else if (rlen == 0){
 		std::cout << "CGI process sent eof.\n";
     disconnectFd(cur_event);
-    // std::cout << "\nRAW_DATA\n ";
-    // print_vec(raw_data_ref);
-    // std::cout << std::endl;
   }
 	else{
     // std::cout << "\nCGI HAS BEEN READ - SIZE: " << rlen << std::endl;
@@ -131,7 +125,6 @@ void  EventHandler::cgiTerminated(UData* udata){
   int status;
   Kqueue::registerWriteEvent(udata->client_fd_, udata);
 	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
-  //TODO: 자식 프로세스의 fd[0]을 unregister해야할까요? 어차피 종료된 프로세스인데.. 그렇게 한다면 udata에 자식 프로세스 fd도 들고있어야 합니다.
   HttpResponse &cur_response = udata->http_response_;
   cur_response.makeBodyResponse(200, cur_response.body_.size());
   waitpid(udata->cgi_pid_, &status, 0);
@@ -183,7 +176,7 @@ void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 
 		return fileErrorCallBack(cur_event);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-		cur_udata->http_response_.makeNoBodyResponse(201);
+		cur_udata->http_response_.makeBodyResponse(201, 0);
 		cur_udata->fd_type_ = CLNT;
 		close(cur_event->ident);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);

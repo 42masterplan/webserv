@@ -51,8 +51,8 @@ LocBlock ServBlock::findLocBlock(std::string path){
 	int ret = -1;
 	for (size_t i = 0;i < serv_index_store.size(); i++){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
-		if (ret != -1)
-			loc_store_[ret].printInfo();
+		// if (ret != -1)
+		// 	loc_store_[ret].printInfo();
 		if (ret != -1)
 			return (loc_store_[ret]);
 	}
@@ -176,11 +176,11 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			}
 			else {
 				for (size_t j = 0; j < loc_index_store.size(); j++){
-					std::cout <<"남은 경로에요~" <<left_path <<std::endl;
+					// std::cout <<"남은 경로에요~" <<left_path <<std::endl;
 					if (left_path == ("/" + loc_index_store[j] + "/")) //같은 경우라고 생각했는데...
 						left_path = "/";
 					if (path.back() != '/'){
-						std::cout << "1번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
+						// std::cout << "1번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
 						std::string open_path = (troot + left_path);
 						open_path.erase(open_path.end() - 1);
 						DIR*	dir = opendir(open_path.c_str());
@@ -188,10 +188,10 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 							closedir(dir);
 						}
 						else {
-							std::cout << "오픈이에용" << open_path<<std::endl;
+							// std::cout << "오픈이에용" << open_path<<std::endl;
 							int fd = open(open_path.c_str(),O_RDONLY);
 							if (fd != -1){
-								std::cout << "HI"<<std::endl;
+								// std::cout << "HI"<<std::endl;
 								loc_store_[i].setCombinePath(open_path);
 								close(fd);
 								return (i);
@@ -200,7 +200,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 						loc_store_[i].setCombinePath(troot + path + "/" + loc_index_store[j]);
 					}
 					else {
-						std::cout << "2번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
+						// std::cout << "2번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
 						loc_store_[i].setCombinePath(troot + path + loc_index_store[j]);
 					}
 					int ret = untilFindLoc(left_path, troot, loc_index_store[j]);

@@ -25,7 +25,7 @@ class Cgi{
   private:
     Cgi();
     ~Cgi();
-    static char** getEnvs(HttpRequest& req);
+    static char** getEnvs(UData* ptr);
 };
 
 #endif

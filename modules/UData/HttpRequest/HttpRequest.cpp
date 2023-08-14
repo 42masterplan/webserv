@@ -241,11 +241,13 @@ void	HttpRequest::checkHeader(void) {
 				return ;
 			}
 		}
+		if (cookie_.find())
 	}
 
 	/* content-type */
 	if (header_.find(std::string("content-type")) != header_.end())
 		content_type_ = header_["content-type"];
+
 
 	/* transfer-encoding */
 	if (header_.find(std::string("transfer-encoding")) != header_.end()) {

@@ -55,6 +55,7 @@ class HttpRequest{
 		/* headers */
 		int							port_;
 		bool						is_chunked_;
+		bool						exist_session_;
 		int							content_length_;
 		std::string			content_type_;
 		std::string			host_;

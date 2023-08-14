@@ -165,11 +165,15 @@ std::string	ServManager::createSession(void) {
 
   srand(static_cast<unsigned int>(time(NULL)));
 	while (true) {
+		/* 랜덤 문자열 생성 */
 		random_str = "";
 	  for (int i = 0; i < length; ++i)
 	      random_str += characters[rand() % characters.length()];
+		
+		/* 존재하는 문자열인 지 확인 */
 		if (session.find(random_str) == session.end()) {
 			session[random_str] = "user" + intToString(session.size());
+			break ;
 		}
 	}
 	return random_str;

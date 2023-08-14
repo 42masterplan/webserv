@@ -7,6 +7,7 @@ HttpResponseHandler& HttpResponseHandler::getInstance(){
 
 void	HttpResponseHandler::parseResponse(UData *udata){
 	std::cout << "PARSE RESPONSE!!!!!!" << std::endl;
+	std::cout << "PATH:" << udata->http_request_[0].getPath() <<"|" <<std::endl;	
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	handleResponse(udata);

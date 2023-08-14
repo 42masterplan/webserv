@@ -53,8 +53,17 @@ LocBlock ServBlock::findLocBlock(std::string path){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
 		// if (ret != -1)
 		// 	loc_store_[ret].printInfo();
-		if (ret != -1)
+
+		if (ret != -1){
+			std::string con_p = loc_store_[ret].getCombineLocPath();
+			if (con_p.size() != 1 &&con_p.back() == '/'){
+				if (isFolder(con_p) == false)
+					con_p.pop_back();
+				// std::cout <<"합성!!!!" << con_p <<std::endl;
+				loc_store_[ret].setCombinePath(con_p);
+			}
 			return (loc_store_[ret]);
+		}
 	}
 	LocBlock ret_loc("");
 	ret_loc.setInherit(*this);

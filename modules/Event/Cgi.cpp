@@ -12,34 +12,28 @@ Cgi::~Cgi(){}
  */
 char**  Cgi::getEnvs(UData* ptr){
   HttpRequest&  req = ptr->http_request_[0];
-  // const std::map<std::string, std::string>&  header = req.getHeader();
-  char**  envp = new char* [4];
-  envp[3] = NULL;
-
-  if (req.getMethod() == GET)
-    envp[0] = (char *)"REQUEST_METHOD=GET";
-  else if (req.getMethod() == POST)
-    envp[0] = (char *)"REQUEST_METHOD=POST";
-  envp[1] = (char *)"SERVER_PROTOCOL=HTTP/1.1";
-  std::string path_info = std::string("PATH_INFO=" + ptr->prog_name_);
-  envp[2] = new char[path_info.size() + 1];
-  std::strcpy(envp[2], path_info.c_str());
-  //선택적으로 스크립트를 호출한 HTTP 요청의 추가 경로 정보를 포함하고 있으며 CGI 스크립트로 해석할 경로를 지정합니다.
-  //PATH_INFO는 CGI 스크립트가 리턴할 자원 또는 하위 자원을 식별하며 스크립트 이름 뒤에 오지만 모든 조회 데이터 앞에 오는 URI 경로 부분에서 파생됩니다.
-  // std::string header_buff = "";
-  // std::map<std::string, std::string>::const_iterator it;
-  // int i = 3;
-  // for (it = header.begin(); it != header.end(); ++it, ++i) {
-  //   header_buff = it->first + "=" + it->second;
-  //   envp[i] = new char[header_buff.size() + 1];
-  //   std::strcpy(envp[i], header_buff.c_str());
-  //   std::cerr << "envp I: " << envp[i] << std::endl;
-  // }
-  // const std::vector<char>&  body = req.getBody();
-  // std::string body_buff = std::string(body.begin(), body.end());
-  // body_buff = "BODY=" + body_buff;
-  // envp[i] = new char[body_buff.size() + 1];
-  // std::strncpy(envp[i], body_buff.c_str(), body_buff.size() + 1);
+  char* envp[19];
+  envp[18] = NULL;
+  envp[0] = "AUTH_TYPE=NULL";
+  if (req.getMethod() == POST)
+    envp[1] = (char *)std::string("CONTENT_LENGTH=" + std::to_string(req.getBody().size())).c_str(); //어차피 Body Length이므로
+  else
+    envp[1] = "CONTENT_LENGTH=-1";
+  envp[2] = (char *)std::string("CONTENT_TYPE=" + req.getContentType()).c_str();
+  envp[3] = "GATEWAY_INTERFACE=CGI/1.1";
+  // envp[4] = "PATH_INFO=/";
+  // envp[5] = "PATH_TRANSLATED=/";
+  // envp[6] = (char *)std::string("QUERY_STRING=" + req.getQueryString()).c_str();
+  // envp[7] = (char *)std::string("REMOTE_ADDR=" + ptr->client_ip_).c_str();
+  // envp[8] = "REMOTE_HOST=NULL";
+  // envp[9] = "REMOTE_IDENT=NULL";
+  // envp[10] = "REMOTE_USER=NULL";
+  // envp[11] = (char *)std::string("REQUEST_METHOD=" + req.getMethodString()).c_str();
+  // envp[12] = (char *)std::string("SCRIPT_NAME=" + ptr->prog_name_).c_str();
+  // envp[13] = (char *)std::string("SERVER_NAME=" + ptr->server_name_).c_str();
+  // envp[14] = (char *)std::string("SERVER_PORT=" + std::to_string(ptr->server_port_)).c_str();
+  // envp[15] = (char *)std::string("SERVER_PROTOCOL=" + req.getVersion()).c_str();
+  // envp[16] = "SERVER_SOFTWARE=webserv/1.0";
   return (envp);
 }
 

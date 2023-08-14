@@ -293,7 +293,7 @@ std::string	intToString(int num) {
 bool	isFolder(const std::string& file_path){
   struct stat path_info;
   if (stat(file_path.c_str(), &path_info) != 0) //오토인덱스이면서 없는 폴더 혹은 파일일 때.
-    throw std::runtime_error("stat() ERROR");
+    return false;
   if (S_ISDIR(path_info.st_mode))
     return true;
   return false;

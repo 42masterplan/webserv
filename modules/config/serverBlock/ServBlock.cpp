@@ -33,6 +33,7 @@ void	ServBlock::refineAll(){
 	if (loc_store_.size() == 0)
 		throw(std::runtime_error("You must input Locaction block least One Block!"));
 	for (size_t i = 0; i < loc_store_.size(); i++){
+    loc_store_[i].setInherit(*this);//TODO: 확인필요
 		loc_store_[i].refineAll();
 	}
 	std::sort(loc_store_.begin(), loc_store_.end(), cmp);

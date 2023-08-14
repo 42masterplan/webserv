@@ -1,5 +1,5 @@
 #include "AutoIndex.hpp"
-
+# include "HttpResponse.hpp"
 AutoIndex::AutoIndex(){}
 
 AutoIndex::~AutoIndex(){}
@@ -42,11 +42,11 @@ const std::string AutoIndex::autoindex_template_ =
 
 /**
  * @brief 오토인덱싱 html 하 템플릿입니다.
- * 이 템플릿 내부의 _FILE_, _SIZE_, _MODIFIED_TIME_ 키워드가 파일에 맞는 값으로 대체됩니다.
+ * 이 템플릿 내부의 _FILE_, _LINK_, _SIZE_, _MODIFIED_TIME_ 키워드가 파일에 맞는 값으로 대체됩니다.
  */
 const std::string AutoIndex::f_info_template_ =
   "        <tr>\n"
-  "            <td><a href=\"_FILE_\">_FILE_</a></td>\n"
+  "            <td><a href=\"_LINK_\">_FILE_</a></td>\n"
   "            <td>_SIZE_</td>\n"
   "            <td>_MODIFIED_TIME_</td>\n"
   "        </tr>\n";
@@ -59,12 +59,12 @@ const std::string AutoIndex::f_info_template_ =
  * @param modified_time 파일이 최근 수정된 시간입니다.
  * @return 가공된 템플릿이 담긴 string입니다.
  */
-std::string  AutoIndex::getFileTemplate(const char* file, const char* size, const char* modified_time){
+std::string  AutoIndex::getFileTemplate(const char* link, const char* file, const char* size, const char* modified_time){
   std::string buff = f_info_template_;
   size_t pos = 0;
 
-  pos = buff.find("_FILE_", pos);
-  buff.replace(pos, 6, file);
+  pos = buff.find("_LINK_", pos);
+  buff.replace(pos, 6, link);
   pos = buff.find("_FILE_", pos);
   buff.replace(pos, 6, file);
   pos = buff.find("_SIZE_", pos);
@@ -80,13 +80,14 @@ std::string  AutoIndex::getFileTemplate(const char* file, const char* size, cons
  * @return 생성된 오토인덱스 페이지가 담긴 string입니다.
  * @exception opendir(), readdir(), stat() 시스템콜에서 에러 발생 시 runtime_error를 throw합니다.
  */
-std::vector<char>  AutoIndex::getDirectoryListing(const char* input_dir){
+std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
+  const char* input_dir = cur_response.file_path_.c_str();
   DIR*          dir;
   std::string   form = autoindex_template_;
   struct dirent *ent;
   struct stat   file_stat;
   std::vector<char> ret;
-  std::cout << "디렉토리::"<<input_dir << std::endl;
+  std::cout << "디렉토리::" << input_dir << std::endl;
   dir = opendir(input_dir);
   if (!dir)
     return ret;
@@ -95,11 +96,15 @@ std::vector<char>  AutoIndex::getDirectoryListing(const char* input_dir){
     return ret;
   while (ent){
     std::string file_path = input_dir;
-    file_path += ent->d_name;
+    std::string temp = cur_response.loc_block_.getRoot();
+    std::cout << "루트: " << temp << std::endl;
     if (stat(file_path.c_str(), &file_stat) == -1)
       return ret;
+    file_path.replace(file_path.find(temp), temp.size(), "");
+    file_path += ent->d_name;
+    std::cout << "2nd디렉토리::" << file_path << std::endl;
     std::string file_size = std::to_string(file_stat.st_size);
-    form += getFileTemplate(ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
+    form += getFileTemplate(file_path.c_str(), ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
     ent = readdir(dir);
   }
   form += "    </table>\n</body>\n</html>";

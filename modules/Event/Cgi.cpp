@@ -12,15 +12,16 @@ Cgi::~Cgi(){}
  */
 char**  Cgi::getEnvs(UData* ptr){
   HttpRequest&  req = ptr->http_request_[0];
-  char* envp[19];
+  char** envp = new char*[19];
   envp[18] = NULL;
-  envp[0] = "AUTH_TYPE=NULL";
+  envp[0] = (char *)"AUTH_TYPE=NULL";
   if (req.getMethod() == POST)
     envp[1] = (char *)std::string("CONTENT_LENGTH=" + std::to_string(req.getBody().size())).c_str(); //어차피 Body Length이므로
   else
-    envp[1] = "CONTENT_LENGTH=-1";
+    envp[1] = (char *)"CONTENT_LENGTH=-1";
+  std::cerr << "CONTENT_TYPE: " << req.getContentType() << std::endl;
   envp[2] = (char *)std::string("CONTENT_TYPE=" + req.getContentType()).c_str();
-  envp[3] = "GATEWAY_INTERFACE=CGI/1.1";
+  envp[3] = (char *)"GATEWAY_INTERFACE=CGI/1.1";
   // envp[4] = "PATH_INFO=/";
   // envp[5] = "PATH_TRANSLATED=/";
   // envp[6] = (char *)std::string("QUERY_STRING=" + req.getQueryString()).c_str();

@@ -28,7 +28,7 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 		case AUTOINDEX :
 		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
 			  return errorCallBack(*udata, 405);
-			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response.getFilePath().c_str());
+			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response);
       cur_response.makeBodyResponse(200, cur_response.body_.size());
 			if (cur_response.body_.size() != 0)
       	RegisterClientWriteEvent(*udata);

@@ -222,6 +222,7 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 		}
 		else{
 			std::cout << "바디 보냈어요" <<std::endl;
+			std::cout << "-----------------------" <<std::endl<<std::endl;
 			Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
 			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
 			if (cur_udata->http_request_.size() != 0 && cur_udata->http_request_[0].getParseStatus() == FINISH)

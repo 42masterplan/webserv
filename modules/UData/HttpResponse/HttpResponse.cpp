@@ -65,7 +65,7 @@ void HttpResponse::processRedirectRes(int status_code) {
 void	HttpResponse::makeBodyResponse(int status_code, int content_length){
 	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
-	std::cout << "여기 왔다~~"<<std::endl;
+	// std::cout << "여기 왔다~~"<<std::endl;
 	// TODO: 변수에 있는 값들 추가한 헤더 만들기
 	std::string header =
 	http_version_ + " " + status_ + "\r\n"+ 
@@ -97,7 +97,7 @@ void  HttpResponse::setFileSize(const std::string& file_path_) {
   }
   if (stat(file_path_.c_str(), &file_stat) != 0)
     throw std::runtime_error("stat() ERROR");
-	std::cout << "파일 크기 만드는중 ~~" << file_stat.st_size <<std::endl;
+	// std::cout << "파일 크기 만드는중 ~~" << file_stat.st_size <<std::endl;
   file_size_ = static_cast<long>(file_stat.st_size);
 }
 

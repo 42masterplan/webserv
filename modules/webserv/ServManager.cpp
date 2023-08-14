@@ -157,24 +157,3 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
-
-std::string	ServManager::createSession(void) {
-	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const int					length = 16;
-  std::string				random_str;
-
-  srand(static_cast<unsigned int>(time(NULL)));
-	while (true) {
-		/* 랜덤 문자열 생성 */
-		random_str = "";
-	  for (int i = 0; i < length; ++i)
-	      random_str += characters[rand() % characters.length()];
-		
-		/* 존재하는 문자열인 지 확인 */
-		if (session.find(random_str) == session.end()) {
-			session[random_str] = "user" + intToString(session.size());
-			break ;
-		}
-	}
-	return random_str;
-}

@@ -5,6 +5,7 @@
 # include <map>
 # include <vector>
 # include "../../Tools/ParseTool.hpp"
+# include "../../Event/Session.hpp"
 
 typedef enum parseStatusType{
 	FIRST,
@@ -40,6 +41,8 @@ class HttpRequest{
 		const e_requestError&			getRequestError(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
 		void											setPort(int port);
+
+		void	printRequestInfo();
 
 		/* methods */
 		void		clear();

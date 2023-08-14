@@ -168,6 +168,7 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
 void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 어디서 처리할지 정하기.
+	std::cout << "FILE Writable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
 	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);

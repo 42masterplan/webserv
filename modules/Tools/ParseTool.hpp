@@ -8,6 +8,10 @@
 # include <map>
 # include <algorithm>
 # include <cmath>
+# include <fcntl.h>
+# include <unistd.h>
+# include <sys/stat.h>
+# include <dirent.h>
 typedef enum methodType{
 	GET,
 	HEAD,

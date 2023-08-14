@@ -137,8 +137,12 @@ std::map<std::string, std::string>& ServBlock::getDirStore(){return (serv_direct
  * @return int 몇번 째 블록을 보면 되는지 확인합니다.
  */
 int ServBlock::untilFindLoc(const std::string& path, const std::string& root, const std::string& index){
-	std::string con_path = path + index;
-	std::cout << "CON PATH" <<con_path <<std::endl;
+	std::string con_path = path;
+	if (path.back() != '/')
+		con_path = con_path + "/" + index;
+	else 
+		con_path = con_path + index;
+	// std::cout << "CON PATH" <<con_path <<std::endl;
 	for (size_t i = 0; i < loc_store_.size(); i++){
 		std::string troot = root;
 		if (loc_store_[i].getRoot() != "")
@@ -147,8 +151,8 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 		if (loc_info.find("/.") != std::string::npos){
 			for(int j = con_path.size() - 1; j >= 0; j--){
 				if (con_path[j] == '.'){
-					// std::cout << "|"<< con_path.substr(j) <<"|" <<  loc_info.substr(loc_info.find("/.") + 2) << "|\n";
-					if (con_path.substr(j + 1) == loc_info.substr(loc_info.find("/.") + 2)){
+					// std::cout << "|"<< con_path.substr(j + 1) <<"|" <<  loc_info.substr(loc_info.find("/.") + 2) + "/"<< "|\n";
+					if (con_path.substr(j + 1) == (loc_info.substr(loc_info.find("/.") + 2) + "/")){
 						loc_store_[i].setCombinePath(troot + path + index);
 						loc_store_[i].setHighPriorityRoot(troot);
 						return (i);
@@ -160,9 +164,9 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 		if (con_path.find(loc_info) == 0){
 			const std::vector<std::string>& loc_index_store = loc_store_[i].getIndex();
 			std::string left_path = con_path.substr(loc_info.size());
-			if (left_path.find("/") == std::string::npos)
+			if (left_path.find("/")!= 0)
 						left_path = "/" + left_path;
-			std::cout << "@@@@left_path:" << left_path<< std::endl;
+			// std::cout << "@@@@left_path:" << left_path<< std::endl;
 			if (left_path == "")
 				left_path = "/";
 			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){
@@ -172,9 +176,33 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			}
 			else {
 				for (size_t j = 0; j < loc_index_store.size(); j++){
-					if (left_path ==("/" + loc_index_store[j] ))
+					std::cout <<"남은 경로에요~" <<left_path <<std::endl;
+					if (left_path == ("/" + loc_index_store[j] + "/")) //같은 경우라고 생각했는데...
 						left_path = "/";
-					loc_store_[i].setCombinePath(troot + path + loc_index_store[j]);
+					if (path.back() != '/'){
+						std::cout << "1번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
+						std::string open_path = (troot + left_path);
+						open_path.erase(open_path.end() - 1);
+						DIR*	dir = opendir(open_path.c_str());
+						if (dir){
+							closedir(dir);
+						}
+						else {
+							std::cout << "오픈이에용" << open_path<<std::endl;
+							int fd = open(open_path.c_str(),O_RDONLY);
+							if (fd != -1){
+								std::cout << "HI"<<std::endl;
+								loc_store_[i].setCombinePath(open_path);
+								close(fd);
+								return (i);
+							}
+						}
+						loc_store_[i].setCombinePath(troot + path + "/" + loc_index_store[j]);
+					}
+					else {
+						std::cout << "2번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
+						loc_store_[i].setCombinePath(troot + path + loc_index_store[j]);
+					}
 					int ret = untilFindLoc(left_path, troot, loc_index_store[j]);
 					if (ret != -1)
 						return(ret);

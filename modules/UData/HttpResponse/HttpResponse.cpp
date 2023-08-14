@@ -24,7 +24,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), exist_session_(req.getExistSession()), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
   try{
-		loc_block_.printInfo();
+		// loc_block_.printInfo();
 		setFilePath(req, loc_block_);
 		if (req.getMethod() == GET || req.getMethod() == HEAD)
 			setFileSize(file_path_);

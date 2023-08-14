@@ -54,7 +54,6 @@ LocBlock ServBlock::findLocBlock(std::string path){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
 		// if (ret != -1)
 		// 	loc_store_[ret].printInfo();
-
 		if (ret != -1){
 			std::string con_p = loc_store_[ret].getCombineLocPath();
 			if (con_p.size() != 1 &&con_p.back() == '/'){

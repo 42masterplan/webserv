@@ -5,25 +5,6 @@ LocBlock::LocBlock():rank_(0), upload_store_(""), loc_info_(""), return_code_(-1
 LocBlock::LocBlock(std::string loc_info) : rank_(0), upload_store_(""), loc_info_(loc_info), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""), is_error_(false){}
 
 LocBlock::~LocBlock(){}
-// LocBlock& LocBlock::operator=(const LocBlock& obj){
-// 	root_ = obj.root_;
-// 	index_ = obj.index_;
-// 	autoindex_ = obj.autoindex_;
-// 	client_max_body_size_ = obj.client_max_body_size_;
-// 	error_code_ = obj.error_code_;
-// 	error_page_ = obj.error_page_;
-
-// 	loc_directives_ = obj.loc_directives_;
-// 	upload_store_ = obj.upload_store_;
-// 	loc_info_ = obj.loc_info_;
-// 	return_code_ = obj.return_code_;
-// 	return_path_ = obj.return_path_;
-// 	is_limit_except_ = obj.is_limit_except_;
-// 	cgi_pass_ = obj.cgi_pass_;
-// 	deny_methods_ = obj.deny_methods_;
-// 	combined_path_ = obj.combined_path_;
-// 	return (*this);
-// }
 
 /*----------------getter (멤버변수 그대로 반환)---------------*/
 int LocBlock::getRank(){return rank_;}

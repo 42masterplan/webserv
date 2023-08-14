@@ -36,7 +36,6 @@ class  HttpResponse{
 		bool isExistFile(std::string &filePath);
 		/* methods */
 		// void 		initStatusStore(void);
-    bool isFolder(const std::string& file_path_) const;
 		void		processErrorRes(int status_code);
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);

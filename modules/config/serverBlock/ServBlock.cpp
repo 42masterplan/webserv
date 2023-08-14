@@ -183,11 +183,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 						// std::cout << "1번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
 						std::string open_path = (troot + left_path);
 						open_path.erase(open_path.end() - 1);
-						DIR*	dir = opendir(open_path.c_str());
-						if (dir){
-							closedir(dir);
-						}
-						else {
+						if (!isFolder(open_path) ){
 							// std::cout << "오픈이에용" << open_path<<std::endl;
 							int fd = open(open_path.c_str(),O_RDONLY);
 							if (fd != -1){

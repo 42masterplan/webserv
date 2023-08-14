@@ -16,7 +16,8 @@ CONFIGOBJS = $(addprefix ./modules/config/, $(CONFIGSRCS:.cpp=.o))
 EVENTSRCS = 	Cgi.cpp \
 							EventHandler.cpp \
 							HttpResponseHandler.cpp \
-							Kqueue.cpp 
+							Kqueue.cpp \
+							Session.cpp
 
 EVENTOBJS = $(addprefix ./modules/Event/, $(EVENTSRCS:.cpp=.o))
 

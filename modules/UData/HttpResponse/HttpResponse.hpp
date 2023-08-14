@@ -6,6 +6,7 @@
 # include "AutoIndex.hpp"
 # include "StatusMsgStore.hpp"
 # include "MimeStore.hpp"
+# include "../../Event/Session.hpp"
 
 # include <iostream>
 # include <fstream>
@@ -44,11 +45,12 @@ class  HttpResponse{
 
 		const std::string&				getFilePath() const;
 		void											setFilePath(HttpRequest &req, LocBlock &loc);
+		void											setLocation(std::string location);
 
     void                      setFileSize(const std::string& file_path_);
 		void											setStatusCode(int status_code);
 		std::vector<char>&				getBody();
-		std::vector<char>& 	getJoinedData() ;
+		std::vector<char>& 				getJoinedData() ;
 		std::string 							getErrorPath(int status_code);
 		
 		std::string 			http_version_;
@@ -58,7 +60,8 @@ class  HttpResponse{
 		int					content_length_;
 		std::string	content_type_;
 		std::string	location_;
-		LocBlock loc_block_;
+		bool				exist_session_;
+		LocBlock		loc_block_;
 
 		std::vector<char>	joined_data_;//여기에 HTTP message를 담고(first line and headers)
 		std::vector<char>	body_;//여기에 파일 또는 response body를 담겠습니다.

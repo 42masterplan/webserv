@@ -35,7 +35,8 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 				errorCallBack(*udata, 404);
 			break ;
 		case REDIRECT : 
-		cur_response.processRedirectRes(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			cur_response.makeBodyResponse(cur_response.loc_block_.getReturnCode(), 0);//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			// cur_response.processRedirectRes(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			RegisterClientWriteEvent(*udata);
 			break ;
 		case ERROR : 
@@ -129,6 +130,7 @@ void HttpResponseHandler::handleHead(UData &udata) {
 void HttpResponseHandler::handlePost(UData &udata) {
 	std::cout << "POST!!!!!!!" << std::endl;
 	std::string filename = udata.http_response_.getFilePath() + MimeStore::getExtension(udata.http_request_[0].getContentType());
+	udata.http_response_.setLocation(filename);
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		return errorCallBack(udata, 500);

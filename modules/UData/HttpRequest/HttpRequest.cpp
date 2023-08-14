@@ -51,6 +51,7 @@ const std::vector<char>&	HttpRequest::getBody(void) const { return body_; }
 const int&								HttpRequest::getContentLength(void) const { return content_length_; }
 const int&								HttpRequest::getPort(void) const { return port_; }
 const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
+const bool&								HttpRequest::getExistSession(void) const { return exist_session_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
 const std::string&				HttpRequest::getHost(void) const { return host_; }
 const e_requestError&			HttpRequest::getRequestError(void) const { return request_error_; }

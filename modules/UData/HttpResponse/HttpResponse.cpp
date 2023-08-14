@@ -11,6 +11,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	content_length_ = ref.content_length_;
 	content_type_ = ref.content_type_;
 	location_ = ref.location_;
+	exist_session_ = ref.exist_session_;
 	body_ = ref.body_;
 	joined_data_ = ref.joined_data_;
 	res_type_ = ref.res_type_;
@@ -21,7 +22,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	return *this;
 }
 
-HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
+HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), exist_session_(req.getExistSession()), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
   try{
 		setFilePath(req, loc_block_);
 		if (req.getMethod() == GET || req.getMethod() == HEAD)
@@ -63,14 +64,32 @@ void HttpResponse::processRedirectRes(int status_code) {
 
 
 void	HttpResponse::makeBodyResponse(int status_code, int content_length){
+	std::string	header = "";
+
 	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	std::cout << "여기 왔다~~"<<std::endl;
-	// TODO: 변수에 있는 값들 추가한 헤더 만들기
-	std::string header =
-	http_version_ + " " + status_ + "\r\n"+ 
-	"Content-Type: text/html; charset=utf-8\r\n"+
-	"content-length: " + std::to_string(content_length) + "\r\n\r\n";
+
+	header += http_version_ + " " + status_ + "\r\n";
+
+	// TODO: MimeStore 사용하기
+	if (status_code_ == 201 || (status_code_ >= 300 && status_code_ < 400))
+		header += "Location: " + location_ + "\r\n";
+	if (status_code_ == 405 && loc_block_.getDenyMethod().size()) {
+		std::vector<std::string> allow_method = loc_block_.getDenyMethod();
+		header += "Allow: ";
+		for (size_t i = 0; i < allow_method.size(); i++) {
+			header += allow_method[i];
+			if (i != allow_method.size() - 1)
+				header += ", ";
+		}
+		header += "\r\n";
+	}
+	if ((status_code_ >= 200 && status_code_ < 400) && !exist_session_)
+		header += "Set-Cookie: SESSIONID=" + Session::getInstance().createSession() + "\r\n";
+	header += "Content-Type: text/html; charset=utf-8\r\n";
+	header += "Content-Length: " + std::to_string(content_length) + "\r\n\r\n";
+	
 	joined_data_.clear();
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 }
@@ -134,8 +153,10 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
     res_type_ = AUTOINDEX;
     return;
   }
-	
 }
+
+void	HttpResponse::setLocation(std::string location) { location_ = location; }
+
 
 std::vector<char>& HttpResponse::getJoinedData(){ return joined_data_; }
 

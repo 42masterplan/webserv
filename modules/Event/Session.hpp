@@ -8,13 +8,12 @@ class Session {
   public:
     ~Session();
     static Session& getInstance();
-		std::string createSession(void);
-    bool        existSession(std::string id);
+		std::string     createSession(void);
+    bool            existSession(std::string id);
 
   private:
     Session();
     std::map<std::string, std::string>	session_;
 };
-
 
 #endif

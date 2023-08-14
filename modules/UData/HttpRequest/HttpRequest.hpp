@@ -36,6 +36,7 @@ class HttpRequest{
 		const int&								getContentLength(void) const;
 		const int&								getPort(void) const;
 		const bool&								getIsChunked(void) const;
+		const bool&								getExistSession(void) const;
 		const std::string&				getContentType(void) const;
 		const std::string&				getHost(void) const;
 		const e_requestError&			getRequestError(void) const;

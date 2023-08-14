@@ -71,7 +71,9 @@ void	HttpResponse::makeNoBodyResponse(int status_code){
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	// status_ = status_store_[status_code_];
 	std::string header =
-	http_version_ + " " + status_ + "\r\n\r\n";
+	http_version_ + " " + status_ + "\r\n" +
+	"Content-Type: text/html; charset=utf-8\r\n"+
+	"content-length: 0\r\n\r\n";
 	joined_data_.clear();
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 }

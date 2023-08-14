@@ -130,6 +130,7 @@ void HttpResponseHandler::handlePost(UData &udata) {
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		return errorCallBack(udata, 500);
+	
 	RegisterFileWriteEvent(fd, udata);
 }
 
@@ -179,6 +180,7 @@ void	HttpResponseHandler::RegisterClientWriteEvent(UData &udata){
 void	HttpResponseHandler::RegisterFileWriteEvent(int file_fd ,UData &udata){
   fcntl(file_fd, F_SETFL, O_NONBLOCK);
   udata.fd_type_ = FILETYPE;
+	
   Kqueue::registerWriteEvent(file_fd, &udata);//파일 write 이벤트 등록
   Kqueue::unregisterReadEvent(udata.client_fd_, &udata);//클라이언트 Read이벤트 잠시 중단
 }

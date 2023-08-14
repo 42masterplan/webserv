@@ -23,6 +23,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
   try{
+		loc_block_.printInfo();
 		setFilePath(req, loc_block_);
 		if (req.getMethod() == GET || req.getMethod() == HEAD)
 			setFileSize(file_path_);
@@ -130,8 +131,15 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	}
 	file_path_ = loc.getCombineLocPath();
 	// std::cout <<"file -------"<< req.getPath()<< "|" << file_path_ << std::endl;
-  if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
-    res_type_ = AUTOINDEX;
+  if (loc.isAutoIndex()){
+	 struct stat path_info;
+		
+    if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0){
+			std::cout << "어째서 여기!"<<std::endl;
+			throw(std::runtime_error("STAT ERROR()"));
+		}
+		if (isFolder(loc.getCombineLocPath()) == true)
+			res_type_ = AUTOINDEX;
     return;
   }
 	

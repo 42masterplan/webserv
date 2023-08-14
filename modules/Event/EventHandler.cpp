@@ -37,7 +37,10 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	}
 	else{
 		buff_[rlen] = '\0';
+		// std::cout <<"들어온 버퍼::" << buff_ <<"|"<< std::endl;
+		// std::cout << "그래서 저장된 raw_data:"<<std::endl;
 		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + rlen);
+		// print_vec(raw_data_ref) ;
 		std::vector<HttpRequest>& request_ref = cur_udata->http_request_;
 		if (request_ref.size() && (request_ref.back().getParseStatus() != FINISH && !request_ref.back().getRequestError()))
 			request_ref.back().parse(raw_data_ref);
@@ -96,7 +99,7 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
  */
 void  EventHandler::cgiReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
+	std::vector<char>&	body_data_ref = cur_udata->http_response_.body_;
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
@@ -111,7 +114,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
     // std::cout << "\nCGI HAS BEEN READ - SIZE: " << rlen << std::endl;
     // std::cout << "BUFFER:" << buff_ << "\n-------------------\n" << std::endl;
 		buff_[rlen] = '\0';
-		raw_data_ref.insert(raw_data_ref.end(), buff_, buff_ + std::strlen(buff_));
+		body_data_ref.insert(body_data_ref.end(), buff_, buff_ + std::strlen(buff_));
     // std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
     // std::cout << "FROM CGI PROC" << raw_data_string << "\n";
     // Kqueue::unregisterReadEvent(cur_udata->client_fd_, cur_udata);//클라이언트 Read이벤트 잠시 중단
@@ -130,7 +133,6 @@ void  EventHandler::cgiTerminated(UData* udata){
 	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
   //TODO: 자식 프로세스의 fd[0]을 unregister해야할까요? 어차피 종료된 프로세스인데.. 그렇게 한다면 udata에 자식 프로세스 fd도 들고있어야 합니다.
   HttpResponse &cur_response = udata->http_response_;
-  cur_response.body_ = udata->raw_data_;
   cur_response.makeBodyResponse(200, cur_response.body_.size());
   waitpid(udata->cgi_pid_, &status, 0);
   udata->fd_type_ = CLNT;

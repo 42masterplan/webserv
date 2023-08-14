@@ -108,7 +108,7 @@ void HttpResponseHandler::handleHttpMethod(UData &udata) {
 
 void HttpResponseHandler::handleGet(UData &udata) {
 	std::cout << "GET!" << udata.http_response_.getFilePath().c_str() << std::endl;
-	if (udata.http_response_.isFolder(udata.http_response_.getFilePath().c_str()) == true)
+	if (isFolder(udata.http_response_.getFilePath().c_str()) == true)
 		return errorCallBack(udata, 404);
 	int fd = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
 	if (fd == -1)

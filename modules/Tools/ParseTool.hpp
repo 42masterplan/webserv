@@ -119,6 +119,6 @@ std::vector<std::string>	split(std::string input, std::string delimiter);
 
 
 std::string		intToString(int num);
-
+bool	isFolder(const std::string& file_path);
 
 #endif

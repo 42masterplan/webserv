@@ -24,8 +24,10 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
   try{
 		setFilePath(req, loc_block_);
-		setFileSize(file_path_);
+		if (req.getMethod() == GET || req.getMethod() == HEAD)
+			setFileSize(file_path_);
   }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.
+		std::cout << "Response 생성자에서 에러 발생!!" <<std::endl;
     res_type_ = ERROR;
 		processErrorRes(404);
   }
@@ -142,9 +144,11 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return;
 	}
 	file_path_ = loc.getCombineUploadStorePath();
-	if (isUploadMethod(req) && file_path_ == ""){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
-		res_type_ = ERROR;
-		processErrorRes(404);
+	if (isUploadMethod(req)){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
+		if (file_path_ == ""){
+			res_type_ = ERROR;
+			processErrorRes(404);
+		}
 		return;
 	}
 	file_path_ = loc.getCombineLocPath();

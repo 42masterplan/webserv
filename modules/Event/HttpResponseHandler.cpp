@@ -130,7 +130,6 @@ void HttpResponseHandler::handlePost(UData &udata) {
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		return errorCallBack(udata, 500);
-	udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 	RegisterFileWriteEvent(fd, udata);
 }
 

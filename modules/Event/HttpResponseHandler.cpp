@@ -116,7 +116,14 @@ void HttpResponseHandler::handleGet(UData &udata) {
 	if (fd == -1)
 		return errorCallBack(udata, 404);
 	udata.http_response_.setFileSize(udata.http_response_.getFilePath());
-	RegisterFileReadEvent(fd, udata);
+	// std::cout << udata.http_response_.file_size_ <<std::endl;
+	if (udata.http_response_.file_size_ == 0){//파일이 있는데 크기가 0인경우
+		close(fd);
+		udata.http_response_.makeBodyResponse(200,0);
+		RegisterClientWriteEvent(udata);
+	}
+	else
+		RegisterFileReadEvent(fd, udata);
 }
 
 void HttpResponseHandler::handleHead(UData &udata) {

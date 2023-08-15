@@ -33,11 +33,13 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	if (rlen == -1){
 		std::cerr << "already disconnected!(READ)"<< std::endl;
 		delete (UData*) cur_event->udata;
+		cur_event->udata = NULL;
 		disconnectFd(cur_event);
 	}
 	else if (rlen == 0){
 		std::cout << "clnt sent eof. disconnecting." << std::endl;
 		delete (UData*) cur_event->udata;
+		cur_event->udata = NULL;
 		disconnectFd(cur_event);
 	}
 	else{
@@ -199,10 +201,12 @@ void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 
  */
 void  EventHandler::disconnectFd(struct kevent *cur_event){
 	UData*	udata = (UData*)cur_event->udata;
-  if (udata->fd_type_ == CLNT)
-	  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
-  else if (udata->fd_type_ == CGI)
-	  std::cout << "CGI FD DISCONNECTED: " << cur_event->ident << std::endl;
+	if (udata){
+	  if (udata->fd_type_ == CLNT)
+		  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
+	  else if (udata->fd_type_ == CGI)
+		  std::cout << "CGI FD DISCONNECTED: " << cur_event->ident << std::endl;
+	}
 	close(cur_event->ident);
 }
 

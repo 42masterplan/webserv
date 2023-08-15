@@ -97,7 +97,7 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
   while (ent){
     std::string file_path = input_dir;
     std::string temp = cur_response.loc_block_.getRoot();
-    std::cout << "루트: " << temp << std::endl;
+    // std::cout << "루트: " << temp << std::endl;
     if (stat(file_path.c_str(), &file_stat) == -1)
       return ret;
     file_path.replace(file_path.find(temp), temp.size(), "");

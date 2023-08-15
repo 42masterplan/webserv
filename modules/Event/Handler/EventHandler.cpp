@@ -56,6 +56,9 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 			request_ref.back().setPort(cur_udata->port_);
 			request_ref.back().parse(raw_data_ref);
 		}
+		if (request_ref.back().getRequestError() != OK){//에러페이지 설정 때문에 앞으로 뺐습니다.
+			cur_udata->http_response_ = HttpResponse(request_ref[0]);
+		}
 		switch (request_ref.back().getRequestError()){
 			case (OK) : 
 				break;

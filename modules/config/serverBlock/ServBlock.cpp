@@ -175,7 +175,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			std::string left_path = con_path.substr(loc_info.size());//이게 파일 경로를 뺀 url에서 해당부분을 뺀 나머지 부분이 된다.
 			if (left_path.find("/")!= 0)
 						left_path = "/" + left_path;
-			std::cout << "@@@@left_path:" << left_path<< "|" << path <<std::endl;
+			// std::cout << "@@@@left_path:" << left_path<< "|" << path <<std::endl;
 			
 			if (left_path == "")
 				left_path = "/";

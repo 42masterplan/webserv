@@ -102,7 +102,7 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
       return ret;
     file_path.replace(file_path.find(temp), temp.size(), "");
     file_path += ent->d_name;
-    std::cout << "2nd디렉토리::" << file_path << std::endl;
+    // std::cout << "2nd디렉토리::" << file_path << std::endl;
     std::string file_size = std::to_string(file_stat.st_size);
     form += getFileTemplate(file_path.c_str(), ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
     ent = readdir(dir);

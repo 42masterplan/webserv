@@ -11,10 +11,10 @@
 #include <cstdio>
 #include <map>
 #include <string>
-# include "../Event/Kqueue.hpp"
+# include "../Event/Features/Kqueue.hpp"
 # include "../config/ConfParser.hpp"
-# include "../Event/HttpResponseHandler.hpp"
-# include "../Event/EventHandler.hpp"
+# include "../Event/Handler/HttpResponseHandler.hpp"
+# include "../Event/Handler/EventHandler.hpp"
 /**
  * @brief kqueue using echo server
  * @details <kqueue 동작 로직>

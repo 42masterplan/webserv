@@ -1,9 +1,9 @@
 #ifndef HTTPRESPONSEHANDLER_HPP
 # define HTTPRESPONSEHANDLER_HPP
-# include "../UData/UData.hpp"
-# include "../config/ConfParser.hpp"
-# include "Cgi.hpp"
-# include "../Tools/FileTool.hpp"
+# include "../../UData/UData.hpp"
+# include "../../config/ConfParser.hpp"
+# include "../Features/Cgi.hpp"
+# include "../../Tools/FileTool.hpp"
 # include <cstdio>
 class HttpResponseHandler{
 	public:

@@ -1,5 +1,6 @@
-#include "AutoIndex.hpp"
-# include "HttpResponse.hpp"
+# include "AutoIndex.hpp"
+# include "../HttpResponse.hpp"
+
 AutoIndex::AutoIndex(){}
 
 AutoIndex::~AutoIndex(){}

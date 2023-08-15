@@ -24,15 +24,20 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	}
 	if (cur_udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(read)" << std::endl;
+		disconnectFd(cur_event);
 		return ;
 	}
 
 	std::vector<char>&	raw_data_ref = cur_udata->raw_data_;
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
-	if (rlen == -1)
-		std::cerr << "already disconnected!"<< std::endl;
+	if (rlen == -1){
+		std::cerr << "already disconnected!(READ)"<< std::endl;
+		delete (UData*) cur_event->udata;
+		disconnectFd(cur_event);
+	}
 	else if (rlen == 0){
 		std::cout << "clnt sent eof. disconnecting." << std::endl;
+		delete (UData*) cur_event->udata;
 		disconnectFd(cur_event);
 	}
 	else{

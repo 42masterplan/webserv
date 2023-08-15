@@ -107,6 +107,7 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
     form += getFileTemplate(file_path.c_str(), ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
     ent = readdir(dir);
   }
+	closedir(dir);
   form += "    </table>\n</body>\n</html>";
   ret = std::vector<char>(form.begin(), form.end());
   return (ret);

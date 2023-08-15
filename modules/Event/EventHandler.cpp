@@ -83,7 +83,7 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
 	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
 	if (head_ref.size()) //여기가 첫번째 요청을 보내는 곳
-	writeToclient(head_ref, false, cur_udata);
+		writeToclient(head_ref, false, cur_udata);
 	else  //두번째 body를 보내는 분기입니다.
 		writeToclient(body_ref, true, cur_udata);
 }

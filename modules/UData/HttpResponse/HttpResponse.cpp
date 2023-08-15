@@ -37,11 +37,6 @@ HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status
 
 /* init */
 
-bool HttpResponse::isExistFile(std::string &filePath) {
-	std::ifstream file(filePath.c_str());
-	return file.good();
-}
-
 void HttpResponse::processErrorRes(int status_code) {
 	status_code_ = status_code;
 	res_type_ = ERROR;

@@ -144,10 +144,22 @@ void HttpResponseHandler::handlePost(UData &udata) {
 }
 
 void HttpResponseHandler::handleDelete(UData &udata) {
-	std::remove(udata.http_response_.getFilePath().c_str());
-	udata.http_response_.makeBodyResponse(200, 0);
+	std::string filename = udata.http_response_.getFilePath();
+
 	//삭제에 성공하던 실패하던 같은 코드를 내보낸다.
-	//TODO:delete 성공했을 때 header와 body를 만들어서 메세지를 만든 후에 아래 이벤트를 등록한다.
+	remove(filename.c_str());
+
+	//TODO: 임시 body 교체
+	std::string result =
+	"<!DOCTYPE html>\n"
+	"<html>\n"
+	"  <body>\n"
+	"    <h1>File deleted.</h1>\n"
+	"  </body>\n"
+	"</html>";
+
+	udata.http_response_.body_ = std::vector<char>(result.begin(), result.end());
+	udata.http_response_.makeBodyResponse(200, result.size());
 	RegisterClientWriteEvent(udata);
 }
 

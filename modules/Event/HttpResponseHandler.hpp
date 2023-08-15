@@ -3,6 +3,8 @@
 # include "../UData/UData.hpp"
 # include "../config/ConfParser.hpp"
 # include "Cgi.hpp"
+# include "../Tools/FileTool.hpp"
+# include <cstdio>
 class HttpResponseHandler{
 	public:
 		static HttpResponseHandler&	getInstance();

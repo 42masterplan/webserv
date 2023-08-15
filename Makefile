@@ -38,7 +38,7 @@ UDATASRCS = UData.cpp \
 #HttpResponse/HttpResponse.cpp
 UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))
 
-TOOLSRCS = ParseTool.cpp 
+TOOLSRCS = ParseTool.cpp FileTool.cpp
 TOOLOBJS = $(addprefix ./modules/Tools/, $(TOOLSRCS:.cpp=.o))
 
 #main문

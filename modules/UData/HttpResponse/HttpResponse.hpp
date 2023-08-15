@@ -34,7 +34,7 @@ class  HttpResponse{
 		HttpResponse(HttpRequest &req);
 		HttpResponse& operator=(const HttpResponse &ref);
 		std::map<int, std::string> status_store_;
-		bool isExistFile(std::string &filePath);
+
 		/* methods */
 		// void 		initStatusStore(void);
 		void		processErrorRes(int status_code);

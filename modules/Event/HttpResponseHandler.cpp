@@ -132,12 +132,14 @@ void HttpResponseHandler::handlePost(UData &udata) {
 	std::cout << "POST!!!!!!!" << std::endl;
 	std::string filename = udata.http_response_.getFilePath() + MimeStore::getExtension(udata.http_request_[0].getContentType());
 	std::cout << "저장 파일 경로!!"<< filename  <<std::endl;
-
+	
 	udata.http_response_.setLocation(filename);
+	size_t max_body_size = udata.http_response_.loc_block_.getClientMaxBodySize();
+	if (max_body_size!= 0 && udata.http_request_[0].getBody().size() > max_body_size )
+		return errorCallBack(udata, 413);
 	int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd == -1)
 		return errorCallBack(udata, 500);
-	
 	RegisterFileWriteEvent(fd, udata);
 }
 

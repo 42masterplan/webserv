@@ -52,16 +52,14 @@ LocBlock ServBlock::findLocBlock(std::string path){
 	int ret = -1;
 	for (size_t i = 0;i < serv_index_store.size(); i++){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
-		// if (ret != -1)
-		// 	loc_store_[ret].printInfo();
 		if (ret != -1){
 			std::string con_p = loc_store_[ret].getCombineLocPath();
 			if (con_p.size() != 1 &&con_p.back() == '/'){
 				if (isFolder(con_p) == false)
 					con_p.pop_back();
-				// std::cout <<"합성!!!!" << con_p <<std::endl;
 				loc_store_[ret].setCombinePath(con_p);
 			}
+			// loc_store_[ret].printInfo();
 			return (loc_store_[ret]);
 		}
 	}
@@ -179,16 +177,11 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 			
 			if (left_path == "")
 				left_path = "/";
-			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){//인덱스가 없는 경우 바로 이 블록이 해당하는 블록이다.
-				loc_store_[i].setCombinePath(troot + left_path);
-				left_path.pop_back();
-				loc_store_[i].setFileName(left_path);
-				loc_store_[i].setHighPriorityRoot(troot);
-				return i;
-			}
+			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == ""))//인덱스가 없는 경우 바로 이 블록이 해당하는 블록이다.
+				return (locBlockSetUp(left_path,i , troot));
 			else {//인덱스가 있다면!
 				for (size_t j = 0; j < loc_index_store.size(); j++){//모든 인덱스를 순회하면서
-					std::cout <<"남은 경로에요~" <<left_path << "|" << path <<std::endl;
+					// std::cout <<"남은 경로에요~" <<left_path << "|" << path <<std::endl;
 					if (left_path == ("/" + loc_index_store[j] + "/")) //left path와 인덱스가 같다면 인덱스를 어차피 붙혀줘서 탐색을 하기 때문에 따로 하지 않아도 됩니다.
 						left_path = "/";
 					if (path.back() != '/'){
@@ -198,8 +191,8 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 						if (!isFolder(open_path)){//폴더가 아니면서
 							  struct stat path_info;
 							  if (stat(open_path.c_str(), &path_info) == 0){//존재하는 파일인 경우만
-								loc_store_[i].setCombinePath(open_path);
-								return (i);
+									loc_store_[i].setCombinePath(open_path);
+									return (i);
 								}
 						}
 						loc_store_[i].setCombinePath(troot + path + "/" + loc_index_store[j]);
@@ -212,17 +205,22 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 					if (ret != -1)
 						return(ret);
 				}//인덱스를 다 탐색했는데..! 없다?
-				loc_store_[i].setCombinePath(troot + left_path);
-				left_path.pop_back();
-				loc_store_[i].setFileName(left_path);
-				loc_store_[i].setHighPriorityRoot(troot);
-				return i;
+				return (locBlockSetUp(left_path,i , troot));
 			}
 		}
 	}
 	return (-1);
 }
 
+
+int ServBlock::locBlockSetUp(std::string &left_path, int ret_idx, std::string & root){
+	loc_store_[ret_idx].setCombinePath(root + left_path);
+	if (left_path.back() == '/')
+		left_path.pop_back();
+	loc_store_[ret_idx].setFileName(left_path);
+	loc_store_[ret_idx].setHighPriorityRoot(root);
+	return ret_idx;
+}
 /**
  * @brief 로케이션 블록을 만드는 함수
  *

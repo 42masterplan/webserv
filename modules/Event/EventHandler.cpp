@@ -153,7 +153,8 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);
 	// print_vec(file_store_ref);
 	cur_udata->http_response_.file_size_ -= read_len;
-	if (cur_udata->http_response_.file_size_ == 0){	
+	if (cur_udata->http_response_.file_size_ == 0){
+		std::cout << "파일 다읽었어요~" <<std::endl;
 		close(cur_event->ident);
 		cur_udata->fd_type_= CLNT;
 		cur_udata->http_response_.makeBodyResponse(cur_udata->http_response_.status_code_, file_store_ref.size());

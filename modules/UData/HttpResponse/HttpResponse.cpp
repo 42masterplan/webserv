@@ -155,10 +155,8 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
   if (loc.isAutoIndex()){
 	 struct stat path_info;
 		
-    if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0){
-			std::cout << "어째서 여기!"<<std::endl;
+    if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0)
 			throw(std::runtime_error("STAT ERROR()"));
-		}
 		if (isFolder(loc.getCombineLocPath()) == true)
 			res_type_ = AUTOINDEX;
     return;

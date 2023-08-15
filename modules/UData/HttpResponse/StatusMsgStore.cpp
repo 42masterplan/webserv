@@ -21,6 +21,7 @@ void StatusMsgStore::initStatusMsgStore() {
 	status_msg_store_[403] = "403 Forbidden";
 	status_msg_store_[404] = "404 Not Found";
 	status_msg_store_[405] = "405 Method Not Allowed";
+	status_msg_store_[413] = "413 Payload Too Large";
 	status_msg_store_[500] = "500 Internal Server Error";
 	status_msg_store_[501] = "501 Not Implemented";
 	status_msg_store_[502] = "502 Bad Gateway";

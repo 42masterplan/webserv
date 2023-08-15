@@ -37,7 +37,7 @@ public:
 	std::string getCombineReturnPath()const;
 	std::string getCombineCgiPath()const;
 	const std::string& getCombineLocPath()const;
-
+	const std::string& getFileName()const;
 	/*setter*/
 	void	setCombinePath(std::string combine_path);
 	void	setHighPriorityRoot(const std::string& root);
@@ -51,6 +51,7 @@ public:
 	std::map<std::string, std::string>& getDirStore();
 	int getRank();
 	void setError();
+	void	setFileName(const std::string &file_name);
 private:
 	void	parseLocDirective();
 	void	parseReturn(std::string ret_line);
@@ -69,6 +70,7 @@ private:
 	std::string combined_path_; //여기에 조합된 경로를 넣어준다.(root와 index를 조합해서 결국 반환되는)
 	std::string high_priority_root_;
 	bool is_error_;
+	std::string file_name_;
 };
 bool cmp(const LocBlock& a, const LocBlock& b);
 #endif

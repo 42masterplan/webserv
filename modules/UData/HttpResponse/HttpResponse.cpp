@@ -145,7 +145,9 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		if (file_path_ == ""){
 			res_type_ = ERROR;
 			processErrorRes(404);
+			return ;
 		}
+		file_path_ +=  loc.getFileName();
 		return;
 	}
 	file_path_ = loc.getCombineLocPath();

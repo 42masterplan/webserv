@@ -181,22 +181,30 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 	udata.http_response_.processErrorRes(status_code);
 	int error_file_fd_ ;
 	std::cout << "ERROR file PATH " <<udata.http_response_.getFilePath() <<std::endl;
+	if (udata.http_response_.getFilePath() == "" || status_code == 500){
+		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
+		if (error_file_fd_ != -1)
+			close(error_file_fd_);
+		else{
+			udata.http_response_.file_size_ = 0;
+			udata.http_response_.makeBodyResponse(status_code, 0);
+			RegisterClientWriteEvent(udata);
+			return ;
+		}
+	}
 	if (udata.http_request_[0].getMethod() == HEAD){
 			udata.http_response_.processErrorRes(status_code);
 			udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 			udata.http_response_.makeBodyResponse(status_code, udata.http_response_.file_size_);
 			RegisterClientWriteEvent(udata);
 	}
-	else if (udata.http_response_.getFilePath() != ""){
+	else{
 		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-		if (error_file_fd_ == -1) //TODO: 500인데 그 에러파일 위치가 없다면? 처리해야함
+		if (error_file_fd_ == -1)
 			return errorCallBack(udata, 500);
 		udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 		RegisterFileReadEvent(error_file_fd_, udata);
 	}
-	//에러페이지가 설정되지 않는 경우가 존재하려나?
-	else 
-		std::cout << "NO ERORRPAGE!!" << std::endl;
 }
 
 void	HttpResponseHandler::RegisterClientWriteEvent(UData &udata){

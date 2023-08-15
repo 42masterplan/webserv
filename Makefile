@@ -13,11 +13,10 @@ CONFIGSRCS = ConfParser.cpp \
 
 CONFIGOBJS = $(addprefix ./modules/config/, $(CONFIGSRCS:.cpp=.o))
 
-EVENTSRCS = 	Cgi.cpp \
-							EventHandler.cpp \
-							HttpResponseHandler.cpp \
-							Kqueue.cpp \
-							Session.cpp
+EVENTSRCS = 	Features/Cgi.cpp \
+							Features/Kqueue.cpp \
+							Handler/EventHandler.cpp \
+							Handler/HttpResponseHandler.cpp 
 
 EVENTOBJS = $(addprefix ./modules/Event/, $(EVENTSRCS:.cpp=.o))
 
@@ -31,9 +30,10 @@ WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
 UDATASRCS = UData.cpp \
 						HttpRequest/HttpRequest.cpp \
 						HttpResponse/HttpResponse.cpp \
-						HttpResponse/MimeStore.cpp \
-						HttpResponse/StatusMsgStore.cpp \
-						HttpResponse/AutoIndex.cpp
+						HttpResponse/Store/MimeStore.cpp \
+						HttpResponse/Store/StatusMsgStore.cpp \
+						HttpResponse/Features/AutoIndex.cpp \
+						HttpResponse/Features/Session.cpp
 
 #HttpResponse/HttpResponse.cpp
 UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))

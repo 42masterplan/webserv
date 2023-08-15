@@ -3,10 +3,10 @@
 
 # include "../../config/ConfParser.hpp"
 # include "../HttpRequest/HttpRequest.hpp"
-# include "AutoIndex.hpp"
-# include "StatusMsgStore.hpp"
-# include "MimeStore.hpp"
-# include "../../Event/Session.hpp"
+# include "./Features/AutoIndex.hpp"
+# include "./Store/StatusMsgStore.hpp"
+# include "./Store/MimeStore.hpp"
+# include "./Features/Session.hpp"
 
 # include <iostream>
 # include <fstream>
@@ -18,7 +18,7 @@
 # include <dirent.h>
 # include <sys/stat.h>
 
-# define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
+// # define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
 
 typedef enum res_type {
 	METHOD_TYPE,

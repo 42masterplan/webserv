@@ -30,7 +30,6 @@ HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status
 			setFileSize(file_path_);
   }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.
 		std::cout << "Response 생성자에서 에러 발생!!" <<std::endl;
-    res_type_ = ERROR;
 		processErrorRes(404);
   }
 }
@@ -96,7 +95,7 @@ std::string HttpResponse::getErrorPath(int status_code){
 	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
 	if (it != error_codes.end())
 		return loc_block_.getCombineErrorPath();
-	return std::string(DEFAULT_ERROR_PATH);
+	return std::string("");
 }
 
 /* getter, setter */

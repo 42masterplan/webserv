@@ -64,7 +64,8 @@ void	HttpBase::setInherit(HttpBase &base){
  * @param dir_store 해당하는 map값
  */
 void	HttpBase::parseHttpDirective(std::map<std::string, std::string>& dir_store){
-	index_.push_back("");
+	if (index_.size() == 0) 
+		index_.push_back("");
 	if (dir_store.find("root") != dir_store.end())
 		root_ = dir_store["root"];
 	if (dir_store.find("index") != dir_store.end())

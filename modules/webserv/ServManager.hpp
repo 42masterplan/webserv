@@ -11,10 +11,10 @@
 #include <cstdio>
 #include <map>
 #include <string>
-#include "Kqueue.hpp"
-#include "../config/ConfParser.hpp"
-# include "../UData/HttpResponse/HttpResponseHandler.hpp"
-# include "EventHandler.hpp"
+# include "../Event/Kqueue.hpp"
+# include "../config/ConfParser.hpp"
+# include "../Event/HttpResponseHandler.hpp"
+# include "../Event/EventHandler.hpp"
 /**
  * @brief kqueue using echo server
  * @details <kqueue 동작 로직>
@@ -50,15 +50,10 @@ class ServManager{
 		void  handleEvents();
 		void  registerNewClnt(int serv_sockfd);
 
-		void  disconnectFd(struct kevent *cur_event);
-		std::string	createSession(void);
+		// void  disconnectFd(struct kevent *cur_event);
 
 		std::vector<int> listen_ports_;
 		std::vector<int> serv_sock_fds_;
-
-		/* server */
-
-		std::map<std::string, std::string>	session;
 
     /* kqueue */
 		struct kevent event_list_[8]; //한번 감지된 이벤트의 배열 -> udata가 있는 kevent의 배열

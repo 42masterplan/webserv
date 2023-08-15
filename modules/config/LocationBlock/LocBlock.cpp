@@ -1,29 +1,10 @@
 #include "LocBlock.hpp"
 
-LocBlock::LocBlock():rank_(0), upload_store_(""), loc_info_(""), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
+LocBlock::LocBlock():rank_(0), upload_store_(""), loc_info_(""), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""),is_error_(false){}
 
-LocBlock::LocBlock(std::string loc_info) : rank_(0), upload_store_(""), loc_info_(loc_info), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""){}
+LocBlock::LocBlock(std::string loc_info) : rank_(0), upload_store_(""), loc_info_(loc_info), return_code_(-1), return_path_("") ,cgi_pass_(""),  is_limit_except_(false),combined_path_(""),high_priority_root_(""), is_error_(false){}
 
 LocBlock::~LocBlock(){}
-// LocBlock& LocBlock::operator=(const LocBlock& obj){
-// 	root_ = obj.root_;
-// 	index_ = obj.index_;
-// 	autoindex_ = obj.autoindex_;
-// 	client_max_body_size_ = obj.client_max_body_size_;
-// 	error_code_ = obj.error_code_;
-// 	error_page_ = obj.error_page_;
-
-// 	loc_directives_ = obj.loc_directives_;
-// 	upload_store_ = obj.upload_store_;
-// 	loc_info_ = obj.loc_info_;
-// 	return_code_ = obj.return_code_;
-// 	return_path_ = obj.return_path_;
-// 	is_limit_except_ = obj.is_limit_except_;
-// 	cgi_pass_ = obj.cgi_pass_;
-// 	deny_methods_ = obj.deny_methods_;
-// 	combined_path_ = obj.combined_path_;
-// 	return (*this);
-// }
 
 /*----------------getter (멤버변수 그대로 반환)---------------*/
 int LocBlock::getRank(){return rank_;}
@@ -108,7 +89,7 @@ const std::string& LocBlock::getCombineLocPath()const{return (combined_path_);}
 /*--------setter-------------*/
 void	LocBlock::setCombinePath(std::string combine_path){combined_path_ = combine_path;}
 void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_ = root;}
-
+void LocBlock::setError(){is_error_ = true;}
 /**
  * @brief 반환된 블럭이 에러인지 아닌지 여부 확인
  *
@@ -116,9 +97,7 @@ void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_
  * @return false 에러 블럭이 아닙니다.
  */
 bool LocBlock::isErrorBlock()const{
-	if (combined_path_ == "")
-		return true;
-	return false;
+	return is_error_;
 }
 
 /**

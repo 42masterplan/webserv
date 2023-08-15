@@ -157,20 +157,3 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }
-
-std::string	ServManager::createSession(void) {
-	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const int					length = 16;
-  std::string				random_str;
-
-  srand(static_cast<unsigned int>(time(NULL)));
-	while (true) {
-		random_str = "";
-	  for (int i = 0; i < length; ++i)
-	      random_str += characters[rand() % characters.length()];
-		if (session.find(random_str) == session.end()) {
-			session[random_str] = "user" + intToString(session.size());
-		}
-	}
-	return random_str;
-}

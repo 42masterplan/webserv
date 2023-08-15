@@ -50,6 +50,7 @@ public:
 	void	makeBlock(std::string line, std::ifstream& input, int& line_len_);
 	std::map<std::string, std::string>& getDirStore();
 	int getRank();
+	void setError();
 private:
 	void	parseLocDirective();
 	void	parseReturn(std::string ret_line);
@@ -67,6 +68,7 @@ private:
 
 	std::string combined_path_; //여기에 조합된 경로를 넣어준다.(root와 index를 조합해서 결국 반환되는)
 	std::string high_priority_root_;
+	bool is_error_;
 };
 bool cmp(const LocBlock& a, const LocBlock& b);
 #endif

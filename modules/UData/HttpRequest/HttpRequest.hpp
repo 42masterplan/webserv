@@ -5,6 +5,7 @@
 # include <map>
 # include <vector>
 # include "../../Tools/ParseTool.hpp"
+# include "../../Event/Session.hpp"
 
 typedef enum parseStatusType{
 	FIRST,
@@ -35,11 +36,14 @@ class HttpRequest{
 		const int&								getContentLength(void) const;
 		const int&								getPort(void) const;
 		const bool&								getIsChunked(void) const;
+		const bool&								getExistSession(void) const;
 		const std::string&				getContentType(void) const;
 		const std::string&				getHost(void) const;
 		const e_requestError&			getRequestError(void) const;
 		const e_parseStatus&			getParseStatus(void) const;
 		void											setPort(int port);
+
+		void	printRequestInfo();
 
 		/* methods */
 		void		clear();
@@ -55,6 +59,7 @@ class HttpRequest{
 		/* headers */
 		int							port_;
 		bool						is_chunked_;
+		bool						exist_session_;
 		int							content_length_;
 		std::string			content_type_;
 		std::string			host_;
@@ -82,5 +87,5 @@ class HttpRequest{
 		static const std::map<std::string, bool>	get_multiple_header();
 		int							hexToDec(const std::string& base_num);
 };
-void	print_vec(std::vector<char>& t);
+void	print_vec(const std::vector<char>& t);
 #endif

@@ -11,6 +11,7 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	content_length_ = ref.content_length_;
 	content_type_ = ref.content_type_;
 	location_ = ref.location_;
+	exist_session_ = ref.exist_session_;
 	body_ = ref.body_;
 	joined_data_ = ref.joined_data_;
 	res_type_ = ref.res_type_;
@@ -21,9 +22,17 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	return *this;
 }
 
-HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"),  status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
-	setFilePath(req, loc_block_);
-  setFileSize(file_path_);
+HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), exist_session_(req.getExistSession()), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
+  try{
+		// loc_block_.printInfo();
+		setFilePath(req, loc_block_);
+		if (req.getMethod() == GET || req.getMethod() == HEAD)
+			setFileSize(file_path_);
+  }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.
+		std::cout << "Response 생성자에서 에러 발생!!" <<std::endl;
+    res_type_ = ERROR;
+		processErrorRes(404);
+  }
 }
 
 /* init */
@@ -54,28 +63,34 @@ void HttpResponse::processRedirectRes(int status_code) {
 	// std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
 
-/**
- * @brief 에러가 나지 않고 POST에 성공했을 때 등에만 사용한다.보낼 body가 있을 대 사용해서는 안된다.
- * 
- * @param status_code 
- */
-void	HttpResponse::makeNoBodyResponse(int status_code){
-	status_code_ = status_code;
-	status_ = status_msg_store_.getStatusMsg(status_code_);
-	// status_ = status_store_[status_code_];
-	std::string header =
-	http_version_ + " " + status_ + "\r\n\r\n";
-	joined_data_.clear();
-	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
-}
 
 void	HttpResponse::makeBodyResponse(int status_code, int content_length){
+	std::string	header = "";
+
 	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
-	// status_ = status_store_[status_code_];
-	std::string header =
-	http_version_ + " " + status_ + "\r\n"+
-	"content-length: " + std::to_string(content_length) + "\r\n\r\n";
+	// std::cout << "여기 왔다~~"<<std::endl;
+
+	header += http_version_ + " " + status_ + "\r\n";
+
+	// TODO: MimeStore 사용하기
+	if (status_code_ == 201 || (status_code_ >= 300 && status_code_ < 400))
+		header += "Location: " + location_ + "\r\n";
+	if (status_code_ == 405 && loc_block_.getDenyMethod().size()) {
+		std::vector<std::string> allow_method = loc_block_.getDenyMethod();
+		header += "Allow: ";
+		for (size_t i = 0; i < allow_method.size(); i++) {
+			header += allow_method[i];
+			if (i != allow_method.size() - 1)
+				header += ", ";
+		}
+		header += "\r\n";
+	}
+	if ((status_code_ >= 200 && status_code_ < 400) && !exist_session_)
+		header += "Set-Cookie: SESSIONID=" + Session::getInstance().createSession() + "\r\n";
+	header += "Content-Type: text/html; charset=utf-8\r\n";
+	header += "Content-Length: " + std::to_string(content_length) + "\r\n\r\n";
+	
 	joined_data_.clear();
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 }
@@ -94,15 +109,6 @@ void HttpResponse::setStatusCode(int status_code) { status_code_ = status_code; 
 std::vector<char> &HttpResponse::getBody() { return body_; }
 const std::string &HttpResponse::getFilePath() const { return file_path_; }
 
-bool HttpResponse::isFolder(const std::string& file_path_) const {
-  struct stat path_info;
-  if (stat(file_path_.c_str(), &path_info) != 0)
-    throw std::runtime_error("stat() ERROR");
-  if (S_ISDIR(path_info.st_mode))
-    return true;
-  return false;
-}
-
 void  HttpResponse::setFileSize(const std::string& file_path_) {
   struct stat file_stat;
   if (file_path_ == ""){
@@ -111,6 +117,7 @@ void  HttpResponse::setFileSize(const std::string& file_path_) {
   }
   if (stat(file_path_.c_str(), &file_stat) != 0)
     throw std::runtime_error("stat() ERROR");
+	// std::cout << "파일 크기 만드는중 ~~" << file_stat.st_size <<std::endl;
   file_size_ = static_cast<long>(file_stat.st_size);
 }
 
@@ -122,29 +129,42 @@ static bool isUploadMethod(HttpRequest &req) {
 }
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
-	file_path_ = loc.getCombineReturnPath();
+	file_path_ = loc.getReturnPath();
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
 		location_ = file_path_;
-		processRedirectRes(loc.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다.
 		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
 	}
-  if (loc.isAutoIndex() && isFolder(loc.getCombineLocPath())){
-    res_type_ = AUTOINDEX;
-    return;
-  }
 	file_path_ = loc.getCombineCgiPath();
 	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;
 		return;
 	}
 	file_path_ = loc.getCombineUploadStorePath();
-	if (isUploadMethod(req) && file_path_ == ""){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
-		res_type_ = ERROR;
-		processErrorRes(404);
+	if (isUploadMethod(req)){//upload 하려고 하는데 그 경로가 설정파일에서 없으면 서버에러가 아니고 잘못된 요청
+		if (file_path_ == ""){
+			res_type_ = ERROR;
+			processErrorRes(404);
+		}
 		return;
 	}
+	file_path_ = loc.getCombineLocPath();
+	// std::cout <<"file -------"<< req.getPath()<< "|" << file_path_ << std::endl;
+  if (loc.isAutoIndex()){
+	 struct stat path_info;
+		
+    if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0){
+			std::cout << "어째서 여기!"<<std::endl;
+			throw(std::runtime_error("STAT ERROR()"));
+		}
+		if (isFolder(loc.getCombineLocPath()) == true)
+			res_type_ = AUTOINDEX;
+    return;
+  }
 }
+
+void	HttpResponse::setLocation(std::string location) { location_ = location; }
+
 
 std::vector<char>& HttpResponse::getJoinedData(){ return joined_data_; }
 

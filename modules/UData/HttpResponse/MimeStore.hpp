@@ -3,7 +3,7 @@
 
 #include <map>
 #include <string>
-
+#include <iostream>
 class MimeStore {
 	public:
 		static void initMimeStore();

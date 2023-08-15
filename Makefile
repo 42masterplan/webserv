@@ -8,18 +8,22 @@ CONFIGSRCS = ConfParser.cpp \
 						httpBlock/HttpBase.cpp \
 						LocationBlock/LocBlock.cpp \
 						serverBlock/ServBlock.cpp \
-						otherBlock/OtherBlock.cpp
+						otherBlock/OtherBlock.cpp 
+
 
 CONFIGOBJS = $(addprefix ./modules/config/, $(CONFIGSRCS:.cpp=.o))
 
-#WebServ
-WEBSERVSRCS = Kqueue.cpp \
-							WebServ.cpp \
-							ServManager.cpp \
-							AutoIndex.cpp  \
-							Cgi.cpp \
-							EventHandler.cpp
+EVENTSRCS = 	Cgi.cpp \
+							EventHandler.cpp \
+							HttpResponseHandler.cpp \
+							Kqueue.cpp \
+							Session.cpp
 
+EVENTOBJS = $(addprefix ./modules/Event/, $(EVENTSRCS:.cpp=.o))
+
+#WebServ
+WEBSERVSRCS = WebServ.cpp \
+							ServManager.cpp 
 
 WEBSERVOBJS = $(addprefix ./modules/webserv/, $(WEBSERVSRCS:.cpp=.o))
 
@@ -29,7 +33,7 @@ UDATASRCS = UData.cpp \
 						HttpResponse/HttpResponse.cpp \
 						HttpResponse/MimeStore.cpp \
 						HttpResponse/StatusMsgStore.cpp \
-						HttpResponse/HttpResponseHandler.cpp
+						HttpResponse/AutoIndex.cpp
 
 #HttpResponse/HttpResponse.cpp
 UDATASOBJS = $(addprefix ./modules/UData/, $(UDATASRCS:.cpp=.o))
@@ -41,15 +45,12 @@ TOOLOBJS = $(addprefix ./modules/Tools/, $(TOOLSRCS:.cpp=.o))
 MAINSRC = main.cpp
 MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 
-#클라이언트
-CSRCS = echo_client.cpp
-COBJS = $(CSRCS:.cpp=.o)
 
-OBJS  =  $(CONFIGOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(TOOLOBJS) $(MAINOBJ) 
+OBJS  =  $(CONFIGOBJS) $(EVENTOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(TOOLOBJS) $(MAINOBJ) 
 
 RM = rm -rf
 
-all : $(NAME) client
+all : $(NAME) 
 
 $(NAME) : $(OBJS)
 		$(CXX) $(CXXFLAGS) -o $@ $^
@@ -57,8 +58,6 @@ $(NAME) : $(OBJS)
 %.o : %.cpp
 		$(CXX) $(CXXFLAGS) -o $@ -c $^
 
-client : $(COBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
 
 clean:
 		$(RM) $(OBJS)
@@ -66,7 +65,6 @@ clean:
 
 fclean: clean
 		$(RM) $(NAME)
-		$(RM) client
 
 re:
 	make fclean

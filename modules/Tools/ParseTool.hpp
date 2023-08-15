@@ -8,6 +8,10 @@
 # include <map>
 # include <algorithm>
 # include <cmath>
+# include <fcntl.h>
+# include <unistd.h>
+# include <sys/stat.h>
+# include <dirent.h>
 typedef enum methodType{
 	GET,
 	HEAD,
@@ -115,6 +119,6 @@ std::vector<std::string>	split(std::string input, std::string delimiter);
 
 
 std::string		intToString(int num);
-
+bool	isFolder(const std::string& file_path);
 
 #endif

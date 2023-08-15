@@ -1,5 +1,5 @@
 #include "MimeStore.hpp"
-#include <iostream>
+
 
 std::map<std::string, std::string> MimeStore::mime_store_;
 
@@ -42,5 +42,5 @@ std::string MimeStore::getExtension(std::string mime) {
 		if (it->second == mime)
 			return it->first;
 	}
-	return "txt";
+	return ".txt";
 }

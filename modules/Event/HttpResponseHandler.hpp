@@ -1,9 +1,8 @@
 #ifndef HTTPRESPONSEHANDLER_HPP
 # define HTTPRESPONSEHANDLER_HPP
-# include "../UData.hpp"
-# include "../../config/ConfParser.hpp"
-# include "../../webserv/Cgi.hpp"
-# include "../../webserv/AutoIndex.hpp"
+# include "../UData/UData.hpp"
+# include "../config/ConfParser.hpp"
+# include "Cgi.hpp"
 class HttpResponseHandler{
 	public:
 		static HttpResponseHandler&	getInstance();
@@ -17,7 +16,8 @@ class HttpResponseHandler{
 		void	RegisterFileReadEvent(int file_fd, UData &udata);
 	private:
 		void	handleHttpMethod(UData &udata);
-		void	handleHeadGet(UData &udata);
+		void	handleGet(UData &udata);
+		void	handleHead(UData &udata);
 		void	handlePost(UData &udata);
 		void	handleDelete(UData &udata);
 };

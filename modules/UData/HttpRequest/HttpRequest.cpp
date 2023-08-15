@@ -27,17 +27,17 @@
  * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
-HttpRequest::HttpRequest(): path_(""), content_length_(-1), content_type_(""), host_(""), \
-parse_status_(FIRST), request_error_(OK), last_header_(""), read_state_(false), to_read_(0) { }
+HttpRequest::HttpRequest(): path_(""), is_chunked_(false), exist_session_(false), content_length_(-1), content_type_(""), \
+host_(""), parse_status_(FIRST), request_error_(OK), last_header_(""), read_state_(false), to_read_(0) { }
 
 /*Test용 함수*/
-void	print_vec(std::vector<char>& t){
+void	print_vec(const std::vector<char>& t){
 	std::cout << "------------printvec----------" << std::endl;
 	std::cout << "vector size:" << t.size() << std::endl;
-	for (size_t i = 0; i < t.size(); i++){
-		std::cout << "(" << (int)t[i] <<")";
-	}
-	std::cout << std::endl;
+	// for (size_t i = 0; i < t.size(); i++){
+	// 	std::cout << "(" << (int)t[i] <<")";
+	// }
+	// std::cout << std::endl;
 	for (size_t i = 0; i < t.size(); i++){
 		std::cout << t[i];
 	}
@@ -51,11 +51,29 @@ const std::vector<char>&	HttpRequest::getBody(void) const { return body_; }
 const int&								HttpRequest::getContentLength(void) const { return content_length_; }
 const int&								HttpRequest::getPort(void) const { return port_; }
 const bool&								HttpRequest::getIsChunked(void) const { return is_chunked_; }
+const bool&								HttpRequest::getExistSession(void) const { return exist_session_; }
 const std::string&				HttpRequest::getContentType(void) const { return content_type_; }
 const std::string&				HttpRequest::getHost(void) const { return host_; }
 const e_requestError&			HttpRequest::getRequestError(void) const { return request_error_; }
 const e_parseStatus&			HttpRequest::getParseStatus(void) const { return parse_status_; }
 void											HttpRequest::setPort(int port) { port_ = port; }
+
+void HttpRequest::printRequestInfo(){
+	std::cout << "-----------------PARSE RESULT------------------" << std::endl;
+	std::cout << "method: " << method_ << std::endl;
+	std::cout << "path: " << path_ << std::endl;
+	std::cout << "port: " << port_ << std::endl;
+	std::cout << "is_chunked_: " << static_cast<int>(is_chunked_) << std::endl;
+	std::cout << "content_length_: " << content_length_ << std::endl;
+	std::cout << "content_type_: " << content_type_ << std::endl;
+	std::cout << "host_: " << host_ << std::endl;
+	std::cout << "parse_status_: " << static_cast<int>(parse_status_) << std::endl;
+	std::cout << "request_error_: " << static_cast<int>(request_error_) << std::endl;
+	std::cout << "-----------------BODY------------------" << std::endl;
+	printBodyInfo();
+	std::cout << "-----------------------------------------------" << std::endl;
+
+}
 
 /**
  * @brief HttpRequest를 파싱하는 함수입니다.
@@ -197,19 +215,21 @@ void	HttpRequest::parseHeader(std::string line) {
     return ;
 	}
 	lowerString(key);
-	lowerString(value);
 	trimSidesSpace(value);
 
 	last_header_ = key;
+	if (header_.find(key) != header_.end() && key == "cookie") {
+		std::vector<std::string> list = split(header_[key], "; ");
+		if (std::find(list.begin(), list.end(), value) == list.end())
+			header_[key] += "; " + value;
+		return ;
+	}
+	lowerString(value);
 	if (header_.find(key) == header_.end())
 		header_[key] = value;
 	else if (get_multiple_header().find(key) != get_multiple_header().end() && !get_multiple_header().at(key))
 		header_[key] = value;
-	else if (key == "cookie") {
-		std::vector<std::string> list = split(header_[key], "; ");
-		if (std::find(list.begin(), list.end(), value) == list.end())
-			header_[key] += "; " + value;
-	} else {
+	else {
 		std::vector<std::string> list = split(header_[key], ", ");
 		if (std::find(list.begin(), list.end(), value) == list.end())
 			header_[key] += ", " + value;
@@ -241,11 +261,15 @@ void	HttpRequest::checkHeader(void) {
 				return ;
 			}
 		}
+		if (cookie_.find("SESSIONID") != header_.end() && \
+			Session::getInstance().existSession(cookie_["SESSIONID"]))
+			exist_session_ = true;
 	}
 
 	/* content-type */
 	if (header_.find(std::string("content-type")) != header_.end())
 		content_type_ = header_["content-type"];
+
 
 	/* transfer-encoding */
 	if (header_.find(std::string("transfer-encoding")) != header_.end()) {

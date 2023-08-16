@@ -119,13 +119,13 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
     // disconnectFd(cur_event);
     waitpid(cur_udata->cgi_pid_, NULL, 0);
 		close(cur_event->ident);
+		res.header_complete_ = false;
 		res.makeCgiResponse();
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
   }
 	else{
 		std::vector<char>& buff_ref = res.header_complete_ ? res.body_ : res.joined_data_;
 		buff_ref.insert(buff_ref.end(), buff_, buff_ + rlen);
-
 		// 헤더에 넣었으면 헤더 끝났는지 확인
 		if (!res.header_complete_) {
 				const char* header_end = strstr(&buff_ref[0], "\r\n\r\n");
@@ -150,7 +150,7 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 		return fileErrorCallBack(cur_event);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-    // std::cout << "여기 오냐?!!" << std::endl;
+    std::cout << "여기 오냐?!!" << std::endl;
 		close(cur_event->ident); //unregister?
 		Kqueue::registerReadEvent(cur_udata->r_pfd, cur_udata);
 		cur_udata->write_size_ = 0;

@@ -69,6 +69,7 @@ void HttpRequest::printRequestInfo(){
 	std::cout << "host_: " << host_ << std::endl;
 	std::cout << "parse_status_: " << static_cast<int>(parse_status_) << std::endl;
 	std::cout << "request_error_: " << static_cast<int>(request_error_) << std::endl;
+	std::cout << "exist_session_: " << static_cast<int>(exist_session_) << std::endl;
 	std::cout << "-----------------BODY------------------" << std::endl;
 	printBodyInfo();
 	std::cout << "-----------------------------------------------" << std::endl;
@@ -218,12 +219,17 @@ void	HttpRequest::parseHeader(std::string line) {
 	trimSidesSpace(value);
 
 	last_header_ = key;
-	if (header_.find(key) != header_.end() && key == "cookie") {
-		std::vector<std::string> list = split(header_[key], "; ");
-		if (std::find(list.begin(), list.end(), value) == list.end())
-			header_[key] += "; " + value;
+	if (key == "cookie") {
+		if (header_.find(key) != header_.end()) {
+			std::vector<std::string> list = split(header_[key], "; ");
+			if (std::find(list.begin(), list.end(), value) == list.end())
+				header_[key] += "; " + value;
+		}
+		else
+			header_[key] = value;
 		return ;
 	}
+
 	lowerString(value);
 	if (header_.find(key) == header_.end())
 		header_[key] = value;

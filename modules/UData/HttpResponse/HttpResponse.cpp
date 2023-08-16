@@ -70,21 +70,22 @@ bool	HttpResponse::makeCgiResponse(){
 	std::string s(joined_data_.begin(), joined_data_.begin() + 8);
 	if (s != "Status: ")
 		return false;
-	// print_vec(joined_data_);
-	// print_vec(body_);
+	std::cout << "CGI STRING" <<std::endl;
+	print_vec(joined_data_);
 	joined_data_.erase(joined_data_.begin(),joined_data_.begin() + 8);
 	std::string http_version  = http_version_ + " ";
 	joined_data_.insert(joined_data_.begin(), http_version.begin(), http_version.end());
 	std::string tmp = "\r\nContent-Length: " + std::to_string(body_.size());
 	joined_data_.insert(joined_data_.end() - 4, tmp.begin(), tmp.end());
+	print_vec(joined_data_);
+	// print_vec(body_);
 	return true;
 }
 
 
-void	HttpResponse::makeBodyResponse(int status_code, int content_length){
+void	HttpResponse::makeBodyResponse(const HttpRequest& req){//TODO: status_code와 content_length를 바꾸기
 	std::string	header = "";
 
-	status_code_ = status_code;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	// std::cout << "여기 왔다~~"<<std::endl;
 
@@ -105,8 +106,11 @@ void	HttpResponse::makeBodyResponse(int status_code, int content_length){
 	}
 	if ((status_code_ >= 200 && status_code_ < 400) && !exist_session_)
 		header += "Set-Cookie: SESSIONID=" + Session::getInstance().createSession() + "\r\n";
-	header += "Content-Type: text/html; charset=utf-8\r\n";
-	header += "Content-Length: " + std::to_string(content_length) + "\r\n\r\n";
+	if (req.getContentType() != "")
+		header += "Content-Type: " + req.getHeader().at("content-type") + "\r\n";
+	else
+		header += "Content-Type: text/html; charset=utf-8\r\n";
+	header += "Content-Length: " + std::to_string(content_length_) + "\r\n\r\n";
 	
 	joined_data_.clear();
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
@@ -123,16 +127,17 @@ std::string HttpResponse::getErrorPath(int status_code){
 
 /* getter, setter */
 void HttpResponse::setStatusCode(int status_code) { status_code_ = status_code; }
+void HttpResponse::setContentLength(int content_length) { content_length_ = content_length; }
 std::vector<char> &HttpResponse::getBody() { return body_; }
 const std::string &HttpResponse::getFilePath() const { return file_path_; }
 
-void  HttpResponse::setFileSize(const std::string& file_path_) {
+void  HttpResponse::setFileSize(const std::string& file_path) {
   struct stat file_stat;
-  if (file_path_ == ""){
+  if (file_path == ""){
     file_size_ = -1;
     return;
   }
-  if (stat(file_path_.c_str(), &file_stat) != 0)
+  if (stat(file_path.c_str(), &file_stat) != 0)
     throw std::runtime_error("stat() ERROR");
 	// std::cout << "파일 크기 만드는중 ~~" << file_stat.st_size <<std::endl;
   file_size_ = static_cast<long>(file_stat.st_size);
@@ -170,7 +175,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 	file_path_ = loc.getCombineLocPath();
 	// std::cout <<"file -------"<< req.getPath()<< "|" << file_path_ << std::endl;
   if (loc.isAutoIndex()){
-	 struct stat path_info;
+		struct stat path_info;
 		
     if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0)
 			throw(std::runtime_error("STAT ERROR()"));

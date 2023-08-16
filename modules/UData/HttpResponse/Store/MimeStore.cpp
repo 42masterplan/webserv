@@ -1,6 +1,10 @@
 #include "MimeStore.hpp"
 
 
+MimeStore::MimeStore() {
+	this->initMimeStore();
+}
+
 std::map<std::string, std::string> MimeStore::mime_store_;
 
 void MimeStore::initMimeStore() {
@@ -32,12 +36,10 @@ std::string MimeStore::getMime(std::string extension) {
 		if (it->first == extension)
 			return it->second;
 	}
-	return "not supported";
+	return "text/html";
 }
 
 std::string MimeStore::getExtension(std::string mime) {
-	if (mime_store_.empty())
-		initMimeStore();
 	for (std::map<std::string, std::string>::const_iterator it = mime_store_.begin(); it != mime_store_.end(); it++) {
 		if (it->second == mime)
 			return it->first;

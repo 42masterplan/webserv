@@ -41,15 +41,17 @@ class  HttpResponse{
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);
 		bool		makeCgiResponse();
-		void		makeBodyResponse(int status_code, int content_length);
+		void		makeBodyResponse(const HttpRequest& req);
 		/* getter, setter */
 
 		const std::string&				getFilePath() const;
 		void											setFilePath(HttpRequest &req, LocBlock &loc);
 		void											setLocation(std::string location);
 
-    void                      setFileSize(const std::string& file_path_);
+    void                      setFileSize(const std::string& file_path);
 		void											setStatusCode(int status_code);
+		void											setContentLength(int content_length);
+
 		std::vector<char>&				getBody();
 		std::vector<char>& 				getJoinedData() ;
 		std::string 							getErrorPath(int status_code);

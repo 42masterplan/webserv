@@ -107,6 +107,7 @@ void  ServManager::handleEvents(){
 			cur_udata = (UData*)cur_event->udata;
 			cur_fd_type = cur_udata->fd_type_;
 		}
+		// std::cout << "이벤트 FD타입이에용~" << cur_fd_type <<std::endl;
 		if (std::find(serv_sock_fds_.begin(), serv_sock_fds_.end(),cur_event->ident) != serv_sock_fds_.end())
 			registerNewClnt(cur_event->ident);
 		else if (cur_event->udata == NULL)

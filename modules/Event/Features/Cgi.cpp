@@ -74,6 +74,8 @@ void  Cgi::forkCgi(UData* ptr){
   if (pipe(r_pfd) == -1 || pipe(w_pfd) == -1)
     throw (std::runtime_error("pipe() Error"));
   fcntl(r_pfd[0], F_SETFL, O_NONBLOCK);
+  fcntl(r_pfd[1], F_SETFL, O_NONBLOCK);
+  fcntl(w_pfd[0], F_SETFL, O_NONBLOCK);
   fcntl(w_pfd[1], F_SETFL, O_NONBLOCK);
   ptr->r_pfd = r_pfd[0];
   ptr->w_pfd = w_pfd[1];
@@ -82,8 +84,6 @@ void  Cgi::forkCgi(UData* ptr){
   ptr->prog_name_ = cgi_path;
   script_name = (char*)cgi_path.c_str();
   ptr->fd_type_ = CGI;
-  Kqueue::unregisterReadEvent(ptr->client_fd_, ptr);
-  Kqueue::registerWriteEvent(w_pfd[1], ptr);
   child_pid = fork();
   if (child_pid == -1){
     close(r_pfd[1]);
@@ -99,8 +99,6 @@ void  Cgi::forkCgi(UData* ptr){
     close(w_pfd[1]);
     dup2(w_pfd[0], STDIN_FILENO);
     close(w_pfd[0]);
-    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    fcntl(w_pfd[0], F_SETFL, O_NONBLOCK);
     char* exec_file[3];
     exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;
@@ -120,6 +118,9 @@ void  Cgi::forkCgi(UData* ptr){
   close(w_pfd[0]);
   // write(w_pfd[1], "hello!", 7);
   // close(w_pfd[1]);
-  // Kqueue::registerExitEvent(child_pid, ptr); 
+  // Kqueue::registerExitEvent(child_pid, ptr);
+  Kqueue::unregisterReadEvent(ptr->client_fd_, ptr);
+  Kqueue::registerWriteEvent(w_pfd[1], ptr); 
+  Kqueue::registerReadEvent(r_pfd[0], ptr);
   ptr->cgi_pid_ = child_pid;
 }

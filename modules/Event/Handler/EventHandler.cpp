@@ -143,7 +143,6 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	}
 }
 
-
 void  EventHandler::cgiWritable(struct kevent *cur_event){
 	std::cout << "CGI Writable" << std::endl;
 	UData*	cur_udata = (UData*)cur_event->udata;
@@ -154,9 +153,8 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 		return fileErrorCallBack(cur_event);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-    std::cout << "여기 오냐?!!" << std::endl;
 		close(cur_event->ident); //unregister?
-		Kqueue::registerReadEvent(cur_udata->r_pfd, cur_udata);
+		// Kqueue::registerReadEvent(cur_udata->r_pfd, cur_udata);
 		cur_udata->write_size_ = 0;
 	}
 }
@@ -199,7 +197,8 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 		std::cout << "파일 다읽었어요~" <<std::endl;
 		close(cur_event->ident);
 		cur_udata->fd_type_= CLNT;
-		cur_udata->http_response_.makeBodyResponse(cur_udata->http_response_.status_code_, file_store_ref.size());
+		cur_udata->http_response_.setContentLength(file_store_ref.size());
+		cur_udata->http_response_.makeBodyResponse(cur_udata->http_request_[0]);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
 	}
 }
@@ -219,7 +218,9 @@ void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 
 		return fileErrorCallBack(cur_event);
 	cur_udata->write_size_+= write_size;
 	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
-		cur_udata->http_response_.makeBodyResponse(201, 0);
+		cur_udata->http_response_.setStatusCode(201);
+		cur_udata->http_response_.setContentLength(0);
+		cur_udata->http_response_.makeBodyResponse(cur_udata->http_request_[0]);
 		cur_udata->fd_type_ = CLNT;
 		close(cur_event->ident);
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
@@ -257,12 +258,13 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 		cur_udata->write_size_ = 0;
 		to_write.clear();
 		Kqueue::unregisterWriteEvent(cur_udata->client_fd_, cur_udata);
-		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		std::cout << "여기가 처음이에용~"<<std::endl;
+		// HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
 		return ;
 	}
 	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
 		cur_udata->write_size_ = 0;
-		if (is_body != true){
+		if (!is_body){
 			std::cout << "헤더 보냈어요" <<std::endl;
 			to_write.clear();
 		}
@@ -281,6 +283,7 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 
 void	EventHandler::fileErrorCallBack(struct kevent *cur_event){
 	close(cur_event->ident);
+	std::cout << "파일에서 에러가 났어용~~"<<std::endl;
 	HttpResponseHandler::getInstance().errorCallBack(*(UData *)(cur_event->udata), 500);
 }
 

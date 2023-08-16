@@ -29,14 +29,19 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 		  if(isDenyMethod(*udata, udata->http_request_[0].getMethod()))
 			  return errorCallBack(*udata, 405);
 			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response);
-      cur_response.makeBodyResponse(200, cur_response.body_.size());
+      cur_response.setStatusCode(200);
+			cur_response.setContentLength(cur_response.body_.size());
+      cur_response.makeBodyResponse(udata->http_request_[0]);
 			if (cur_response.body_.size() != 0)
       	RegisterClientWriteEvent(*udata);
 			else 
 				errorCallBack(*udata, 404);
 			break ;
 		case REDIRECT : 
-			cur_response.makeBodyResponse(cur_response.loc_block_.getReturnCode(), 0);//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			cur_response.setStatusCode(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			cur_response.setStatusCode(cur_response.loc_block_.getReturnCode());
+			cur_response.setContentLength(0);
+			cur_response.makeBodyResponse(udata->http_request_[0]);//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			// cur_response.processRedirectRes(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			RegisterClientWriteEvent(*udata);
 			break ;
@@ -119,7 +124,9 @@ void HttpResponseHandler::handleGet(UData &udata) {
 	// std::cout << udata.http_response_.file_size_ <<std::endl;
 	if (udata.http_response_.file_size_ == 0){//파일이 있는데 크기가 0인경우
 		close(fd);
-		udata.http_response_.makeBodyResponse(200,0);
+		udata.http_response_.setStatusCode(200);
+		udata.http_response_.setContentLength(0);
+		udata.http_response_.makeBodyResponse(udata.http_request_[0]);
 		RegisterClientWriteEvent(udata);
 	}
 	else
@@ -166,7 +173,9 @@ void HttpResponseHandler::handleDelete(UData &udata) {
 	"</html>";
 
 	udata.http_response_.body_ = std::vector<char>(result.begin(), result.end());
-	udata.http_response_.makeBodyResponse(200, result.size());
+	udata.http_response_.setStatusCode(200);
+	udata.http_response_.setContentLength(result.size());
+	udata.http_response_.makeBodyResponse(udata.http_request_[0]);
 	RegisterClientWriteEvent(udata);
 }
 
@@ -187,7 +196,9 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 			close(error_file_fd_);
 		else{
 			udata.http_response_.file_size_ = 0;
-			udata.http_response_.makeBodyResponse(status_code, 0);
+			udata.http_response_.setStatusCode(status_code);
+			udata.http_response_.setContentLength(0);
+			udata.http_response_.makeBodyResponse(udata.http_request_[0]);
 			RegisterClientWriteEvent(udata);
 			return ;
 		}
@@ -195,7 +206,9 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 	if (udata.http_request_[0].getMethod() == HEAD){
 			udata.http_response_.processErrorRes(status_code);
 			udata.http_response_.setFileSize(udata.http_response_.getFilePath());
-			udata.http_response_.makeBodyResponse(status_code, udata.http_response_.file_size_);
+			udata.http_response_.setStatusCode(status_code);
+			udata.http_response_.setContentLength(udata.http_response_.file_size_);
+			udata.http_response_.makeBodyResponse(udata.http_request_[0]);
 			RegisterClientWriteEvent(udata);
 	}
 	else{

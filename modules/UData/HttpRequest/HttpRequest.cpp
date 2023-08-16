@@ -70,8 +70,11 @@ void HttpRequest::printRequestInfo(){
 	std::cout << "parse_status_: " << static_cast<int>(parse_status_) << std::endl;
 	std::cout << "request_error_: " << static_cast<int>(request_error_) << std::endl;
 	std::cout << "exist_session_: " << static_cast<int>(exist_session_) << std::endl;
+	for (std::map<std::string, std::string>::iterator i = header_.begin(); i != header_.end(); i++) {
+		std::cout << "[header " << i->first << "] " << i->second << std::endl;
+	}
 	std::cout << "-----------------BODY------------------" << std::endl;
-	printBodyInfo();
+	// printBodyInfo();
 	std::cout << "-----------------------------------------------" << std::endl;
 
 }
@@ -92,6 +95,7 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 		}
 		switch (parse_status_) {
 			case FINISH:
+				printRequestInfo();
 				return ;
 
 			case BODY:
@@ -319,9 +323,10 @@ void	HttpRequest::checkHeader(void) {
 bool	HttpRequest::parseBody(std::vector<char>& raw_data){
 	if (is_chunked_)
 		return parseChunkedBody(raw_data);
-	else if ((size_t)content_length_ >= raw_data.size()){
-		std::copy(raw_data.begin(), raw_data.begin() + content_length_,  std::back_inserter(body_));
-		raw_data.erase(raw_data.begin(),raw_data.begin() + content_length_);
+	else if ((size_t)content_length_ <= raw_data.size()){
+		body_.reserve(body_.size() + content_length_);
+		body_.insert(body_.end(), raw_data.begin(), raw_data.begin() + content_length_);
+		raw_data.erase(raw_data.begin(), raw_data.begin() + content_length_);
 		parse_status_ = FINISH;
 		return true;
 	}
@@ -362,7 +367,8 @@ bool HttpRequest::parseChunkedBody(std::vector<char>& raw_data) {
 		parse_status_ = FINISH;
 		return true;
 	} else if (raw_data.size() >= (size_t)to_read_ + 2) { // CRLF 보장을 위해 + 2
-		std::copy(raw_data.begin(), raw_data.begin() + to_read_, std::back_inserter(body_));
+		raw_data.reserve(raw_data.size() + to_read_);
+		body_.insert(body_.end(), raw_data.begin(), raw_data.begin() + to_read_);
 		raw_data.erase(raw_data.begin(), raw_data.begin() + to_read_);
 		to_read_ = 0;
 		read_state_ = false;

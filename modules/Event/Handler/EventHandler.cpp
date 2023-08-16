@@ -120,7 +120,11 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
     waitpid(cur_udata->cgi_pid_, NULL, 0);
 		close(cur_event->ident);
 		res.header_complete_ = false;
-		res.makeCgiResponse();
+		if (!res.makeCgiResponse()){
+			res.joined_data_.clear();
+			res.body_.clear();
+			return HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		}
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
   }
 	else{
@@ -128,13 +132,13 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 		buff_ref.insert(buff_ref.end(), buff_, buff_ + rlen);
 		// 헤더에 넣었으면 헤더 끝났는지 확인
 		if (!res.header_complete_) {
-				const char* header_end = strstr(&buff_ref[0], "\r\n\r\n");
-				if (header_end) {
-						res.header_complete_ = true;
-						size_t header_size = header_end - &buff_ref[0] + 4;
-						res.body_.assign(buff_ref.begin() + header_size, buff_ref.end());
-						buff_ref.erase(buff_ref.begin() + header_size, buff_ref.end());
-				}
+			const char* header_end = strstr(&buff_ref[0], "\r\n\r\n");
+			if (header_end) {
+					res.header_complete_ = true;
+					size_t header_size = header_end - &buff_ref[0] + 4;
+					res.body_.assign(buff_ref.begin() + header_size, buff_ref.end());
+					buff_ref.erase(buff_ref.begin() + header_size, buff_ref.end());
+			}
 		}
 	}
 }

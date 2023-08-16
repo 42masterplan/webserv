@@ -52,16 +52,14 @@ LocBlock ServBlock::findLocBlock(std::string path){
 	int ret = -1;
 	for (size_t i = 0;i < serv_index_store.size(); i++){
 		ret = untilFindLoc(path, root_, serv_index_store[i]);
-		// if (ret != -1)
-		// 	loc_store_[ret].printInfo();
 		if (ret != -1){
 			std::string con_p = loc_store_[ret].getCombineLocPath();
 			if (con_p.size() != 1 &&con_p.back() == '/'){
 				if (isFolder(con_p) == false)
 					con_p.pop_back();
-				// std::cout <<"합성!!!!" << con_p <<std::endl;
 				loc_store_[ret].setCombinePath(con_p);
 			}
+			// loc_store_[ret].printInfo();
 			return (loc_store_[ret]);
 		}
 	}
@@ -151,56 +149,51 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 		con_path = con_path + "/" + index;
 	else 
 		con_path = con_path + index;
-	// std::cout << "CON PATH" <<con_path <<std::endl;
-	for (size_t i = 0; i < loc_store_.size(); i++){
+	for (size_t i = 0; i < loc_store_.size(); i++){//모든 로케이션 블록을 돌면서 탐색
 		std::string troot = root;
-		if (loc_store_[i].getRoot() != "")
+		if (loc_store_[i].getRoot() != "")//현재 로케이션 블럭의 Root를 가져온다.
 			troot = loc_store_[i].getRoot();
-		std::string loc_info = loc_store_[i].getLocInfo();
-		if (loc_info.find("/.") != std::string::npos){
-			for(int j = con_path.size() - 1; j >= 0; j--){
+		std::string loc_info = loc_store_[i].getLocInfo();//로케이션 블록의 Loc인포를 가져온다.
+		if (loc_info.find("/.") != std::string::npos){//와일드 카드를 처리하기 위해서 /.으로 끝나는 경우 찾아준다.
+			for(int j = con_path.size() - 1; j >= 0; j--){//합성 경로에서 뒤에서부터 탐색해서 .을 찾는다.
 				if (con_path[j] == '.'){
 					// std::cout << "|"<< con_path.substr(j + 1) <<"|" <<  loc_info.substr(loc_info.find("/.") + 2) + "/"<< "|\n";
-					if (con_path.substr(j + 1) == (loc_info.substr(loc_info.find("/.") + 2) + "/")){
+					if (con_path.substr(j + 1) == (loc_info.substr(loc_info.find("/.") + 2) + "/")){//합성 경로의 뒷부분의 .bla와 location 블록의 .bla가 일치하는 경우 그것을 리턴한다.
+						//와일드 카드 안에 index가 있는 건 처리하지 않았다.
 						loc_store_[i].setCombinePath(troot + path + index);
 						loc_store_[i].setHighPriorityRoot(troot);
 						return (i);
 					}
-					break;
+					break;//만약 .으로 끝났는데 와일드 카드가 아니면 일단 break;
 				}
 			}
 		}
-		if (con_path.find(loc_info) == 0){
+		if (con_path.find(loc_info) == 0){//합성 경로에서 현재 location이 있다면
 			const std::vector<std::string>& loc_index_store = loc_store_[i].getIndex();
-			std::string left_path = con_path.substr(loc_info.size());
+			std::string left_path = con_path.substr(loc_info.size());//이게 파일 경로를 뺀 url에서 해당부분을 뺀 나머지 부분이 된다.
 			if (left_path.find("/")!= 0)
 						left_path = "/" + left_path;
-			// std::cout << "@@@@left_path:" << left_path<< std::endl;
+			// std::cout << "@@@@left_path:" << left_path<< "|" << path <<std::endl;
+			
 			if (left_path == "")
 				left_path = "/";
-			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == "")){
-				loc_store_[i].setCombinePath(troot + left_path);
-				loc_store_[i].setHighPriorityRoot(troot);
-				return i;
-			}
-			else {
-				for (size_t j = 0; j < loc_index_store.size(); j++){
-					// std::cout <<"남은 경로에요~" <<left_path <<std::endl;
-					if (left_path == ("/" + loc_index_store[j] + "/")) //같은 경우라고 생각했는데...
+			if (loc_index_store.size()  == 0 || (loc_index_store.size() == 1 && loc_index_store[0]  == ""))//인덱스가 없는 경우 바로 이 블록이 해당하는 블록이다.
+				return (locBlockSetUp(left_path,i , troot));
+			else {//인덱스가 있다면!
+				for (size_t j = 0; j < loc_index_store.size(); j++){//모든 인덱스를 순회하면서
+					// std::cout <<"남은 경로에요~" <<left_path << "|" << path <<std::endl;
+					if (left_path == ("/" + loc_index_store[j] + "/")) //left path와 인덱스가 같다면 인덱스를 어차피 붙혀줘서 탐색을 하기 때문에 따로 하지 않아도 됩니다.
 						left_path = "/";
 					if (path.back() != '/'){
 						// std::cout << "1번이에용" << troot + path + "/" + loc_index_store[j] <<std::endl;
-						std::string open_path = (troot + left_path);
-						open_path.erase(open_path.end() - 1);
-						if (!isFolder(open_path) ){
-							// std::cout << "오픈이에용" << open_path<<std::endl;
-							int fd = open(open_path.c_str(),O_RDONLY);
-							if (fd != -1){
-								// std::cout << "HI"<<std::endl;
-								loc_store_[i].setCombinePath(open_path);
-								close(fd);
-								return (i);
-							}
+						std::string open_path = (troot + left_path); //파일을 열어보는 경로이다.
+						open_path.pop_back();
+						if (!isFolder(open_path)){//폴더가 아니면서
+							  struct stat path_info;
+							  if (stat(open_path.c_str(), &path_info) == 0){//존재하는 파일인 경우만
+									loc_store_[i].setCombinePath(open_path);
+									return (i);
+								}
 						}
 						loc_store_[i].setCombinePath(troot + path + "/" + loc_index_store[j]);
 					}
@@ -211,16 +204,23 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 					int ret = untilFindLoc(left_path, troot, loc_index_store[j]);
 					if (ret != -1)
 						return(ret);
-				}
-				loc_store_[i].setHighPriorityRoot(troot);
-				loc_store_[i].setCombinePath(troot + path + index);
-				return (i);
+				}//인덱스를 다 탐색했는데..! 없다?
+				return (locBlockSetUp(left_path,i , troot));
 			}
 		}
 	}
 	return (-1);
 }
 
+
+int ServBlock::locBlockSetUp(std::string &left_path, int ret_idx, std::string & root){
+	loc_store_[ret_idx].setCombinePath(root + left_path);
+	if (left_path.back() == '/')
+		left_path.pop_back();
+	loc_store_[ret_idx].setFileName(left_path);
+	loc_store_[ret_idx].setHighPriorityRoot(root);
+	return ret_idx;
+}
 /**
  * @brief 로케이션 블록을 만드는 함수
  *

@@ -30,17 +30,11 @@ HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status
 			setFileSize(file_path_);
   }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.
 		std::cout << "Response 생성자에서 에러 발생!!" <<std::endl;
-    res_type_ = ERROR;
 		processErrorRes(404);
   }
 }
 
 /* init */
-
-bool HttpResponse::isExistFile(std::string &filePath) {
-	std::ifstream file(filePath.c_str());
-	return file.good();
-}
 
 void HttpResponse::processErrorRes(int status_code) {
 	status_code_ = status_code;
@@ -101,7 +95,7 @@ std::string HttpResponse::getErrorPath(int status_code){
 	std::vector<int>::iterator it = std::find(error_codes.begin(), error_codes.end(), status_code);	
 	if (it != error_codes.end())
 		return loc_block_.getCombineErrorPath();
-	return std::string(DEFAULT_ERROR_PATH);
+	return std::string("");
 }
 
 /* getter, setter */
@@ -145,7 +139,9 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		if (file_path_ == ""){
 			res_type_ = ERROR;
 			processErrorRes(404);
+			return ;
 		}
+		file_path_ +=  loc.getFileName();
 		return;
 	}
 	file_path_ = loc.getCombineLocPath();
@@ -153,10 +149,8 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
   if (loc.isAutoIndex()){
 	 struct stat path_info;
 		
-    if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0){
-			std::cout << "어째서 여기!"<<std::endl;
+    if (stat(loc.getCombineLocPath().c_str(), &path_info) != 0)
 			throw(std::runtime_error("STAT ERROR()"));
-		}
 		if (isFolder(loc.getCombineLocPath()) == true)
 			res_type_ = AUTOINDEX;
     return;

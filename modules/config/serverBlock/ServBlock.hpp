@@ -43,7 +43,8 @@ public:
 	void	makeBlock(std::string line, std::ifstream& input, int& line_len_);
 	std::map<std::string, std::string>& getDirStore();
 private :
-	int	untilFindLoc(const std::string& path, const std::string& root, const std::string& index);
+	int		untilFindLoc(const std::string& path, const std::string& root, const std::string& index);
+	int 	locBlockSetUp(std::string &left_path, int ret_idx, std::string & root);
 	void	makeLocBlock(std::ifstream& input, int& line_len_, std::string &block_name);
 	void	makeOtherBlock(std::ifstream& input, int& line_lne_);
 	void	parseServDirective();

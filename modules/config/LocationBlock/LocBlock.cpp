@@ -51,8 +51,14 @@ std::string LocBlock::getCombineErrorPath()const{
 std::string LocBlock::getCombineUploadStorePath()const{
 	if (upload_store_ == "")
 		return (upload_store_);
-	if (high_priority_root_ == "")
-		return(root_ + upload_store_);
+	if (high_priority_root_ == ""){
+		if (root_.back() != '/')
+			return(root_+ "/" + upload_store_);
+		return(root_+ upload_store_);
+	}
+	if (high_priority_root_.back()!= '/'){
+		return (high_priority_root_ + '/' + upload_store_);
+	}
 	return (high_priority_root_ + upload_store_);
 }
 
@@ -86,10 +92,14 @@ std::string LocBlock::getCombineCgiPath()const{
  */
 const std::string& LocBlock::getCombineLocPath()const{return (combined_path_);}
 
+const std::string& LocBlock::getFileName()const{return file_name_;}
+
+
 /*--------setter-------------*/
 void	LocBlock::setCombinePath(std::string combine_path){combined_path_ = combine_path;}
 void	LocBlock::setHighPriorityRoot(const std::string & root){high_priority_root_ = root;}
 void LocBlock::setError(){is_error_ = true;}
+void	LocBlock::setFileName(const std::string &file_name){file_name_ = file_name;}
 /**
  * @brief 반환된 블럭이 에러인지 아닌지 여부 확인
  *
@@ -138,6 +148,7 @@ void	LocBlock::printInfo()const{
 	std::cout << "getCombineReturnPath:|" << getCombineReturnPath()<< "|\n";
 	std::cout << "getCombineCgiPath:|" << getCombineCgiPath()<< "|\n";
 	std::cout << "getCombineLocPath:|" << getCombineLocPath()<< "|\n";
+	std::cout << "getFileName:|" <<getFileName()<<"|\n";
 }
 
 

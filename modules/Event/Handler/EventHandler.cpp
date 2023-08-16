@@ -112,6 +112,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
 		std::cout << "CGI process sent eof.\n";
+    // cur_udata->fd_type_ = CLNT;
     disconnectFd(cur_event);
   }
 	else{
@@ -127,20 +128,27 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 }
 
 
+void  EventHandler::cgiWritable(struct kevent *cur_event){
+	std::cout << "CGI Writable" << std::endl;
+	UData*	cur_udata = (UData*)cur_event->udata;
+	std::vector<char>&	head_ref = cur_udata->http_response_.getJoinedData();
+	std::vector<char>&	body_ref = cur_udata->http_response_.getBody();
+	if (head_ref.size()) //여기가 첫번째 요청을 보내는 곳
+		writeToCgi(head_ref, false, cur_udata);
+	else  //두번째 body를 보내는 분기입니다.
+		writeToCgi(body_ref, true, cur_udata);
+}
+
 /**
  * @brief CGI 프로세스를 회수하는 함수입니다.
- * @param udata pid가 담긴 udata입니다. 이후 CLNT용으로 전환됩니다.
+ * @param udata pid가 담긴 udata입니다.
  * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
  */
 void  EventHandler::cgiTerminated(UData* udata){
   int status;
-  Kqueue::registerWriteEvent(udata->client_fd_, udata);
 	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
-  HttpResponse &cur_response = udata->http_response_;
-  cur_response.makeBodyResponse(200, cur_response.body_.size());
-	
+  
   waitpid(udata->cgi_pid_, &status, 0);
-  udata->fd_type_ = CLNT;
   udata->prog_name_ = "";
   udata->cgi_pid_ = 0;
   if (WIFEXITED(status))
@@ -245,6 +253,43 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 				HttpResponseHandler::getInstance().parseResponse(cur_udata);
 			else
 				Kqueue::registerReadEvent(cur_udata->client_fd_, cur_udata);
+		}
+	}
+}
+
+void  EventHandler::writeToCgi(std::vector<char> &to_write, bool is_body, UData* cur_udata){
+	int n;
+	int w_size = cur_udata->write_size_;
+	if (to_write.size() < (size_t) w_size){
+		std::cout << "말이 안돼!" <<std::endl;
+		return ;
+	}
+	n = write(cur_udata->w_pfd, &to_write[w_size], to_write.size() - w_size);
+	cur_udata->write_size_ += n;
+	if (n == -1){
+		cur_udata->write_size_ = 0;
+		to_write.clear();
+		Kqueue::unregisterWriteEvent(cur_udata->w_pfd, cur_udata);
+		HttpResponseHandler::getInstance().errorCallBack(*cur_udata, 500);
+		return ;
+	}
+	else if ((size_t)cur_udata->write_size_ == to_write.size() || to_write.size() == 0){
+		cur_udata->write_size_ = 0;
+		if (is_body != true){
+			std::cout << "cgi헤더 보냈어요" <<std::endl;
+			to_write.clear();
+		}
+		else{
+			std::cout << "cgi바디 보냈어요" <<std::endl;
+			std::cout << "-----------------------" <<std::endl<<std::endl;
+			Kqueue::unregisterWriteEvent(cur_udata->w_pfd, cur_udata);
+			cur_udata->http_request_.erase(cur_udata->http_request_.begin());
+			if (cur_udata->http_request_.size() != 0 && cur_udata->http_request_[0].getParseStatus() == FINISH)
+				HttpResponseHandler::getInstance().parseResponse(cur_udata);
+			else{
+				Kqueue::registerReadEvent(cur_udata->r_pfd, cur_udata);
+        close(cur_udata->w_pfd);
+      }
 		}
 	}
 }

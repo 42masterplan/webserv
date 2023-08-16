@@ -67,47 +67,59 @@ char**  Cgi::getEnvs(UData* ptr){
  * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  Cgi::forkCgi(UData* ptr){
-  int   pfd[2];
+  int   r_pfd[2];
+  int   w_pfd[2];
   pid_t child_pid;
 
-  if (pipe(pfd) == -1)
+  if (pipe(r_pfd) == -1 || pipe(w_pfd) == -1)
     throw (std::runtime_error("pipe() Error"));
-  fcntl(pfd[0], F_SETFL, O_NONBLOCK);
+  fcntl(r_pfd[0], F_SETFL, O_NONBLOCK);
+  fcntl(w_pfd[1], F_SETFL, O_NONBLOCK);
+  ptr->r_pfd = r_pfd[0];
+  ptr->w_pfd = w_pfd[1];
   char* script_name;
   std::string cgi_path = ptr->http_response_.file_path_;
   ptr->prog_name_ = cgi_path;
   script_name = (char*)cgi_path.c_str();
   ptr->fd_type_ = CGI;
-  Kqueue::registerReadEvent(pfd[0], ptr);
   Kqueue::unregisterReadEvent(ptr->client_fd_, ptr);
+  Kqueue::registerWriteEvent(w_pfd[1], ptr);
   child_pid = fork();
   if (child_pid == -1){
-    close(pfd[1]);
-    close(pfd[0]);
+    close(r_pfd[1]);
+    close(r_pfd[0]);
+    close(w_pfd[1]);
+    close(w_pfd[0]);
     throw (std::runtime_error("fork() Error"));
   }
   else if (!child_pid){ //child
-    close(pfd[0]);
-    dup2(pfd[1], STDOUT_FILENO);
-    close(pfd[1]);
-    int flags = fcntl(STDOUT_FILENO, F_GETFL, 0);
-    fcntl(STDOUT_FILENO, F_SETFL, flags | O_NONBLOCK);
+    close(r_pfd[0]);
+    dup2(r_pfd[1], STDOUT_FILENO);
+    close(r_pfd[1]);
+    close(w_pfd[1]);
+    dup2(w_pfd[0], STDIN_FILENO);
+    close(w_pfd[0]);
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    fcntl(w_pfd[0], F_SETFL, O_NONBLOCK);
     char* exec_file[3];
     exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;
     exec_file[2] = NULL;
     char** envp = getEnvs(ptr);
-    for (int i = 0; envp[i]; i++)
-      std::cerr << "ENVP" << i << ": " << envp[i] << std::endl;
-    std::cerr << "\nCGI1: " << exec_file[0];
-    std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
+    // for (int i = 0; envp[i]; i++)
+    //   std::cerr << "ENVP" << i << ": " << envp[i] << std::endl;
+    // std::cerr << "\nCGI1: " << exec_file[0];
+    // std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
     if (execve(exec_file[0], exec_file, envp) == -1){//envp needed
       delete [] envp;
       throw (std::runtime_error("execve() Error"));
     }
   }
   //parent
-  close(pfd[1]);
+  close(r_pfd[1]);
+  close(w_pfd[0]);
+  // write(w_pfd[1], "hello!", 7);
+  // close(w_pfd[1]);
   Kqueue::registerExitEvent(child_pid, ptr); 
   ptr->cgi_pid_ = child_pid;
 }

@@ -34,6 +34,8 @@ class UData{
 		std::string				prog_name_;
 		std::vector<char>	cgi_store_;
 		pid_t							cgi_pid_;
+    int               r_pfd;
+    int               w_pfd;
 		/*임시 결과 저장소 for test*/
 		// std::vector<char> ret_store_;//return 하는 값을 저장하는 저장소. 임시로 만듬
 		/*file*/

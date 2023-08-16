@@ -119,8 +119,8 @@ void  ServManager::handleEvents(){
 			EventHandler::getInstance().cgiReadable(cur_event);
     else if (cur_fd_type == CGI && cur_event->filter == EVFILT_WRITE)
       EventHandler::getInstance().cgiWritable(cur_event);
-    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
-      EventHandler::getInstance().cgiTerminated(cur_udata);
+    // else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
+    //   EventHandler::getInstance().(cur_udata);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_READ)
 			EventHandler::getInstance().fileReadable(cur_event);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_WRITE)

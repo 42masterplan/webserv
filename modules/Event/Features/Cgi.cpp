@@ -22,7 +22,7 @@ char**  Cgi::getEnvs(UData* ptr){
     std::strcpy(envp[1], buf.c_str());
   }
   else
-    envp[1] = (char*)"CONTENT_LENGTH=-1";
+    envp[1] = (char*)"CONTENT_LENGTH=0";
   if (req.getContentType() == "")
     envp[2] = (char*)"CONTENT_TYPE=";
   else{
@@ -120,6 +120,6 @@ void  Cgi::forkCgi(UData* ptr){
   close(w_pfd[0]);
   // write(w_pfd[1], "hello!", 7);
   // close(w_pfd[1]);
-  Kqueue::registerExitEvent(child_pid, ptr); 
+  // Kqueue::registerExitEvent(child_pid, ptr); 
   ptr->cgi_pid_ = child_pid;
 }

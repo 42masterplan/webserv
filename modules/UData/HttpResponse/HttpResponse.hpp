@@ -40,6 +40,7 @@ class  HttpResponse{
 		void		processErrorRes(int status_code);
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);
+		void		makeCgiResponse();
 		void		makeBodyResponse(int status_code, int content_length);
 		/* getter, setter */
 

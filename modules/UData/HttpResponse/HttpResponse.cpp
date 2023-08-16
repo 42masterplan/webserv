@@ -56,16 +56,28 @@ void HttpResponse::processRedirectRes(int status_code) {
 	joined_data_.insert(joined_data_.end(), header.begin(), header.end());
 	// std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
-
-void	HttpResponse::makeCgiResponse(){
+/**
+ * @brief CGI response를 만드는 함수
+ * joined_data에 정제되지 않은 데이터가 들어오고, body에는 cgi가 반환 한 body가 들어옵니다.
+ * 
+ * @return true 에러가 발생하지 않음
+ * @return false 에러가 발생함
+ */
+bool	HttpResponse::makeCgiResponse(){
 	std::cout << "CGI 리스폰스 만들기!"<<std::endl;
-	print_vec(joined_data_);
-	print_vec(body_);
+	if (joined_data_.size() < 8)
+		return (false);
+	std::string s(joined_data_.begin(), joined_data_.begin() + 8);
+	if (s != "Status: ")
+		return false;
+	// print_vec(joined_data_);
+	// print_vec(body_);
 	joined_data_.erase(joined_data_.begin(),joined_data_.begin() + 8);
 	std::string http_version  = http_version_ + " ";
 	joined_data_.insert(joined_data_.begin(), http_version.begin(), http_version.end());
-	std::string tmp = "\r\nContent-Length: 0";
+	std::string tmp = "\r\nContent-Length: " + std::to_string(body_.size());
 	joined_data_.insert(joined_data_.end() - 4, tmp.begin(), tmp.end());
+	return true;
 }
 
 

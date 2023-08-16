@@ -45,6 +45,7 @@ TOOLOBJS = $(addprefix ./modules/Tools/, $(TOOLSRCS:.cpp=.o))
 MAINSRC = main.cpp
 MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 
+TEST_FILE = ./var/www/YoupiBanane/upload_put/file_should_exist_after.txt
 
 OBJS  =  $(CONFIGOBJS) $(EVENTOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(TOOLOBJS) $(MAINOBJ) 
 
@@ -65,7 +66,7 @@ clean:
 
 fclean: clean
 		$(RM) $(NAME)
-
+		$(RM) $(TEST_FILE)
 re:
 	make fclean
 	make all

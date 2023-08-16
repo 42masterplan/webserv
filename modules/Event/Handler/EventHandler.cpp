@@ -108,7 +108,8 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
  */
 void  EventHandler::cgiReadable(struct kevent *cur_event){
 	UData*	cur_udata = (UData*)cur_event->udata;
-	std::vector<char>&	joined_data_ref = cur_udata->http_response_.joined_data_;
+	HttpResponse &res = cur_udata->http_response_;
+	
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
@@ -118,17 +119,23 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
     // disconnectFd(cur_event);
     waitpid(cur_udata->cgi_pid_, NULL, 0);
 		close(cur_event->ident);
-		cur_udata->http_response_.makeCgiResponse();
+		res.makeCgiResponse();
 		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
   }
 	else{
-    // std::cout << "\nCGI HAS BEEN READ - SIZE: " << rlen << std::endl;
-    // std::cout << "BUFFER:" << buff_ << "\n-------------------\n" << std::endl;
-		// std::cout << "CGI의 버퍼다!"<< buff_ <<std::endl;
-		joined_data_ref.insert(joined_data_ref.end(), buff_, buff_ + rlen);
-    // std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
-    // std::cout << "FROM CGI PROC" << raw_data_string << "\n";
-    // Kqueue::unregisterReadEvent(cur_udata->client_fd_, cur_udata);//클라이언트 Read이벤트 잠시 중단
+		std::vector<char>& buff_ref = res.header_complete_ ? res.body_ : res.joined_data_;
+		buff_ref.insert(buff_ref.end(), buff_, buff_ + rlen);
+
+		// 헤더에 넣었으면 헤더 끝났는지 확인
+		if (!res.header_complete_) {
+				const char* header_end = strstr(&buff_ref[0], "\r\n\r\n");
+				if (header_end) {
+						res.header_complete_ = true;
+						size_t header_size = header_end - &buff_ref[0] + 4;
+						res.body_.assign(buff_ref.begin() + header_size, buff_ref.end());
+						buff_ref.erase(buff_ref.begin() + header_size, buff_ref.end());
+				}
+		}
 	}
 }
 

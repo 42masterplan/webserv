@@ -72,6 +72,7 @@ class  HttpResponse{
 		int								client_fd_;
 		int								write_size_;
     long              file_size_;
+		bool							header_complete_;
 		StatusMsgStore		status_msg_store_;
 	private :
 };

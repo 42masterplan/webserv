@@ -95,7 +95,6 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 		}
 		switch (parse_status_) {
 			case FINISH:
-				printRequestInfo();
 				return ;
 
 			case BODY:

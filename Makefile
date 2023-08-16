@@ -45,7 +45,8 @@ TOOLOBJS = $(addprefix ./modules/Tools/, $(TOOLSRCS:.cpp=.o))
 MAINSRC = main.cpp
 MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 
-TEST_FILE = ./var/www/YoupiBanane/upload_put/file_should_exist_after.txt
+TEST_FILE = ./var/www/YoupiBanane/upload_put/file_should_exist_after.txt \
+						./var/www/YoupiBanane/upload_post.txt
 
 OBJS  =  $(CONFIGOBJS) $(EVENTOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(TOOLOBJS) $(MAINOBJ) 
 

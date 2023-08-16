@@ -57,6 +57,16 @@ void HttpResponse::processRedirectRes(int status_code) {
 	// std::cout << std::string(joined_data_.begin(), joined_data_.end()) << "\n";
 }
 
+void	HttpResponse::makeCgiResponse(){
+	std::cout << "CGI 리스폰스 만들기!"<<std::endl;
+	print_vec(joined_data_);
+	joined_data_.erase(joined_data_.begin(),joined_data_.begin() + 8);
+	std::string http_version  = http_version_ + " ";
+	joined_data_.insert(joined_data_.begin(), http_version.begin(), http_version.end());
+	std::string tmp = "\r\nContent-Length: 0";
+	joined_data_.insert(joined_data_.end() - 4, tmp.begin(), tmp.end());
+}
+
 
 void	HttpResponse::makeBodyResponse(int status_code, int content_length){
 	std::string	header = "";

@@ -45,11 +45,11 @@ void	Kqueue::registerReadEvent(const int& ident, void* udata){changeEvent(ident,
 void	Kqueue::registerWriteEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_WRITE, EV_ADD | EV_ENABLE, udata);}
 void	Kqueue::unregisterReadEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_READ, EV_DISABLE | EV_DELETE, udata);}
 void	Kqueue::unregisterWriteEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_WRITE, EV_DISABLE | EV_DELETE, udata);}
-void  Kqueue::registerExitEvent(const pid_t& pid, void* udata){
-	struct kevent tmp_event;
-  EV_SET(&tmp_event, pid, EVFILT_PROC, EV_ADD | EV_ENABLE, NOTE_EXIT, 0, udata);
-  change_list_.push_back(tmp_event);
-}
+// void  Kqueue::registerExitEvent(const pid_t& pid, void* udata){
+// 	struct kevent tmp_event;
+//   EV_SET(&tmp_event, pid, EVFILT_PROC, EV_ADD | EV_ENABLE, NOTE_EXIT, 0, udata);
+//   change_list_.push_back(tmp_event);
+// }
 
 /**
  * @brief 등록할 이벤트를 생성하여 change_list_에 추가하는 함수

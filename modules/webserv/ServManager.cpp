@@ -117,14 +117,19 @@ void  ServManager::handleEvents(){
 			EventHandler::getInstance().sockWritable(cur_event);
 		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_READ)
 			EventHandler::getInstance().cgiReadable(cur_event);
-    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
-      EventHandler::getInstance().cgiTerminated(cur_udata);
+    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_WRITE)
+      EventHandler::getInstance().cgiWritable(cur_event);
+    // else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
+    //   EventHandler::getInstance().(cur_udata);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_READ)
 			EventHandler::getInstance().fileReadable(cur_event);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_WRITE)
 			EventHandler::getInstance().fileWritable(cur_event);
-		else
+		else{
+      std::cerr << "CUR_FD_TYPE: " << cur_fd_type << std::endl;
+      std::cerr << "CUR_EVENT_FILTER" << cur_event->filter << std::endl;
 			throw(std::runtime_error("????????THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
+    }
 	}
 }
 

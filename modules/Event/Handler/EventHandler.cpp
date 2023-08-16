@@ -24,7 +24,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	}
 	if (cur_udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(read)" << std::endl;
-		disconnectFd(cur_event);
+		// disconnectFd(cur_event);
 		return ;
 	}
 
@@ -35,12 +35,14 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 		delete (UData*) cur_event->udata;
 		cur_event->udata = NULL;
 		disconnectFd(cur_event);
+		return ;
 	}
 	else if (rlen == 0){
 		std::cout << "clnt sent eof. disconnecting." << std::endl;
 		delete (UData*) cur_event->udata;
 		cur_event->udata = NULL;
 		disconnectFd(cur_event);
+		return ;
 	}
 	else{
 		// buff_[rlen] = '\0';
@@ -112,14 +114,18 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
 		std::cout << "CGI process sent eof.\n";
-    disconnectFd(cur_event);
+    cur_udata->fd_type_ = CLNT;
+    // disconnectFd(cur_event);
+    waitpid(cur_udata->cgi_pid_, NULL, 0);
+		close(cur_event->ident);
+		cur_udata->http_response_.makeCgiResponse();
+		Kqueue::registerWriteEvent(cur_udata->client_fd_, cur_udata);
   }
 	else{
     // std::cout << "\nCGI HAS BEEN READ - SIZE: " << rlen << std::endl;
     // std::cout << "BUFFER:" << buff_ << "\n-------------------\n" << std::endl;
-		buff_[rlen] = '\0';
-		std::cout << "CGI의 버퍼다!"<< buff_ <<std::endl;
-		joined_data_ref.insert(joined_data_ref.end(), buff_, buff_ + std::strlen(buff_));
+		// std::cout << "CGI의 버퍼다!"<< buff_ <<std::endl;
+		joined_data_ref.insert(joined_data_ref.end(), buff_, buff_ + rlen);
     // std::string raw_data_string = std::string(raw_data_ref.begin(), raw_data_ref.end());
     // std::cout << "FROM CGI PROC" << raw_data_string << "\n";
     // Kqueue::unregisterReadEvent(cur_udata->client_fd_, cur_udata);//클라이언트 Read이벤트 잠시 중단
@@ -127,27 +133,40 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 }
 
 
+void  EventHandler::cgiWritable(struct kevent *cur_event){
+	std::cout << "CGI Writable" << std::endl;
+	UData*	cur_udata = (UData*)cur_event->udata;
+	const std::vector<char> &write_store_ref = cur_udata->http_request_[0].getBody();
+	// print_vec(write_store_ref);
+	int write_size = write(cur_event->ident, &write_store_ref[cur_udata->write_size_], write_store_ref.size() - cur_udata->write_size_);
+	if (write_size == -1) //실패하면 코드가 이상하긴 하다.
+		return fileErrorCallBack(cur_event);
+	cur_udata->write_size_+= write_size;
+	if ((size_t)cur_udata->write_size_ == write_store_ref.size()){
+    // std::cout << "여기 오냐?!!" << std::endl;
+		close(cur_event->ident); //unregister?
+		Kqueue::registerReadEvent(cur_udata->r_pfd, cur_udata);
+		cur_udata->write_size_ = 0;
+	}
+}
+
 /**
  * @brief CGI 프로세스를 회수하는 함수입니다.
- * @param udata pid가 담긴 udata입니다. 이후 CLNT용으로 전환됩니다.
+ * @param udata pid가 담긴 udata입니다.
  * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
  */
-void  EventHandler::cgiTerminated(UData* udata){
-  int status;
-  Kqueue::registerWriteEvent(udata->client_fd_, udata);
-	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
-  HttpResponse &cur_response = udata->http_response_;
-  cur_response.makeBodyResponse(200, cur_response.body_.size());
-	
-  waitpid(udata->cgi_pid_, &status, 0);
-  udata->fd_type_ = CLNT;
-  udata->prog_name_ = "";
-  udata->cgi_pid_ = 0;
-  if (WIFEXITED(status))
-    return;
-  else
-    throw std::runtime_error("CGI terminated abnormally");
-}
+// void  EventHandler::cgiTerminated(UData* udata){
+//   int status;
+// 	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
+  
+//   waitpid(udata->cgi_pid_, &status, 0);
+//   udata->prog_name_ = "";
+//   udata->cgi_pid_ = 0;
+//   if (WIFEXITED(status))
+//     return;
+//   else
+//     throw std::runtime_error("CGI terminated abnormally");
+// }
 
 
 /**

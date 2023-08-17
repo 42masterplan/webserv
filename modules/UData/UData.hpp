@@ -3,6 +3,7 @@
 # include <iostream>
 # include <string>
 # include <vector>
+# include <signal.h>
 # include "./HttpResponse/HttpResponse.hpp"
 # include "./HttpRequest/HttpRequest.hpp"
 
@@ -44,6 +45,7 @@ class UData{
 		int								client_fd_;
 		int								write_size_;
 		int								port_;
+		bool							is_forked_;
 	private :
 		UData();
 };

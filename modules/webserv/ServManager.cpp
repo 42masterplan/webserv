@@ -58,9 +58,25 @@ void  ServManager::sockInit(){
 	int serv_sockfd = socket(PF_INET, SOCK_STREAM, 0);
 	if (serv_sockfd == -1)
 		throw(std::runtime_error("SOCK() ERROR"));
-	int	optval;
+	int	optval = 1;
+  struct linger _linger;
+
+  _linger.l_onoff = 1;//링거 옵션 활상화
+  _linger.l_linger = 0; //close가 즉시 리턴을 해서 상태가 종료 되고 소켓 버퍼에 남아있는 데이터를 버리는 비정상 종료가 이루어집니다.
+	if (setsockopt(serv_sockfd, SOL_SOCKET, SO_LINGER, &_linger, sizeof(_linger)))  
+		throw(std::runtime_error("Socket opt Change ERROR!!(SO_LINGER)"));
+	//keep alive 설정해줌
+	//SO_KEEPALIVE 옵션은 TCP 소켓에 적용된다. 이 옵션을 1로 설정하면 일정 시간(통상 2시간)동안 해당 소켓을 통해 어떤 자료도 송수신되지 않을 때, 커널에서 상대방의 상태를 확인하는 패킷을 전송한다. 이 패킷에 대해 상대방이 정상적이면 ACK 패킷을 전송한다.
+	// ACK 패킷으로 정상이라고 응답하는 경우 응용 프로그램에는 어떠한 통보도 하지 않고 커널 간의 확인만으로 상대방이 살아 있음을 확인하고 마무리한다. 상대방으로부터 아무런 응답이 없거나 RST 응답을 받으면 소켓을 자동으로 종료한다.
+	if (setsockopt(serv_sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) == -1)
+		throw(std::runtime_error("Socket opt Change ERROR!!(SO_KEEPALIVE)"));
+	optval = 1;
+	//TCP레벨의 변경사항 -> Nagle 알고리즘 끄기(지연전송 해제) -> 전송속도 up && network부하 up
+	if (setsockopt(serv_sockfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) == -1) 
+		throw(std::runtime_error("Socket opt Change ERROR!!(TCP_NODELAY)"));
+	
 	if (setsockopt(serv_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1)
-		throw(std::runtime_error("Socket opt Change ERROR!!"));
+		throw(std::runtime_error("Socket opt Change ERROR!!(SO_REUSEADDR)"));
 	serv_sock_fds_.push_back(serv_sockfd);
 }
 
@@ -82,12 +98,12 @@ void  ServManager::sockBind(int port){
 
 
 /**
- * @brief listen()함수에 서버소켓과 15칸의 연결대기큐 사이즈 인자를 주어 호출합니다.
+ * @brief listen()함수에 서버소켓과 1024칸의 연결대기큐 사이즈 인자를 주어 호출합니다.
  * @note 여기서 서버 fd를 non-blocking으로 바꿔줍니다.
  * @exception listen()에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  ServManager::sockListen(){
-	if (listen(serv_sock_fds_[serv_sock_fds_.size() - 1], 15) == -1)
+	if (listen(serv_sock_fds_[serv_sock_fds_.size() - 1], 1024) == -1)
 		throw(std::runtime_error("LISTEN() ERROR"));
 	fcntl(serv_sock_fds_[serv_sock_fds_.size() - 1], F_SETFL, O_NONBLOCK);
 }
@@ -145,14 +161,18 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	struct sockaddr_in	clnt_addr;
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
-	int									option;
-	socklen_t						option_len;
+	// int									option;
+	// socklen_t						option_len;
 	if (clnt_sockfd == -1)
 		throw(std::runtime_error("ACCEPT() ERROR"));
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
-	option_len = sizeof(option);
-	option = 1;
-	setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, option_len);
+	struct linger _linger;
+  _linger.l_onoff = 1;
+  _linger.l_linger = 0;
+  setsockopt(clnt_sockfd, SOL_SOCKET, SO_LINGER, &_linger, sizeof(_linger));  
+	// option_len = sizeof(option);
+	// option = 1;
+	// setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, option_len);
 	for (idx = 0; idx < serv_sock_fds_.size(); idx++){
 		if (serv_sock_fds_[idx] == serv_sockfd)
 			break;

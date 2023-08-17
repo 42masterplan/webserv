@@ -113,8 +113,8 @@ void  Cgi::forkCgi(UData* ptr){
     exec_file[1] = script_name;
     exec_file[2] = NULL;
     char** envp = getEnvs(ptr);
-    for (int i = 0; envp[i]; i++)
-      std::cerr << "ENVP" << i << ": " << envp[i] << std::endl;
+    // for (int i = 0; envp[i]; i++)
+    //   std::cerr << "ENVP" << i << ": " << envp[i] << std::endl;
     // std::cerr << "\nCGI1: " << exec_file[0];
     // std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
     if (execve(exec_file[0], exec_file, envp) == -1){//envp needed

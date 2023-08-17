@@ -2,8 +2,8 @@
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method == "POST") {
   echo "Status: 200 OK";
-  echo "Content-Type: text/html; charset=utf-8";
-  echo "";
+  echo "Content-Type: text/html; charset=utf-8\r\n\r\n";
+  // echo "";
   $body = file_get_contents('php://input');
   // 바이너리 방식으로 작성된 body 이미지 데이터를 html로 변환
   echo "<html>";
@@ -28,11 +28,10 @@ if ($method == "POST") {
   echo "<h2>이미지 업로드</h2>";
   echo "<img src='data:image/png;base64," . base64_encode($body) . "'>";
   echo "</body>";
-  echo "</html>";
+  echo "</html>\r\n\r\n";
 } else {
   echo "Status: 501 INVALID_METHOD";
-  echo "Content-Type: text/html; charset=utf-8";
-  echo "";
+  echo "Content-Type: text/html; charset=utf-8\r\n\r\n";
   echo "<html>";
   echo "<head>";
   echo "<style>";
@@ -54,6 +53,6 @@ if ($method == "POST") {
   echo "<body>";
   echo "<h2>지원하지 않는 메소드입니다.</h2>";
   echo "</body>";
-  echo "</html>";
+  echo "</html>\r\n\r\n";
 }
 ?>

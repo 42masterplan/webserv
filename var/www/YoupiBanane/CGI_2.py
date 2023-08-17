@@ -8,8 +8,8 @@ import xml.etree.ElementTree as ET
 method = os.environ.get('REQUEST_METHOD')
 if method == "GET":
   print("Status: 200 OK")
-  print("Content-Type: text/html; charset=utf-8")
-  print()
+  print("Content-Type: text/html; charset=utf-8\r\n\r\n")
+  # print()
   # API URL 및 요청 파라미터 설정
   API = "http://www.kma.go.kr/weather/forecast/mid-term-rss3.jsp"
   values = {'stnId': '108'}  # 서울 지역 (stnId 108)
@@ -50,11 +50,10 @@ if method == "GET":
       max_temp = data.find('tmx').text
       print(f'<tr><td>{date}</td><td>{weather}</td><td>{min_temp}</td><td>{max_temp}</td></tr>')
   print('</table>')
-  print("</body>")
+  print("</body>\r\n\r\n")
 else:
   print("Status: 501 INVALID_METHOD")
-  print("Content-Type: text/html; charset=utf-8")
-  print()
+  print("Content-Type: text/html; charset=utf-8\r\n\r\n")
   print("<html>")
   print("<head>")
   print("<style>")
@@ -76,4 +75,4 @@ else:
   print("<body>")
   print("<h2>지원하지 않는 메소드입니다.</h2>")
   print("</body>")
-print("</html>")
+print("</html>\r\n\r\n")

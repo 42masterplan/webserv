@@ -78,9 +78,9 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  EventHandler::sockWritable(struct kevent *cur_event){
-	std::cout << "SOCK Writable" << std::endl;
+	// std::cout << "SOCK Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
-	if (udata == NULL){ // TODO: 제출 시 삭제 예정
+	if (udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
 		return ;
 	}

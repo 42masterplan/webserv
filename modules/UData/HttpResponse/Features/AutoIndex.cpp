@@ -88,7 +88,7 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
   struct dirent *ent;
   struct stat   file_stat;
   std::vector<char> ret;
-  std::cout << "디렉토리::" << input_dir << std::endl;
+  // std::cout << "디렉토리::" << input_dir << std::endl;
   dir = opendir(input_dir);
   if (!dir)
     return ret;

@@ -93,6 +93,7 @@ void  Cgi::forkCgi(UData* ptr){
   ptr->prog_name_ = cgi_path;
   script_name = (char*)cgi_path.c_str();
   ptr->fd_type_ = CGI;
+	ptr->is_forked_ = true;
   child_pid = fork();
   if (child_pid == -1){
     close(r_pfd[1]);

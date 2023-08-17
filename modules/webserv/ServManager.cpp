@@ -29,6 +29,7 @@ ServManager::~ServManager() {
  */
 void  ServManager::serverInit(){
 	listen_ports_ = ConfParser::getInstance().getListenPorts();
+	signal(SIGPIPE, SIG_IGN);
 	for (size_t i = 0; i < listen_ports_.size(); i++){
 		sockInit();
 		sockBind(listen_ports_[i]);

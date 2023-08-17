@@ -145,6 +145,7 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 	std::cout << "CGI Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = udata->http_request_[0].getBody();
+  // print_vec(write_store_ref);
 	// print_vec(write_store_ref);
 	int write_size = write(cur_event->ident, &write_store_ref[udata->write_size_], write_store_ref.size() - udata->write_size_);
 	if (write_size == -1) // 실패하면 코드가 이상하긴 하다.

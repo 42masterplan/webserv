@@ -59,7 +59,7 @@ LocBlock ServBlock::findLocBlock(std::string path){
 					con_p.pop_back();
 				loc_store_[ret].setCombinePath(con_p);
 			}
-			loc_store_[ret].printInfo();
+			// loc_store_[ret].printInfo();
 			return (loc_store_[ret]);
 		}
 	}

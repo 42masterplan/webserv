@@ -98,7 +98,7 @@ void  ServManager::sockBind(int port){
 
 
 /**
- * @brief listen()함수에 서버소켓과 50칸의 연결대기큐 사이즈 인자를 주어 호출합니다.
+ * @brief listen()함수에 서버소켓과 1024칸의 연결대기큐 사이즈 인자를 주어 호출합니다.
  * @note 여기서 서버 fd를 non-blocking으로 바꿔줍니다.
  * @exception listen()에서 에러 발생 시 runtime_error를 throw합니다.
  */

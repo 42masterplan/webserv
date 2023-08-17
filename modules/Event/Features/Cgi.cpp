@@ -90,6 +90,7 @@ void  Cgi::forkCgi(UData* ptr){
   ptr->w_pfd = w_pfd[1];
   char* script_name;
   std::string cgi_path = ptr->http_response_.file_path_;
+  std::cout << "CGI_PATH: " << cgi_path << std::endl;
   ptr->prog_name_ = cgi_path;
   script_name = (char*)cgi_path.c_str();
   ptr->fd_type_ = CGI;
@@ -109,14 +110,19 @@ void  Cgi::forkCgi(UData* ptr){
     dup2(w_pfd[0], STDIN_FILENO);
     close(w_pfd[0]);
     char* exec_file[3];
-    exec_file[0] = (char*)ptr->prog_name_.c_str();
+    if (cgi_path.find(".py") != std::string::npos)
+      exec_file[0] = (char*)"/usr/local/bin/python3";
+    else if (cgi_path.find(".php") != std::string::npos)
+      exec_file[0] = (char*)"/usr/bin/php";
+    else
+      exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;
     exec_file[2] = NULL;
     char** envp = getEnvs(ptr);
     // for (int i = 0; envp[i]; i++)
     //   std::cerr << "ENVP" << i << ": " << envp[i] << std::endl;
-    // std::cerr << "\nCGI1: " << exec_file[0];
-    // std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
+    std::cerr << "\nCGI1: " << exec_file[0];
+    std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
     if (execve(exec_file[0], exec_file, envp) == -1){//envp needed
       delete [] envp;
       throw (std::runtime_error("execve() Error"));

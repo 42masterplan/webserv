@@ -9,6 +9,6 @@ int main(int argc, char** argv){
 	// s.findLocBlock("/directory/youpi.bad_extension").printInfo();
 	// s.findLocBlock("/directory/nop").printInfo();
 	// s.findLocBlock("/directory/nop/").printInfo();
-	// s.findLocBlock("/directory/youpi.bla").printInfo();
+	s.findLocBlock("/directory/CGI_2.py").printInfo();
 	// s.findLocBlock("/directory/nop/other.pouic").printInfo();
 }

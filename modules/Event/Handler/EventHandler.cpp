@@ -111,6 +111,8 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	HttpResponse &res = cur_udata->http_response_;
 	
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
+  // std::cout << "MESSAGE FROM CGI:";
+  // std::cout << buff_ << "\n";
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){

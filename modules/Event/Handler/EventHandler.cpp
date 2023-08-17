@@ -31,6 +31,7 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	std::vector<char>&	raw_data_ref = udata->raw_data_;
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1){
+		std::cout << "플래그다"<< cur_event->flags << std::endl;
 		std::cerr << "sock read fail! (READ)"<< std::endl;
 		disconnectFd(cur_event);
 		return ;
@@ -86,10 +87,14 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 
 	std::vector<char>&	head_ref = udata->http_response_.getJoinedData();
 	std::vector<char>&	body_ref = udata->http_response_.getBody();
-	if (head_ref.size()) // 여기가 첫번째 요청을 보내는 곳
-		writeToclient(head_ref, false, udata);
-	else  // 두번째 body를 보내는 분기입니다.
-		writeToclient(body_ref, true, udata);
+	if (head_ref.size()) {// 여기가 첫번째 요청을 보내는 곳
+		if (!writeToclient(head_ref, false, udata))
+				disconnectFd(cur_event);
+	}
+	else  {// 두번째 body를 보내는 분기입니다.
+		if (!writeToclient(body_ref, true, udata))
+			disconnectFd(cur_event);
+	}
 }
 
 
@@ -227,34 +232,40 @@ void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 
 void  EventHandler::disconnectFd(struct kevent *cur_event){
 	UData*	udata = (UData*)cur_event->udata;
 	if (udata){
+		if (udata->is_forked_){
+			kill(udata->cgi_pid_, SIGKILL);
+			close(udata->r_pfd);
+			close(udata->w_pfd);
+		}
+		close(udata->client_fd_);
 	  if (udata->fd_type_ == CLNT)
 		  std::cout << "CLIENT DISCONNECTED: " << cur_event->ident << std::endl;
 	  else if (udata->fd_type_ == CGI)
 		  std::cout << "CGI FD DISCONNECTED: " << cur_event->ident << std::endl;
-			delete udata;
+		delete udata;
 		cur_event->udata = NULL;
 	}
 	close(cur_event->ident);
 }
 
-
-void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	udata){
+/**
+ * @brief 클라이언트에게 write하는 함수
+ * 
+ * @param to_write 보낼 벡터
+ * @param is_body 바디인지 아닌지 확인
+ * @param udata udata
+ */
+bool	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UData*	udata){
 	int n;
 	int w_size = udata->write_size_;
 	if (to_write.size() < (size_t) w_size){
 		std::cout << "말이 안돼!" <<std::endl;
-		return ;
+		return false;
 	}
 	n = write(udata->client_fd_, &to_write[w_size], to_write.size() - w_size);
 	udata->write_size_ += n;
-	if (n == -1){
-		udata->write_size_ = 0;
-		to_write.clear();
-		Kqueue::unregisterWriteEvent(udata->client_fd_, udata);
-		std::cout << "여기가 처음이에용~"<<std::endl;
-		// HttpResponseHandler::getInstance().errorCallBack(*udata, 500);
-		return ;
-	}
+	if (n == -1)
+		return false;
 	else if ((size_t)udata->write_size_ == to_write.size() || to_write.size() == 0){
 		udata->write_size_ = 0;
 		if (!is_body){
@@ -272,6 +283,7 @@ void	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 				Kqueue::registerReadEvent(udata->client_fd_, udata);
 		}
 	}
+	return true;
 }
 
 void	EventHandler::fileErrorCallBack(struct kevent *cur_event){

@@ -22,7 +22,7 @@ private:
 	char          buff_[BUFF_SIZE];
 
 	EventHandler();
-	void	writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata);
+	bool	writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata);
 
 	void	fileErrorCallBack(struct kevent *cur_event);
 };

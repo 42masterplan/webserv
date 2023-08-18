@@ -55,6 +55,10 @@ void  Kqueue::registerTimeoutEvent(const pid_t& pid, void* udata){
     throw(std::runtime_error("kevent() ERROR!!"));
   }
 }
+// void  Kqueue::unregisterTimeoutEvent(const pid_t& pid, void* udata){
+//   changeEvent(pid, EVFILT_TIMER, EV_DISABLE | EV_DELETE, udata);
+// }
+
 // void  Kqueue::registerExitEvent(const pid_t& pid, void* udata){
 // 	struct kevent tmp_event;
 //   EV_SET(&tmp_event, pid, EVFILT_PROC, EV_ADD | EV_ENABLE, NOTE_EXIT, 0, udata);

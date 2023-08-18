@@ -116,6 +116,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
+    Kqueue::unregisterTimeoutEvent(udata->cgi_pid_, udata);
 		std::cout << "CGI process sent eof.\n";
     udata->fd_type_ = CLNT;
     waitpid(udata->cgi_pid_, NULL, 0);

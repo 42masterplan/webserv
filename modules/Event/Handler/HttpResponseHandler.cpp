@@ -192,9 +192,13 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 	std::cout << "ERROR file PATH " <<udata.http_response_.getFilePath() <<std::endl;
 	if (udata.http_response_.getFilePath() == "" || status_code == 500){
 		error_file_fd_ = open(udata.http_response_.getFilePath().c_str(), O_RDONLY);
-		if (error_file_fd_ != -1)
-			close(error_file_fd_);
+		if (error_file_fd_ != -1){
+			udata.http_response_.setFileSize(udata.http_response_.getFilePath());
+			RegisterFileReadEvent(error_file_fd_, udata);
+			return ;
+		}
 		else{
+			std::cout << "에러에 해당하는 파일이 없어용~~" <<std::endl;
 			udata.http_response_.file_size_ = 0;
 			udata.http_response_.setStatusCode(status_code);
 			udata.http_response_.setContentLength(0);

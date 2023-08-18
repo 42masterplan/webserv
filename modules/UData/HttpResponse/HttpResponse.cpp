@@ -74,13 +74,13 @@ bool	HttpResponse::makeCgiResponse(){
 	if (s != "Status: ")
 		return false;
 	std::cout << "CGI STRING" <<std::endl;
-	print_vec(joined_data_);
+	// print_vec(joined_data_);
 	joined_data_.erase(joined_data_.begin(),joined_data_.begin() + 8);
 	std::string http_version  = http_version_ + " ";
 	joined_data_.insert(joined_data_.begin(), http_version.begin(), http_version.end());
 	std::string tmp = "\r\nContent-Length: " + std::to_string(body_.size());
 	joined_data_.insert(joined_data_.end() - 4, tmp.begin(), tmp.end());
-	print_vec(joined_data_);
+	// print_vec(joined_data_);
 	// print_vec(body_);
 	return true;
 }
@@ -154,7 +154,7 @@ static bool isUploadMethod(HttpRequest &req) {
 }
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
-  loc.printInfo();
+  // loc.printInfo();
 	file_path_ = loc.getReturnPath();
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;

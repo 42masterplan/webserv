@@ -150,7 +150,8 @@ void  ServManager::handleEvents(){
 		else{
       std::cerr << "CUR_FD_TYPE: " << cur_fd_type << std::endl;
       std::cerr << "CUR_EVENT_FILTER" << cur_event->filter << std::endl;
-			throw(std::runtime_error("????????THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
+			continue;
+			// throw(std::runtime_error("????????THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
     }
 	}
 }

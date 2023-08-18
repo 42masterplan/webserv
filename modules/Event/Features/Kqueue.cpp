@@ -46,10 +46,10 @@ void	Kqueue::registerWriteEvent(const int& ident, void* udata){changeEvent(ident
 void	Kqueue::unregisterReadEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_READ, EV_DISABLE | EV_DELETE, udata);}
 void	Kqueue::unregisterWriteEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_WRITE, EV_DISABLE | EV_DELETE, udata);}
 void  Kqueue::registerTimeoutEvent(const pid_t& pid, void* udata){
-  struct timespec timeout = {5, 0};
+  struct timespec timeout = {180, 0};
   struct kevent timeout_event;
   EV_SET(&timeout_event, pid, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, 5, udata);
-  int n_event = kevent(kqueue_fd_, &timeout_event, 1, nullptr, 0, &timeout);
+  int n_event = kevent(kqueue_fd_, &timeout_event, 1, NULL, 0, &timeout);
 	if (n_event == -1){
     std::cerr << errno << "\n";
     throw(std::runtime_error("kevent() ERROR!!"));

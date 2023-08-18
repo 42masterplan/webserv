@@ -125,6 +125,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 			res.body_.clear();
 			return HttpResponseHandler::getInstance().errorCallBack(*udata, 500);
 		}
+		udata->write_size_ = 0;
 		Kqueue::registerWriteEvent(udata->client_fd_, udata);
   }
 	else{

@@ -13,6 +13,7 @@ public:
 	void  sockWritable(struct kevent *cur_event);
   void  cgiReadable(struct kevent *cur_event);
   void  cgiWritable(struct kevent *cur_event);
+  void  cgiTimeout(struct kevent *cur_event);
   // void  cgiTerminated(UData* udata);
 	void	fileReadable(struct kevent *cur_event);
 	void	fileWritable(struct kevent *cur_event);

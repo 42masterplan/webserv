@@ -141,6 +141,10 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	}
 }
 
+/**
+ * @brief cgi 파이프가 Writable할 때 호출되는 함수입니다.
+ * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
+ */
 void  EventHandler::cgiWritable(struct kevent *cur_event){
 	std::cout << "CGI Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
@@ -162,23 +166,14 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 }
 
 /**
- * @brief CGI 프로세스를 회수하는 함수입니다.
- * @param udata pid가 담긴 udata입니다.
- * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
+ * @brief cgi 프로세스가 타임아웃 되었을 때 호출되는 함수입니다.
+ * @param cur_event cgi 프로세스에 해당되는 발생한 이벤트 구조체
  */
-// void  EventHandler::cgiTerminated(UData* udata){
-//   int status;
-// 	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
-  
-//   waitpid(udata->cgi_pid_, &status, 0);
-//   udata->prog_name_ = "";
-//   udata->cgi_pid_ = 0;
-//   if (WIFEXITED(status))
-//     return;
-//   else
-//     throw std::runtime_error("CGI terminated abnormally");
-// }
-
+void  EventHandler::cgiTimeout(struct kevent *cur_event){
+  UData*	udata = (UData*)cur_event->udata;
+  std::cout << "CGI TIMEDOUT, KILL:" << udata->cgi_pid_ << std::endl;
+  kill(udata->cgi_pid_, SIGKILL);
+}
 
 /**
  * @brief 파일을 Read하는 이벤트가 발생했을 때 해당하는 파일을 Read합니다.
@@ -300,3 +295,21 @@ void	EventHandler::fileErrorCallBack(struct kevent *cur_event){
 }
 
 EventHandler::EventHandler(){}
+
+/**
+ * @brief CGI 프로세스를 회수하는 함수입니다.
+ * @param udata pid가 담긴 udata입니다.
+ * @exception 자식이 비정상적으로 종료된 것이 감지되면 runtime_error를 throw합니다.
+ */
+// void  EventHandler::cgiTerminated(UData* udata){
+//   int status;
+// 	std::cout << "CGI PROCESS TERMINATED: " << udata->cgi_pid_ << std::endl;
+  
+//   waitpid(udata->cgi_pid_, &status, 0);
+//   udata->prog_name_ = "";
+//   udata->cgi_pid_ = 0;
+//   if (WIFEXITED(status))
+//     return;
+//   else
+//     throw std::runtime_error("CGI terminated abnormally");
+// }

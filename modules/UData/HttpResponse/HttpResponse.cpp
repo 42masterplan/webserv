@@ -19,10 +19,12 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 	client_fd_ = ref.client_fd_;
 	write_size_ = ref.write_size_;
 	loc_block_ = ref.loc_block_;
+	header_complete_ = ref.header_complete_;
+	file_size_ = ref.file_size_;
 	return *this;
 }
 
-HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), exist_session_(req.getExistSession()), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
+HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), exist_session_(req.getExistSession()), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") ,header_complete_(false){
   // std::cout << "REQUEST_HOST: " << req.getPath() << std::endl;
   // loc_block_.printInfo();
   // std::cout << "---------------------"<<std::endl;
@@ -68,12 +70,15 @@ void HttpResponse::processRedirectRes(int status_code) {
  */
 bool	HttpResponse::makeCgiResponse(){
 	std::cout << "CGI 리스폰스 만들기!"<<std::endl;
-	if (joined_data_.size() < 8)
+	if (joined_data_.size() < 8){
+		std::cout << "여기서 나냐?" <<std::endl;
+		print_vec(joined_data_);
 		return (false);
+	}
 	std::string s(joined_data_.begin(), joined_data_.begin() + 8);
 	if (s != "Status: ")
 		return false;
-	std::cout << "CGI STRING" <<std::endl;
+	// std::cout << "CGI STRING" <<std::endl;
 	// print_vec(joined_data_);
 	joined_data_.erase(joined_data_.begin(),joined_data_.begin() + 8);
 	std::string http_version  = http_version_ + " ";
@@ -162,7 +167,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
 	}
 	file_path_ = loc.getCombineCgiPath();
-  std::cout << "COMBINECGIPATH:" << file_path_ << "|" << std::endl;
+  // std::cout << "COMBINECGIPATH:" << file_path_ << "|" << std::endl;
 	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;
 		return;

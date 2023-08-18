@@ -6,8 +6,8 @@ HttpResponseHandler& HttpResponseHandler::getInstance(){
 }
 
 void	HttpResponseHandler::parseResponse(UData *udata){
-	std::cout << "PARSE RESPONSE!!!!!!" << std::endl;
-	std::cout << "PATH:" << udata->http_request_[0].getPath() <<"|" <<std::endl;	
+	// std::cout << "PARSE RESPONSE!!!!!!" << std::endl;
+	// std::cout << "PATH:" << udata->http_request_[0].getPath() <<"|" <<std::endl;
 	HttpRequest &cur_request = udata->http_request_[0];
 	udata->http_response_ = HttpResponse(cur_request);
 	handleResponse(udata);
@@ -19,7 +19,7 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 	if (cur_response.loc_block_.isErrorBlock() == true)
 		return errorCallBack(*udata, 404);
 	// HttpRequest &cur_request = udata->http_request_[0];
-	std::cout << "RESTYPE: " << static_cast<int>(cur_response.res_type_) << std::endl;
+	// std::cout << "RESTYPE: " << static_cast<int>(cur_response.res_type_) << std::endl;
 	switch(cur_response.res_type_){
 		case METHOD_TYPE : handleHttpMethod(*udata);
 			break ;
@@ -92,7 +92,7 @@ bool HttpResponseHandler::isDenyMethod(UData &udata, e_method method) {
 
 void HttpResponseHandler::handleHttpMethod(UData &udata) {
 	const e_method method = udata.http_request_[0].getMethod();
-	std::cout << "handle METHOD!!!!" << std::endl;
+	// std::cout << "handle METHOD!!!!" << std::endl;
 	if(isDenyMethod(udata, method))
 		return errorCallBack(udata, 405);
 	switch(method) {

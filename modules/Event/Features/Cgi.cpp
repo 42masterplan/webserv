@@ -89,7 +89,7 @@ void  Cgi::forkCgi(UData* ptr){
   ptr->w_pfd = w_pfd[1];
   char* script_name;
   std::string cgi_path = ptr->http_response_.file_path_;
-  std::cout << "CGI_PATH: " << cgi_path << std::endl;
+  // std::cout << "CGI_PATH: " << cgi_path << std::endl;
   ptr->prog_name_ = cgi_path;
   script_name = (char*)cgi_path.c_str();
   ptr->fd_type_ = CGI;

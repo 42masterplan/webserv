@@ -120,6 +120,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
     waitpid(udata->cgi_pid_, NULL, 0);
 		close(cur_event->ident);
 		res.header_complete_ = false;
+		udata->is_forked_ = false;
 		if (!res.makeCgiResponse()){
 			res.joined_data_.clear();
 			res.body_.clear();

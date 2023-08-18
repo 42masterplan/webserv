@@ -160,7 +160,7 @@ int ServBlock::untilFindLoc(const std::string& path, const std::string& root, co
 					std::cout << "|"<< con_path.substr(j + 1) <<"|" <<  loc_info.substr(loc_info.find("/.") + 2) + "/"<< "|\n";
 					if (con_path.substr(j + 1) == (loc_info.substr(loc_info.find("/.") + 2) + "/")){//합성 경로의 뒷부분의 .bla와 location 블록의 .bla가 일치하는 경우 그것을 리턴한다.
 						//와일드 카드 안에 index가 있는 건 처리하지 않았다.
-            std::cout << "찾았다!!" <<std::endl;
+            // std::cout << "찾았다!!" <<std::endl;
 						loc_store_[i].setCombinePath(troot + path + index);
 						loc_store_[i].setHighPriorityRoot(troot);
 						return (i);

@@ -108,13 +108,15 @@ void  EventHandler::sockWritable(struct kevent *cur_event){
 void  EventHandler::cgiReadable(struct kevent *cur_event){
 	UData*	udata = (UData*)cur_event->udata;
 	HttpResponse &res = udata->http_response_;
-	
+  Kqueue::unregisterTimeoutEvent(udata->cgi_pid_, udata);
+  Kqueue::registerTimeoutEvent(udata->cgi_pid_, udata);
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
   // std::cout << "MESSAGE FROM CGI:";
   // std::cout << buff_ << "\n";
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
+    Kqueue::unregisterTimeoutEvent(udata->cgi_pid_, udata);
 		std::cout << "CGI process sent eof.\n";
     udata->fd_type_ = CLNT;
     waitpid(udata->cgi_pid_, NULL, 0);
@@ -154,6 +156,8 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 	// std::cout << "CGI Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = udata->http_request_[0].getBody();
+  Kqueue::unregisterTimeoutEvent(udata->cgi_pid_, udata);
+  Kqueue::registerTimeoutEvent(udata->cgi_pid_, udata);
   // print_vec(write_store_ref);
 	// print_vec(write_store_ref);
 	int write_size = write(cur_event->ident, &write_store_ref[udata->write_size_], write_store_ref.size() - udata->write_size_);

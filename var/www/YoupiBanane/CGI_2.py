@@ -4,8 +4,8 @@ import urllib.request
 import urllib.parse
 import xml.etree.ElementTree as ET
 
-# while True:
-#    1
+while True:
+   1
 
 #환경변수에 METHOD가 있으면, METHOD 값을 읽어와서 method 변수에 저장
 method = os.environ.get('REQUEST_METHOD')

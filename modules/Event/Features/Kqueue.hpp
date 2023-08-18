@@ -24,6 +24,7 @@ class Kqueue{
 		static void	unregisterReadEvent(const int& ident, void* udata);
 		static void	unregisterWriteEvent(const int& ident, void* udata);
     static void registerTimeoutEvent(const pid_t& pid, void* udata);
+    static void updateTimeoutEvent(const pid_t& pid, void* udata);
     // static void registerExitEvent(const pid_t& pid, void* udata);
     // static void unregisterExitEvent(const pid_t& pid, void* udata);
 	private:

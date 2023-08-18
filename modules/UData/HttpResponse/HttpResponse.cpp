@@ -23,6 +23,9 @@ HttpResponse& HttpResponse::operator=(const HttpResponse &ref) {
 }
 
 HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status_code_(200), status_(""), content_length_(0), content_type_(""), location_(""), exist_session_(req.getExistSession()), loc_block_((ConfParser::getInstance().getServBlock(req.getPort(), req.getHost())).findLocBlock(req.getPath())), res_type_(METHOD_TYPE), file_path_("") {
+  // std::cout << "REQUEST_HOST: " << req.getPath() << std::endl;
+  // loc_block_.printInfo();
+  // std::cout << "---------------------"<<std::endl;
   try{
 		// loc_block_.printInfo();
 		setFilePath(req, loc_block_);
@@ -151,6 +154,7 @@ static bool isUploadMethod(HttpRequest &req) {
 }
 
 void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
+  loc.printInfo();
 	file_path_ = loc.getReturnPath();
 	if (file_path_ != "") {
 		res_type_ = REDIRECT;
@@ -158,6 +162,7 @@ void HttpResponse::setFilePath(HttpRequest &req, LocBlock &loc) {
 		return; // 4 분기문 전부 processRes 여기서 하거나 밖에서 하거나 통일 좀 해야겠다
 	}
 	file_path_ = loc.getCombineCgiPath();
+  std::cout << "COMBINECGIPATH:" << file_path_ << "|" << std::endl;
 	if (file_path_ != ""){
 		res_type_ = CGI_EXEC;
 		return;

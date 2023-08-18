@@ -5,9 +5,11 @@ import urllib.parse
 import xml.etree.ElementTree as ET
 
 #환경변수에 METHOD가 있으면, METHOD 값을 읽어와서 method 변수에 저장
-method = os.environ.get('METHOD')
-
+method = os.environ.get('REQUEST_METHOD')
 if method == "GET":
+  print("Status: 200 OK")
+  print("Content-Type: text/html; charset=utf-8\r\n\r\n")
+  # print()
   # API URL 및 요청 파라미터 설정
   API = "http://www.kma.go.kr/weather/forecast/mid-term-rss3.jsp"
   values = {'stnId': '108'}  # 서울 지역 (stnId 108)
@@ -48,33 +50,10 @@ if method == "GET":
       max_temp = data.find('tmx').text
       print(f'<tr><td>{date}</td><td>{weather}</td><td>{min_temp}</td><td>{max_temp}</td></tr>')
   print('</table>')
-  print("</body>")
-elif method == "POST":
-  body = os.environ.get('BODY')
-  # 바이너리 방식으로 작성된 body 이미지 데이터를 html로 변환
-  print("<html>")
-  print("<head>")
-  print("<style>")
-  print("table {")
-  print("    border-collapse: collapse;")
-  print("    width: 80%;")
-  print("    margin: 0 auto;")
-  print("    text-align: center;")
-  print("}")
-  print("th, td {")
-  print("    border: 1px solid #dddddd;")
-  print("    padding: 8px;")
-  print("}")
-  print("th {")
-  print("    background-color: #f2f2f2;")
-  print("}")
-  print("</style>")
-  print("</head>")
-  print("<body>")
-  print("<h2>이미지 업로드</h2>")
-  print("<img src='data:image/png;base64,{}'>".format(body))
-  print("</body>")
+  print("</body>\r\n\r\n")
 else:
+  print("Status: 501 INVALID_METHOD")
+  print("Content-Type: text/html; charset=utf-8\r\n\r\n")
   print("<html>")
   print("<head>")
   print("<style>")
@@ -96,4 +75,4 @@ else:
   print("<body>")
   print("<h2>지원하지 않는 메소드입니다.</h2>")
   print("</body>")
-print("</html>")
+print("</html>\r\n\r\n")

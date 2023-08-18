@@ -88,7 +88,6 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
   struct dirent *ent;
   struct stat   file_stat;
   std::vector<char> ret;
-  // std::cout << "디렉토리::" << input_dir << std::endl;
   dir = opendir(input_dir);
   if (!dir)
     return ret;
@@ -98,12 +97,10 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
   while (ent){
     std::string file_path = input_dir;
     std::string temp = cur_response.loc_block_.getRoot();
-    // std::cout << "루트: " << temp << std::endl;
-    if (stat(file_path.c_str(), &file_stat) == -1)
+    if (stat((file_path + ent->d_name).c_str(), &file_stat) == -1)
       return ret;
     file_path.replace(file_path.find(temp), temp.size(), "");
     file_path += ent->d_name;
-    // std::cout << "2nd디렉토리::" << file_path << std::endl;
     std::string file_size = std::to_string(file_stat.st_size);
     form += getFileTemplate(file_path.c_str(), ent->d_name, file_size.c_str(), ctime(&file_stat.st_mtime));
     ent = readdir(dir);

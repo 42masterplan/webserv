@@ -47,7 +47,8 @@ MAINOBJ = $(addprefix ./, $(MAINSRC:.cpp=.o))
 
 TEST_FILE = ./var/www/YoupiBanane/upload_put/file_should_exist_after.txt \
 						./var/www/YoupiBanane/upload_post.txt \
-						./var/www/YoupiBanane/upload_put/multiple_same.txt
+						./var/www/YoupiBanane/upload_put/multiple_same.txt \
+						./var/www/YoupiBanane/upload_post/*.png
 
 OBJS  =  $(CONFIGOBJS) $(EVENTOBJS) $(WEBSERVOBJS) $(UDATASOBJS) $(TOOLOBJS) $(MAINOBJ) 
 

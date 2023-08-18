@@ -78,9 +78,9 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
  * @param cur_event 클라이언트 소켓에 해당되는 발생한 이벤트 구조체
  */
 void  EventHandler::sockWritable(struct kevent *cur_event){
-	std::cout << "SOCK Writable" << std::endl;
+	// std::cout << "SOCK Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
-	if (udata == NULL){ // TODO: 제출 시 삭제 예정
+	if (udata == NULL){
 		std::cout << cur_event->ident << "is already disconnected!(Write)"<< std::endl;
 		return ;
 	}
@@ -108,6 +108,8 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 	HttpResponse &res = udata->http_response_;
 	
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
+  // std::cout << "MESSAGE FROM CGI:";
+  // std::cout << buff_ << "\n";
 	if (rlen == -1)
 		throw(std::runtime_error("READ() ERROR!! IN CLNT_SOCK"));
 	else if (rlen == 0){
@@ -143,10 +145,14 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 	std::cout << "CGI Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = udata->http_request_[0].getBody();
+  // print_vec(write_store_ref);
 	// print_vec(write_store_ref);
 	int write_size = write(cur_event->ident, &write_store_ref[udata->write_size_], write_store_ref.size() - udata->write_size_);
-	if (write_size == -1) // 실패하면 코드가 이상하긴 하다.
-		return fileErrorCallBack(cur_event);
+	if (write_size == -1) {// 실패하면 코드가 이상하긴 하다.
+		udata->write_size_= 0;
+		close(cur_event->ident);
+		return ;
+	}
 	udata->write_size_+= write_size;
 	if ((size_t)udata->write_size_ == write_store_ref.size()){
 		close(cur_event->ident); //unregister?
@@ -259,6 +265,7 @@ bool	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 	int n;
 	int w_size = udata->write_size_;
 	if (to_write.size() < (size_t) w_size){
+		std::cout << to_write.size() << "|" << w_size<<std::endl;
 		std::cout << "말이 안돼!" <<std::endl;
 		return false;
 	}

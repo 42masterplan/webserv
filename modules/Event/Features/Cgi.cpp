@@ -22,7 +22,7 @@ char**  Cgi::getEnvs(UData* ptr){
     envp[1] = new char[buf.size() + 1];
     std::strcpy(envp[1], buf.c_str());
   }
-  else //hi ㅋ
+  else
     envp[1] = (char*)"CONTENT_LENGTH=0";
   if (req.getContentType() == "")
     envp[2] = (char*)"CONTENT_TYPE=";
@@ -33,7 +33,6 @@ char**  Cgi::getEnvs(UData* ptr){
   }
   envp[3] = (char*)"GATEWAY_INTERFACE=CGI/1.1"; //서버가 스크립트와 통신하기 위해 사용하는 CGI 스펙의 버전
   envp[4] = (char*)"PATH_INFO=/directory/youpi.bla"; //선택적으로 스크립트를 호출한 HTTP 요청의 추가 경로 정보
-  //TODO: PATH_INFO를 적절히 설정할 것.
   buf = std::string("PATH_TRANSLATED=" + ptr->prog_name_); //루트 경로가 붙은 CGI 경로 ex.)/var/www/YoupiBanane/cgi_tester
   envp[5] = new char[buf.size() + 1];
   std::strcpy(envp[5], buf.c_str());
@@ -51,7 +50,6 @@ char**  Cgi::getEnvs(UData* ptr){
       envp[11] = (char*)"REQUEST_METHOD=INVALID";
   }
   envp[12] = (char*)"SCRIPT_NAME=/directory/youpi.bla";
-  //TODO: SCRIPT_NAME을 적절히 설정할 것.
   envp[13] = (char*)"SERVER_NAME=localhost"; //웹 서버의 호스트 이름 또는 도메인 이름
   buf = std::string("SERVER_PORT=" + std::to_string(ptr->port_)); //웹 서버가 사용하는 포트 번호
   envp[14] = new char[buf.size() + 1];
@@ -76,6 +74,7 @@ char**  Cgi::getEnvs(UData* ptr){
  * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  Cgi::forkCgi(UData* ptr){
+  int   del_arr[5] = {1, 2, 5, 14, 18};
   int   r_pfd[2];
   int   w_pfd[2];
   pid_t child_pid;
@@ -90,6 +89,7 @@ void  Cgi::forkCgi(UData* ptr){
   ptr->w_pfd = w_pfd[1];
   char* script_name;
   std::string cgi_path = ptr->http_response_.file_path_;
+  std::cout << "CGI_PATH: " << cgi_path << std::endl;
   ptr->prog_name_ = cgi_path;
   script_name = (char*)cgi_path.c_str();
   ptr->fd_type_ = CGI;
@@ -110,7 +110,12 @@ void  Cgi::forkCgi(UData* ptr){
     dup2(w_pfd[0], STDIN_FILENO);
     close(w_pfd[0]);
     char* exec_file[3];
-    exec_file[0] = (char*)ptr->prog_name_.c_str();
+    if (cgi_path.find(".py") != std::string::npos)
+      exec_file[0] = (char*)"/usr/local/bin/python3";
+    else if (cgi_path.find(".php") != std::string::npos)
+      exec_file[0] = (char*)"/usr/bin/php";
+    else
+      exec_file[0] = (char*)ptr->prog_name_.c_str();
     exec_file[1] = script_name;
     exec_file[2] = NULL;
     char** envp = getEnvs(ptr);
@@ -119,6 +124,8 @@ void  Cgi::forkCgi(UData* ptr){
     // std::cerr << "\nCGI1: " << exec_file[0];
     // std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
     if (execve(exec_file[0], exec_file, envp) == -1){//envp needed
+      for (int i = 0; i < 5; i++)
+        delete envp[del_arr[i]];
       delete [] envp;
       throw (std::runtime_error("execve() Error"));
     }
@@ -126,9 +133,6 @@ void  Cgi::forkCgi(UData* ptr){
   //parent
   close(r_pfd[1]);
   close(w_pfd[0]);
-  // write(w_pfd[1], "hello!", 7);
-  // close(w_pfd[1]);
-  // Kqueue::registerExitEvent(child_pid, ptr);
   Kqueue::unregisterReadEvent(ptr->client_fd_, ptr);
   Kqueue::registerWriteEvent(w_pfd[1], ptr); 
   Kqueue::registerReadEvent(r_pfd[0], ptr);

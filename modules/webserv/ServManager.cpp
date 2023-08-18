@@ -145,6 +145,8 @@ void  ServManager::handleEvents(){
 			EventHandler::getInstance().fileReadable(cur_event);
 		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_WRITE)
 			EventHandler::getInstance().fileWritable(cur_event);
+    else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_TIMER)
+      continue;
 		else{
       std::cerr << "CUR_FD_TYPE: " << cur_fd_type << std::endl;
       std::cerr << "CUR_EVENT_FILTER" << cur_event->filter << std::endl;

@@ -130,6 +130,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
 		Kqueue::registerWriteEvent(udata->client_fd_, udata);
   }
 	else{
+		// std::cout << "THIS IS HIIII" <<std::endl;
 		std::vector<char>& buff_ref = res.header_complete_ ? res.body_ : res.joined_data_;
 		buff_ref.insert(buff_ref.end(), buff_, buff_ + rlen);
 		// 헤더에 넣었으면 헤더 끝났는지 확인
@@ -150,7 +151,7 @@ void  EventHandler::cgiReadable(struct kevent *cur_event){
  * @param cur_event cgi 파이프에 해당되는 발생한 이벤트 구조체
  */
 void  EventHandler::cgiWritable(struct kevent *cur_event){
-	std::cout << "CGI Writable" << std::endl;
+	// std::cout << "CGI Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = udata->http_request_[0].getBody();
   // print_vec(write_store_ref);
@@ -213,7 +214,7 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
  * @param cur_event 해당하는 이벤트에 해당하는 Udata가 들어있는 cur_event
  */
 void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 어디서 처리할지 정하기.
-	std::cout << "FILE Writable" << std::endl;
+	// std::cout << "FILE Writable" << std::endl;
 	UData*	udata = (UData*)cur_event->udata;
 	const std::vector<char> &write_store_ref = udata->http_request_[0].getBody();
 	int write_size = write(cur_event->ident, &write_store_ref[udata->write_size_], write_store_ref.size() - udata->write_size_);

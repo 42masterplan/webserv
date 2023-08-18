@@ -31,6 +31,8 @@ HttpResponse::HttpResponse(HttpRequest &req) : http_version_("HTTP/1.1"), status
   try{
 		// loc_block_.printInfo();
 		setFilePath(req, loc_block_);
+		if (res_type_ == REDIRECT)
+			return ;
 		if (req.getMethod() == GET || req.getMethod() == HEAD)
 			setFileSize(file_path_);
   }catch(std::exception& e){ //이곳은 isFolder에서 throw된 예외가 잡힙니다. 이 경우 존재하지 않는 폴더 혹은 파일의 요청입니다.

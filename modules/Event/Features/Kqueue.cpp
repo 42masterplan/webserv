@@ -35,7 +35,7 @@ int  Kqueue::detectEvent(struct kevent *event_list){
 	int n_event = kevent(kqueue_fd_, &change_list_[0], change_list_.size(), event_list, 8, NULL);
 	if (n_event == -1){
     std::cerr << errno << "\n";
-    throw(std::runtime_error("kevent() ERROR!!"));
+    throw(std::runtime_error(""));
   }
 	change_list_.clear(); //등록한 이벤트들은 삭제
 	return (n_event);
@@ -46,18 +46,20 @@ void	Kqueue::registerWriteEvent(const int& ident, void* udata){changeEvent(ident
 void	Kqueue::unregisterReadEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_READ, EV_DISABLE | EV_DELETE, udata);}
 void	Kqueue::unregisterWriteEvent(const int& ident, void* udata){changeEvent(ident, EVFILT_WRITE, EV_DISABLE | EV_DELETE, udata);}
 void  Kqueue::registerTimeoutEvent(const pid_t& pid, void* udata){
-  struct timespec timeout = {120, 0};
+  struct timespec timeout = {60, 0};
   struct kevent timeout_event;
-  EV_SET(&timeout_event, pid, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, 120, udata);
+  EV_SET(&timeout_event, pid, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_SECONDS, 60, udata);
   int n_event = kevent(kqueue_fd_, &timeout_event, 1, NULL, 0, &timeout);
-	if (n_event == -1){
-    std::cerr << errno << "\n";
-    throw(std::runtime_error("kevent() ERROR!!"));
-  }
+	if (n_event == -1)
+      return;
 }
-// void  Kqueue::unregisterTimeoutEvent(const pid_t& pid, void* udata){
-//   changeEvent(pid, EVFILT_TIMER, EV_DISABLE | EV_DELETE, udata);
-// }
+void  Kqueue::unregisterTimeoutEvent(const pid_t& pid, void* udata){
+  struct kevent timeout_event;
+  EV_SET(&timeout_event, pid, EVFILT_TIMER, EV_DISABLE | EV_DELETE, 0, 0, udata);
+  int n_event = kevent(kqueue_fd_, &timeout_event, 1, NULL, 0, NULL);
+	if (n_event == -1)
+    return;
+}
 
 // void  Kqueue::registerExitEvent(const pid_t& pid, void* udata){
 // 	struct kevent tmp_event;

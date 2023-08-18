@@ -136,5 +136,6 @@ void  Cgi::forkCgi(UData* ptr){
   Kqueue::unregisterReadEvent(ptr->client_fd_, ptr);
   Kqueue::registerWriteEvent(w_pfd[1], ptr); 
   Kqueue::registerReadEvent(r_pfd[0], ptr);
+  Kqueue::registerTimeoutEvent(child_pid, ptr);
   ptr->cgi_pid_ = child_pid;
 }

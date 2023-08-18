@@ -32,6 +32,8 @@ void  EventHandler::sockReadable(struct kevent *cur_event){
 	int rlen = read(cur_event->ident, buff_, BUFF_SIZE);
 	if (rlen == -1){
 		std::cout << "플래그다"<< cur_event->flags << std::endl;
+		if (EV_ERROR & cur_event->flags)
+			std::cout << "에러가 발생했습니다~" <<std::endl;
 		std::cerr << "sock read fail! (READ)"<< std::endl;
 		disconnectFd(cur_event);
 		return ;
@@ -189,7 +191,9 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 	ssize_t read_len = read(cur_event->ident, buff_, BUFF_SIZE);
 	UData*	udata = (UData*)cur_event->udata;
 	std::vector<char>& file_store_ref = udata->http_response_.getBody();
-	if (read_len == -1 || udata->http_response_.file_size_ < static_cast<long>(read_len))//읽고 있는 파일을 삭제하는 경우 또는 파일크기보다 갑자기 더 큰게 읽히면 에러로 처리
+	if (read_len == -1 )
+		return;
+	if (udata->http_response_.file_size_ < static_cast<long>(read_len))//읽고 있는 파일을 삭제하는 경우 또는 파일크기보다 갑자기 더 큰게 읽히면 에러로 처리
 		return fileErrorCallBack(cur_event);
 	// buff_[read_len] = '\0';
 	file_store_ref.insert(file_store_ref.end(), buff_, buff_ + read_len);

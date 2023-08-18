@@ -147,8 +147,11 @@ void  EventHandler::cgiWritable(struct kevent *cur_event){
 	const std::vector<char> &write_store_ref = udata->http_request_[0].getBody();
 	// print_vec(write_store_ref);
 	int write_size = write(cur_event->ident, &write_store_ref[udata->write_size_], write_store_ref.size() - udata->write_size_);
-	if (write_size == -1) // 실패하면 코드가 이상하긴 하다.
-		return fileErrorCallBack(cur_event);
+	if (write_size == -1) {// 실패하면 코드가 이상하긴 하다.
+		udata->write_size_= 0;
+		close(cur_event->ident);
+		return ;
+	}
 	udata->write_size_+= write_size;
 	if ((size_t)udata->write_size_ == write_store_ref.size()){
 		close(cur_event->ident); //unregister?
@@ -261,6 +264,7 @@ bool	EventHandler::writeToclient(std::vector<char> &to_write, bool is_body, UDat
 	int n;
 	int w_size = udata->write_size_;
 	if (to_write.size() < (size_t) w_size){
+		std::cout << to_write.size() << "|" << w_size<<std::endl;
 		std::cout << "말이 안돼!" <<std::endl;
 		return false;
 	}

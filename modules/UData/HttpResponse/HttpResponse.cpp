@@ -95,7 +95,8 @@ bool	HttpResponse::makeCgiResponse(){
 
 void	HttpResponse::makeBodyResponse(const HttpRequest& req){//TODO: status_code와 content_length를 바꾸기
 	std::string	header = "";
-
+	const std::string& file_name_ref = loc_block_.getFileName();
+	(void) req;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	// std::cout << "여기 왔다~~"<<std::endl;
 
@@ -116,8 +117,10 @@ void	HttpResponse::makeBodyResponse(const HttpRequest& req){//TODO: status_code�
 	}
 	if ((status_code_ >= 200 && status_code_ < 400) && !exist_session_)
 		header += "Set-Cookie: SESSIONID=" + Session::getInstance().createSession() + "\r\n";
-	if (req.getContentType() != "")
-		header += "Content-Type: " + req.getHeader().at("content-type") + "\r\n";
+	// if (req.getContentType() != "")
+	// std::cout << "파일이름!!!" << file_name_ref << "|"<<  file_name_ref.substr(file_name_ref.find_last_of('.'))<<std::endl;
+	if (file_name_ref.find_last_of('.') != std::string::npos)
+		header += "Content-Type: " + MimeStore::getMime(file_name_ref.substr(file_name_ref.find_last_of('.'))) + "; charset=utf-8\r\n";
 	else
 		header += "Content-Type: text/html; charset=utf-8\r\n";
 	header += "Content-Length: " + std::to_string(content_length_) + "\r\n\r\n";

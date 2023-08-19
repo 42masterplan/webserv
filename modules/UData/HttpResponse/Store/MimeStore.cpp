@@ -1,10 +1,6 @@
 #include "MimeStore.hpp"
 
 
-MimeStore::MimeStore() {
-	this->initMimeStore();
-}
-
 std::map<std::string, std::string> MimeStore::mime_store_;
 
 void MimeStore::initMimeStore() {
@@ -32,6 +28,8 @@ void MimeStore::initMimeStore() {
 }
 
 std::string MimeStore::getMime(std::string extension) {
+	if (mime_store_.size() == 0)
+		initMimeStore();
 	for (std::map<std::string, std::string>::const_iterator it = mime_store_.begin(); it != mime_store_.end(); it++) {
 		if (it->first == extension)
 			return it->second;
@@ -40,6 +38,8 @@ std::string MimeStore::getMime(std::string extension) {
 }
 
 std::string MimeStore::getExtension(std::string mime) {
+	if (mime_store_.size() == 0)
+		initMimeStore();
 	for (std::map<std::string, std::string>::const_iterator it = mime_store_.begin(); it != mime_store_.end(); it++) {
 		if (it->second == mime)
 			return it->first;

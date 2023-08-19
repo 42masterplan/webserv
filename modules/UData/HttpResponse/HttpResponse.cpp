@@ -93,10 +93,9 @@ bool	HttpResponse::makeCgiResponse(){
 }
 
 
-void	HttpResponse::makeBodyResponse(const HttpRequest& req){//TODO: status_code와 content_length를 바꾸기
+void	HttpResponse::makeBodyResponse(){//TODO: status_code와 content_length를 바꾸기
 	std::string	header = "";
 	const std::string& file_name_ref = loc_block_.getFileName();
-	(void) req;
 	status_ = status_msg_store_.getStatusMsg(status_code_);
 	// std::cout << "여기 왔다~~"<<std::endl;
 

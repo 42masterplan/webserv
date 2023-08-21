@@ -33,10 +33,8 @@ void  Kqueue::kqueueStart(const std::vector<int>& serv_sock_fds){
  */
 int  Kqueue::detectEvent(struct kevent *event_list){
 	int n_event = kevent(kqueue_fd_, &change_list_[0], change_list_.size(), event_list, 8, NULL);
-	if (n_event == -1){
-    std::cerr << errno << "\n";
+	if (n_event == -1)
     throw(std::runtime_error(""));
-  }
 	change_list_.clear(); //등록한 이벤트들은 삭제
 	return (n_event);
 }

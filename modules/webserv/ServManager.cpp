@@ -110,7 +110,6 @@ void  ServManager::sockListen(){
 
 /**
  * @brief 코어함수로, kqueue에서 받아온 이벤트들을 하나씩 처리합니다.
- * @exception read, write이외의 이벤트가 발생했을 시 runtime_error를 throw합니다.
  */
 void  ServManager::handleEvents(){
 	struct kevent*	event;

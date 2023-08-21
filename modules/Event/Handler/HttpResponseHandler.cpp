@@ -31,7 +31,7 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 			cur_response.body_ = AutoIndex::getDirectoryListing(cur_response);
       cur_response.setStatusCode(200);
 			cur_response.setContentLength(cur_response.body_.size());
-      cur_response.makeBodyResponse(udata->http_request_[0]);
+      cur_response.makeBodyResponse();
 			if (cur_response.body_.size() != 0)
       	RegisterClientWriteEvent(*udata);
 			else 
@@ -41,7 +41,7 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 			cur_response.setStatusCode(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			cur_response.setStatusCode(cur_response.loc_block_.getReturnCode());
 			cur_response.setContentLength(0);
-			cur_response.makeBodyResponse(udata->http_request_[0]);//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			cur_response.makeBodyResponse();//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			// cur_response.processRedirectRes(cur_response.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			RegisterClientWriteEvent(*udata);
 			break ;
@@ -126,7 +126,7 @@ void HttpResponseHandler::handleGet(UData &udata) {
 		close(fd);
 		udata.http_response_.setStatusCode(200);
 		udata.http_response_.setContentLength(0);
-		udata.http_response_.makeBodyResponse(udata.http_request_[0]);
+		udata.http_response_.makeBodyResponse();
 		RegisterClientWriteEvent(udata);
 	}
 	else
@@ -175,7 +175,7 @@ void HttpResponseHandler::handleDelete(UData &udata) {
 	udata.http_response_.body_ = std::vector<char>(result.begin(), result.end());
 	udata.http_response_.setStatusCode(200);
 	udata.http_response_.setContentLength(result.size());
-	udata.http_response_.makeBodyResponse(udata.http_request_[0]);
+	udata.http_response_.makeBodyResponse();
 	RegisterClientWriteEvent(udata);
 }
 
@@ -202,7 +202,7 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 			udata.http_response_.file_size_ = 0;
 			udata.http_response_.setStatusCode(status_code);
 			udata.http_response_.setContentLength(0);
-			udata.http_response_.makeBodyResponse(udata.http_request_[0]);
+			udata.http_response_.makeBodyResponse();
 			RegisterClientWriteEvent(udata);
 			return ;
 		}
@@ -212,7 +212,7 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 			udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 			udata.http_response_.setStatusCode(status_code);
 			udata.http_response_.setContentLength(udata.http_response_.file_size_);
-			udata.http_response_.makeBodyResponse(udata.http_request_[0]);
+			udata.http_response_.makeBodyResponse();
 			RegisterClientWriteEvent(udata);
 	}
 	else{

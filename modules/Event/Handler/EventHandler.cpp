@@ -206,7 +206,7 @@ void  EventHandler::fileReadable(struct kevent *cur_event){
 		close(cur_event->ident);
 		udata->fd_type_= CLNT;
 		udata->http_response_.setContentLength(file_store_ref.size());
-		udata->http_response_.makeBodyResponse(udata->http_request_[0]);
+		udata->http_response_.makeBodyResponse();
 		Kqueue::registerWriteEvent(udata->client_fd_, udata);
 	}
 }
@@ -228,7 +228,7 @@ void	EventHandler::fileWritable(struct kevent *cur_event){//TODO: Max_body_size 
 	if ((size_t)udata->write_size_ == write_store_ref.size()){
 		udata->http_response_.setStatusCode(201);
 		udata->http_response_.setContentLength(0);
-		udata->http_response_.makeBodyResponse(udata->http_request_[0]);
+		udata->http_response_.makeBodyResponse();
 		udata->fd_type_ = CLNT;
 		close(cur_event->ident);
 		Kqueue::registerWriteEvent(udata->client_fd_, udata);

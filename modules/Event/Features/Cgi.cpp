@@ -76,7 +76,6 @@ char**  Cgi::getEnvs(UData* ptr, std::vector<int>& del_vec){
  * 파이프 생성, 논블로킹 설정, UData 할당, 이벤트 등록 후 자식프로세스를 생성합니다.
  * 자식 프로세스는 주어진 Cgi 스크립트를 실행합니다.
  * @param ptr 호출한 클라이언트가 사용하는 udata입니다. CGI타입으로 변경됩니다.
- * @exception 위 과정에서 에러 발생 시 runtime_error를 throw합니다.
  */
 void  Cgi::forkCgi(UData* ptr){
   std::vector<int>	del_vec;

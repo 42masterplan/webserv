@@ -79,7 +79,6 @@ std::string  AutoIndex::getFileTemplate(const char* link, const char* file, cons
  * @brief 디렉토리 리스팅, 즉 오토인덱스 페이지를 생성하는 함수입니다.
  * @param input_dir 페이지를 생성할 파일 경로입니다.
  * @return 생성된 오토인덱스 페이지가 담긴 string입니다.
- * @exception opendir(), readdir(), stat() 시스템콜에서 에러 발생 시 runtime_error를 throw합니다.
  */
 std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& res){
   const char* input_dir = res.file_path_.c_str();

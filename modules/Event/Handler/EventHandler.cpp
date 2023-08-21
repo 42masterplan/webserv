@@ -17,7 +17,7 @@ EventHandler& EventHandler::getInstance(){
  */
 void  EventHandler::sockReadable(struct kevent *event){
 	UData*	udata = (UData*)event->udata;
-	if (event->flags == EV_EOF)
+	if (event->flags & EV_EOF)
 		return disconnectFd(event);
 	if (udata == NULL)
 		return ;
@@ -182,7 +182,7 @@ void  EventHandler::fileReadable(struct kevent *event){
 		close(event->ident);
 		udata->fd_type_= CLNT;
 		udata->http_response_.setContentLength(file_store_ref.size());
-		udata->http_response_.makeBodyResponse();
+		udata->http_response_.makeResponseHeader();
 		Kqueue::registerWriteEvent(udata->client_fd_, udata);
 	}
 }
@@ -203,7 +203,7 @@ void	EventHandler::fileWritable(struct kevent *event){
 	if ((size_t)udata->write_size_ == write_store_ref.size()){
 		udata->http_response_.setStatusCode(201);
 		udata->http_response_.setContentLength(0);
-		udata->http_response_.makeBodyResponse();
+		udata->http_response_.makeResponseHeader();
 		udata->fd_type_ = CLNT;
 		close(event->ident);
 		Kqueue::registerWriteEvent(udata->client_fd_, udata);

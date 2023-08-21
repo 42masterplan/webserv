@@ -26,17 +26,16 @@ void	HttpResponseHandler::handleResponse(UData *udata){
 			res.body_ = AutoIndex::getDirectoryListing(res);
       res.setStatusCode(200);
 			res.setContentLength(res.body_.size());
-      res.makeBodyResponse();
+      res.makeResponseHeader();
 			if (res.body_.size() != 0)
       	RegisterClientWriteEvent(*udata);
 			else 
 				errorCallBack(*udata, 404);
 			break ;
 		case REDIRECT : 
-			res.setStatusCode(res.loc_block_.getReturnCode());//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
-			res.setStatusCode(res.loc_block_.getReturnCode());
+			res.setStatusCode(res.loc_block_.getReturnCode()); 
 			res.setContentLength(0);
-			res.makeBodyResponse();//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
+			res.makeResponseHeader();//여기서 첫번째 줄과 헤더 합쳐서 메세지 다 만들어서 joined_data_에 넣어줍니다. 
 			RegisterClientWriteEvent(*udata);
 			break ;
 		case ERROR : 
@@ -118,7 +117,7 @@ void HttpResponseHandler::handleGet(UData &udata) {
 		close(fd);
 		udata.http_response_.setStatusCode(200);
 		udata.http_response_.setContentLength(0);
-		udata.http_response_.makeBodyResponse();
+		udata.http_response_.makeResponseHeader();
 		RegisterClientWriteEvent(udata);
 	}
 	else
@@ -165,7 +164,7 @@ void HttpResponseHandler::handleDelete(UData &udata) {
 	udata.http_response_.body_ = std::vector<char>(result.begin(), result.end());
 	udata.http_response_.setStatusCode(200);
 	udata.http_response_.setContentLength(result.size());
-	udata.http_response_.makeBodyResponse();
+	udata.http_response_.makeResponseHeader();
 	RegisterClientWriteEvent(udata);
 }
 
@@ -190,7 +189,7 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 			udata.http_response_.file_size_ = 0;
 			udata.http_response_.setStatusCode(status_code);
 			udata.http_response_.setContentLength(0);
-			udata.http_response_.makeBodyResponse();
+			udata.http_response_.makeResponseHeader();
 			RegisterClientWriteEvent(udata);
 			return ;
 		}
@@ -200,7 +199,7 @@ void	HttpResponseHandler::errorCallBack(UData &udata, int status_code){
 			udata.http_response_.setFileSize(udata.http_response_.getFilePath());
 			udata.http_response_.setStatusCode(status_code);
 			udata.http_response_.setContentLength(udata.http_response_.file_size_);
-			udata.http_response_.makeBodyResponse();
+			udata.http_response_.makeResponseHeader();
 			RegisterClientWriteEvent(udata);
 	}
 	else{

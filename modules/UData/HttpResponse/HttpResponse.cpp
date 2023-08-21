@@ -78,7 +78,7 @@ bool	HttpResponse::makeCgiResponse(){
 }
 
 
-void	HttpResponse::makeBodyResponse(){
+void	HttpResponse::makeResponseHeader(){
 	std::string	header = "";
 	const std::string& file_name_ref = loc_block_.getFileName();
 	status_ = status_msg_store_.getStatusMsg(status_code_);

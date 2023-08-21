@@ -1,5 +1,5 @@
-#ifndef EVENTHANDLER_HPP
-# define EVENTHANDLER_HPP
+#ifndef EVENT_HANDLER_HPP
+# define EVENT_HANDLER_HPP
 # include "../Features/Kqueue.hpp"
 # include "HttpResponseHandler.hpp"
 class EventHandler
@@ -9,23 +9,22 @@ public:
 
 	~EventHandler();
 	static EventHandler&	getInstance();
-	void  sockReadable(struct kevent *cur_event);
-	void  sockWritable(struct kevent *cur_event);
-  void  cgiReadable(struct kevent *cur_event);
-  void  cgiWritable(struct kevent *cur_event);
-  void  cgiTimeout(struct kevent *cur_event);
-  // void  cgiTerminated(UData* udata);
-	void	fileReadable(struct kevent *cur_event);
-	void	fileWritable(struct kevent *cur_event);
-	void  disconnectFd(struct kevent *cur_event);
+	void  sockReadable(struct kevent *event);
+	void  sockWritable(struct kevent *event);
+  void  cgiReadable(struct kevent *event);
+  void  cgiWritable(struct kevent *event);
+  void  cgiTimeout(struct kevent *event);
+	void	fileReadable(struct kevent *event);
+	void	fileWritable(struct kevent *event);
+	void  disconnectFd(struct kevent *event);
 
 private:
 	char          buff_[BUFF_SIZE];
 
 	EventHandler();
-	bool	writeToclient(std::vector<char> &to_write, bool is_body, UData*	cur_udata);
+	bool	writeToclient(std::vector<char> &to_write, bool is_body, UData*	udata);
 
-	void	fileErrorCallBack(struct kevent *cur_event);
+	void	fileErrorCallBack(struct kevent *event);
 };
 
 #endif

@@ -10,7 +10,7 @@
  * 주어진 raw_data에 대해 가능한 모든 파싱을 진행합니다.
  * 각 request마다 오류가 발생했을 시 flag를 설정한 뒤 종료합니다.
  * * FORM_ERROR: 400 Bad Request
- * * METHOD_ERROR: 405 Method Not Allowed -> ** TODO: response에 반드시 Allow 헤더가 포함되어야 합니다. **
+ * * METHOD_ERROR: 405 Method Not Allowed
  * * VERSION_ERROR: 505 HTTP Version Not Supported
  * * UNIMPLEMENTED_ERROR: 501 Unimplemented
  * * LENGTH_REQUIRED_ERROR: 411 Length Required
@@ -19,30 +19,10 @@
  * ---- 전체 파싱 끝 ----
  * getRequestError()를 통해 각 HttpRequest마다 오류 여부를 확인하고, 오류 발생 시 오류 response 생성을 위해 분기합니다.
  * status가 FINISH인 HttpRequest에 대해 HttpResponse를 생성한 뒤 해당 HttpRequest를 vector에서 pop합니다.
- *
- * !! chunked encoding의 경우, BODY를 받은 이후 HEADER가 들어올 수 있습니다(Trailer).
- * !! Trailer에는 Transfer-Encoding, Content-Length, Trailer가 포함되어서는 안됩니다.
- *
- * * 바디 없는 요청의 경우, 헤더 마지막에 CRLF가 두번 나오지 않을 수 있음. (일단 처리 x)
- * * 처리한다면, 파싱을 했을 때 원하는 꼴이 나오지 않고 시작 줄 양식에는 맞다면 분리하는 방식으로 ..
  */
 
 HttpRequest::HttpRequest(): path_(""), is_chunked_(false), exist_session_(false), content_length_(-1), content_type_(""), \
 host_(""), parse_status_(FIRST), request_error_(OK), last_header_(""), read_state_(false), to_read_(0) { }
-
-/*Test용 함수*/
-void	print_vec(const std::vector<char>& t){
-	std::cout << "------------printvec----------" << std::endl;
-	std::cout << "vector size:" << t.size() << std::endl;
-	// for (size_t i = 0; i < t.size(); i++){
-	// 	std::cout << "(" << (int)t[i] <<")";
-	// }
-	// std::cout << std::endl;
-	for (size_t i = 0; i < t.size(); i++){
-		std::cout << t[i];
-	}
-	std::cout << "-------------------------------" <<std::endl;
-}
 
 const e_method&						HttpRequest::getMethod(void) const { return method_; }
 const std::string&				HttpRequest::getPath(void) const { return path_; }
@@ -74,7 +54,7 @@ void HttpRequest::printRequestInfo(){
 		std::cout << "[header " << i->first << "] " << i->second << std::endl;
 	}
 	std::cout << "-----------------BODY------------------" << std::endl;
-	// printBodyInfo();
+	// print_vec(body_);
 	std::cout << "-----------------------------------------------" << std::endl;
 
 }
@@ -113,14 +93,6 @@ void HttpRequest::parse(std::vector<char>& raw_data) {
 				break;
 		}
 	}
-}
-
-//for test
-void	HttpRequest::printBodyInfo(){
-	for (size_t i = 0; i < body_.size(); i++){
-		std::cout<<body_[i];
-	}
-	std::cout << std::endl;
 }
 
 /**
@@ -263,7 +235,8 @@ void	HttpRequest::checkHeader(void) {
 		size_t	pos;
 
 		for (std::vector<std::string>::const_iterator it = list.begin(); it != list.end(); it++) {
-			if ((pos = (*it).find("=")) != std::string::npos) {
+			pos = (*it).find("=");
+			if (isExist(pos)) {
 				cookie_[(*it).substr(0, pos)] = (*it).substr(pos + 1);
 			} else {
 				request_error_ = FORM_ERROR;

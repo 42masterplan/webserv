@@ -1,5 +1,4 @@
 #include "StatusMsgStore.hpp"
-#include <iostream>
 
 
 StatusMsgStore::StatusMsgStore() {

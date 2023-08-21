@@ -1,3 +1,4 @@
+
 # include "ParseTool.hpp"
 # include "../config/otherBlock/OtherBlock.hpp"
 /**
@@ -103,13 +104,11 @@ void	splitKeyVal(std::string& key, std::string &value, std::string &line){
 	if (tmpos == std::string::npos)	//directive<space>value로 되어있어야 한다.
 		throw(std::runtime_error("ERROR DIRECTIVE key"));
 	key = line.substr(0,tmpos);
-	// std::cout << "key:|"<< key << "|" << std::endl;
 	for (; tmpos < line.size(); tmpos++){
 		if (line[tmpos] != ' ' && line[tmpos] != '\t')
 			break ;
 	}
 	value = line.substr(tmpos);
-	// std::cout << "value:|"<< value << "|" << std::endl;
 }
 
 /**
@@ -289,12 +288,26 @@ std::string	intToString(int num) {
   return result;
 }
 
+/**
+ * @brief find후 iterator가 npos가 아니라면 true, npos라면 false를 반환합니다. 
+ * 
+ * @param pos 
+ * @return true 
+ * @return false 
+ */
+bool isExist(size_t pos) {
+	return pos != std::string::npos;
+}
 
-bool	isFolder(const std::string& file_path){
-  struct stat path_info;
-  if (stat(file_path.c_str(), &path_info) != 0) //오토인덱스이면서 없는 폴더 혹은 파일일 때.
-    return false;
-  if (S_ISDIR(path_info.st_mode))
-    return true;
-  return false;
+/**
+ * @brief vector<char>를 전부 다 프린트하는 함수입니다.
+ * 
+ * @param vec
+ */
+void	print_vec(const std::vector<char>& vec){
+	std::cout << "size: " << vec.size() << std::endl;
+	for (size_t i = 0; i < vec.size(); i++){
+		std::cout << vec[i];
+	}
+	std::cout << std::endl;
 }

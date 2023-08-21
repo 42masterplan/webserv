@@ -1,10 +1,6 @@
-#ifndef AUTOINDEX_HPP
-# define AUTOINDEX_HPP
-# include <iostream>
-# include <dirent.h>
-# include <stdlib.h>
-# include <stdio.h>
-# include <sys/stat.h>
+#ifndef AUTO_INDEX_HPP
+# define AUTO_INDEX_HPP
+# include <string>
 # include <vector>
 class HttpResponse;
 
@@ -13,7 +9,7 @@ class HttpResponse;
  */
 class AutoIndex {
   public:
-    static std::vector<char>  getDirectoryListing(HttpResponse& cur_response);
+    static std::vector<char>  getDirectoryListing(HttpResponse& res);
   private:
     AutoIndex();
     ~AutoIndex();

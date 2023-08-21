@@ -1,5 +1,5 @@
-#ifndef WEBSERV_HPP
-# define WEBSERV_HPP
+#ifndef WEB_SERV_HPP
+# define WEB_SERV_HPP
 # include "../config/ConfParser.hpp"
 # include "ServManager.hpp"
 class WebServ{

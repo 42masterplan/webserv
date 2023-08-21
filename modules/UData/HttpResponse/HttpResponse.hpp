@@ -8,18 +8,8 @@
 # include "./Store/MimeStore.hpp"
 # include "./Features/Session.hpp"
 
-# include <iostream>
-# include <fstream>
-# include <string>
-# include <vector>
-# include <map>
-# include <algorithm>
+
 /* stat func */
-# include <dirent.h>
-# include <sys/stat.h>
-
-// # define DEFAULT_ERROR_PATH "./var/www/errorPages/404.html"
-
 typedef enum res_type {
 	METHOD_TYPE,
 	CGI_EXEC,
@@ -36,14 +26,13 @@ class  HttpResponse{
 		std::map<int, std::string> status_store_;
 
 		/* methods */
-		// void 		initStatusStore(void);
 		void		processErrorRes(int status_code);
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);
 		bool		makeCgiResponse();
 		void		makeBodyResponse();
+		
 		/* getter, setter */
-
 		const std::string&				getFilePath() const;
 		void											setFilePath(HttpRequest &req, LocBlock &loc);
 		void											setLocation(std::string location);

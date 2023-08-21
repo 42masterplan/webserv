@@ -1,18 +1,6 @@
-#ifndef SERVMANAGER_HPP
-# define SERVMANAGER_HPP
-#include <sys/event.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <iostream>
-#include <cstdio>
-#include <map>
-#include <string>
+#ifndef SERV_MANAGER_HPP
+# define SERV_MANAGER_HPP
+
 # include "../Event/Features/Kqueue.hpp"
 # include "../config/ConfParser.hpp"
 # include "../Event/Handler/HttpResponseHandler.hpp"

@@ -27,7 +27,6 @@ void	OtherBlock::makeBlock(std::string line, std::ifstream& input, int& line_len
 	size_t pos = line.find('{');
 	block_name_ = line.substr(0, pos);
 	trimSidesSpace(block_name_);
-	// std::cout << "5. |" << block_name_ << "|"<< std::endl;
 	if (pos != line.size() - 1 || block_name_ == "")
 		throw(std::runtime_error("this is not block"));
 	switch(checkBlockName(block_name_)){

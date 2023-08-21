@@ -1,10 +1,9 @@
-#ifndef HTTPRESPONSEHANDLER_HPP
-# define HTTPRESPONSEHANDLER_HPP
+#ifndef HTTP_RESPONSE_HANDLER_HPP
+# define HTTP_RESPONSE_HANDLER_HPP
 # include "../../UData/UData.hpp"
 # include "../../config/ConfParser.hpp"
 # include "../Features/Cgi.hpp"
-# include "../../Tools/FileTool.hpp"
-# include <cstdio>
+
 class HttpResponseHandler{
 	public:
 		static HttpResponseHandler&	getInstance();

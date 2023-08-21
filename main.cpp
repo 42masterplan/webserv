@@ -5,7 +5,7 @@ int main(int argc, char **argv){
 		WebServ WebServ;
 		WebServ.startServer(argc,argv);
 	}
-	catch(std::exception &e){
+	catch(std::exception &e){//config parsing에서만 올 수 있다.
 		std::cerr << e.what() << "\n";
 	}
 }

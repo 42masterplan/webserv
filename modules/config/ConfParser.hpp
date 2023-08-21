@@ -1,5 +1,5 @@
-#ifndef CONFPARSER_HPP
-# define CONFPARSER_HPP
+#ifndef CONF_PARSER_HPP
+# define CONF_PARSER_HPP
 # include "./httpBlock/HttpBlock.hpp"
 # include "./interface/IBlock.hpp"
 /**

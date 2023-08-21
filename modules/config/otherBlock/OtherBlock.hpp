@@ -1,5 +1,5 @@
-#ifndef OTHERBLOCK_HPP
-# define OTHERBLOCK_HPP
+#ifndef OTHER_BLOCK_HPP
+# define OTHER_BLOCK_HPP
 # include "../../Tools/ParseTool.hpp"
 # include "../interface/IBlock.hpp"
 /**

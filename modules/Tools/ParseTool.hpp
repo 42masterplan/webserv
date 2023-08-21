@@ -1,17 +1,8 @@
-#ifndef PARSETOOL_HPP
-# define PARSETOOL_HPP
-# include <fstream>
-# include <sstream>
-# include <iostream>
-# include <string>
-# include <vector>
-# include <map>
-# include <algorithm>
-# include <cmath>
-# include <fcntl.h>
-# include <unistd.h>
-# include <sys/stat.h>
-# include <dirent.h>
+#ifndef PARSE_TOOL_HPP
+# define PARSE_TOOL_HPP
+
+# include "./FileTool.hpp"
+
 typedef enum methodType{
 	GET,
 	HEAD,
@@ -22,14 +13,7 @@ typedef enum methodType{
 	OTHER_METHOD
 }e_method;
 
-typedef enum blockType{
-	HTTPBLOCK,
-	SERVERBLOCK,
-	LOCATIONBLOCK,
-	OTHERBLOCK
-}e_block;
-
-//안하는 메서드들
+//지원하지 않는 메서드
 // OPTIONS, //서버가 지원하는 메서드를 판별할 수 있는 명령
 // COPY, //
 // MOVE,
@@ -38,6 +22,13 @@ typedef enum blockType{
 // LOCK,
 // UNLOCK,
 // MKCOL //디렉토리 만드는 method
+
+typedef enum blockType{
+	HTTPBLOCK,
+	SERVERBLOCK,
+	LOCATIONBLOCK,
+	OTHERBLOCK
+}e_block;
 
 /* ConfParser utils */
 e_block	checkBlockName(const std::string& block_name);
@@ -54,7 +45,11 @@ void	splitAndStore(std::vector<int>& store, std::string line, char delimiter);
 
 void  extractDirective(std::string line, std::map<std::string, std::string>& directives_map);
 
-int stringToInt(const std::string &num);
+int		stringToInt(const std::string &num);
+bool	isExist(size_t pos);
+
+
+
 
 /**
  * @brief [파싱에서 가장 핵심 함수] 재귀적으로 괄호가 닫힐때까지 탐색하는 함수
@@ -86,20 +81,19 @@ void	parseUntilEnd(std::ifstream& input, int& line_len_, T& block){
 		line_len_++;
 		if (line == "")
 			continue;
-		size_t dir_pos_a = line.find('{');
-		size_t dir_pos_b = line.find(';');
-		size_t dir_pos_c = line.find('}');
-		// std::cout << "2. line|"<< line << "|" << std::endl;
-		if (dir_pos_c != std::string::npos ){ //괄호가 닫히는 경우 재귀 종료
+		size_t pos_brace_open = line.find('{');
+		size_t pos_semicolon = line.find(';');
+		size_t pos_brace_close = line.find('}');
+		if (isExist(pos_brace_close)){ //괄호가 닫히는 경우 재귀 종료
 			if (line.size() != 1)
 				throw(std::runtime_error(" '{' is only line by line"));
 			return ;
 		}
-		else if ((dir_pos_a == std::string::npos && dir_pos_b == std::string::npos)  || \
-					(dir_pos_a != std::string::npos && dir_pos_b != std::string::npos))
+		else if ((!isExist(pos_brace_open) && !isExist(pos_semicolon)) || \
+					(isExist(pos_brace_open) && isExist(pos_semicolon)))
 			throw(std::runtime_error(" [ERROR in Nginx conf_file]"));
-		else if (dir_pos_b != std::string::npos && dir_pos_a == std::string::npos)
-				extractDirective(line.substr(0, dir_pos_b), block.getDirStore());
+		else if (isExist(pos_semicolon) && !isExist(pos_brace_open))
+				extractDirective(line.substr(0, pos_semicolon), block.getDirStore());
 		else{ // {가 나오는 경우
 			block.makeBlock(line, input, line_len_);
 			if (input.eof() == true)
@@ -119,6 +113,7 @@ std::vector<std::string>	split(std::string input, std::string delimiter);
 
 
 std::string		intToString(int num);
-bool	isFolder(const std::string& file_path);
+void					print_vec(const std::vector<char>& vec);
+
 
 #endif

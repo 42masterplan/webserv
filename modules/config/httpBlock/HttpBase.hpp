@@ -1,5 +1,5 @@
-#ifndef HTTPBASE_HPP
-# define HTTPBASE_HPP
+#ifndef HTTP_BASE_HPP
+# define HTTP_BASE_HPP
 # include "../../Tools/ParseTool.hpp"
 class HttpBase
 {

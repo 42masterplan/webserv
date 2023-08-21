@@ -1,5 +1,5 @@
-#ifndef SERVBLOCK_HPP
-# define SERVBLOCK_HPP
+#ifndef SERV_BLOCK_HPP
+# define SERV_BLOCK_HPP
 # include "../LocationBlock/LocBlock.hpp"
 # include "../interface/IBlock.hpp"
 # include "../httpBlock/HttpBase.hpp"

@@ -14,7 +14,6 @@ ServManager& ServManager::getInstance(){
 
 /**
  * @brief ServManager 소멸자입니다. 서버 소켓을 닫습니다.
- * @todo 종료시 열어둔 port 및 fd를 수거해줘야 합니다.
  */
 ServManager::~ServManager() {
 	for (size_t i = 0; i < serv_sock_fds_.size(); i++){
@@ -24,7 +23,7 @@ ServManager::~ServManager() {
 
 
 /**
- * @brief 
+ * @brief Listen할 포트를 가져와 Server소켓을 생성 후 초기화합니다. init, bind, listen
  * 
  */
 void  ServManager::serverInit(){
@@ -34,7 +33,7 @@ void  ServManager::serverInit(){
 		sockInit();
 		sockBind(listen_ports_[i]);
 		sockListen();
-		std::cout << "listen:::::"<<listen_ports_[i] << std::endl;
+		std::cout << "listen PORT: " << listen_ports_[i] << std::endl;
 	}
 }
 
@@ -114,45 +113,37 @@ void  ServManager::sockListen(){
  * @exception read, write이외의 이벤트가 발생했을 시 runtime_error를 throw합니다.
  */
 void  ServManager::handleEvents(){
-	struct kevent*	cur_event;
-  UData*					cur_udata;
-	e_fd_type				cur_fd_type;
+	struct kevent*	event;
+  UData*					udata;
+	e_fd_type				fd_type;
 
 	for (int i = 0; i < event_list_size_; i++){
-		cur_event = &event_list_[i];
-		if (cur_event->udata != NULL){
-			cur_udata = (UData*)cur_event->udata;
-			cur_fd_type = cur_udata->fd_type_;
+		event = &event_list_[i];
+		if (event->udata != NULL){
+			udata = (UData*)event->udata;
+			fd_type = udata->fd_type_;
 		}
-		// std::cout << "이벤트 FD타입이에용~" << cur_fd_type <<std::endl;
-		if (std::find(serv_sock_fds_.begin(), serv_sock_fds_.end(),cur_event->ident) != serv_sock_fds_.end())
-			registerNewClnt(cur_event->ident);
-		else if (cur_event->udata == NULL || cur_event->flags & EV_ERROR)
+		if (std::find(serv_sock_fds_.begin(), serv_sock_fds_.end(),event->ident) != serv_sock_fds_.end())
+			registerNewClnt(event->ident);
+		else if (event->udata == NULL || event->flags & EV_ERROR)
 			continue;
-		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_READ)
-			EventHandler::getInstance().sockReadable(cur_event);
-		else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_WRITE)
-			EventHandler::getInstance().sockWritable(cur_event);
-		else if (cur_fd_type == CGI && cur_event->filter == EVFILT_READ)
-			EventHandler::getInstance().cgiReadable(cur_event);
-    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_WRITE)
-      EventHandler::getInstance().cgiWritable(cur_event);
-    // else if (cur_fd_type == CGI && cur_event->filter == EVFILT_PROC)
-    //   EventHandler::getInstance().(cur_udata);
-    else if (cur_fd_type == CGI && cur_event->filter == EVFILT_TIMER)
-      EventHandler::getInstance().cgiTimeout(cur_event);
-		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_READ)
-			EventHandler::getInstance().fileReadable(cur_event);
-		else if (cur_fd_type == FILETYPE && cur_event->filter == EVFILT_WRITE)
-			EventHandler::getInstance().fileWritable(cur_event);
-    // else if (cur_fd_type == CLNT && cur_event->filter == EVFILT_TIMER)
-    //   continue;
+		else if (fd_type == CLNT && event->filter == EVFILT_READ)
+			EventHandler::getInstance().sockReadable(event);
+		else if (fd_type == CLNT && event->filter == EVFILT_WRITE)
+			EventHandler::getInstance().sockWritable(event);
+		else if (fd_type == CGI && event->filter == EVFILT_READ)
+			EventHandler::getInstance().cgiReadable(event);
+    else if (fd_type == CGI && event->filter == EVFILT_WRITE)
+      EventHandler::getInstance().cgiWritable(event);
+    else if (fd_type == CGI && event->filter == EVFILT_TIMER)
+      EventHandler::getInstance().cgiTimeout(event);
+		else if (fd_type == FILETYPE && event->filter == EVFILT_READ)
+			EventHandler::getInstance().fileReadable(event);
+		else if (fd_type == FILETYPE && event->filter == EVFILT_WRITE)
+			EventHandler::getInstance().fileWritable(event);
 		else{
-      // std::cerr << "CUR_FD_TYPE: " << cur_fd_type << std::endl;
-      // std::cerr << "CUR_EVENT_FILTER" << cur_event->filter << std::endl;
-			EventHandler::getInstance().disconnectFd(cur_event);
+			EventHandler::getInstance().disconnectFd(event);
 			continue;
-			// throw(std::runtime_error("????????THAT'S IMPOSSIBLE THIS IS CODE ERROR!!"));
     }
 	}
 }
@@ -168,8 +159,7 @@ void  ServManager::registerNewClnt(int serv_sockfd){
 	struct sockaddr_in	clnt_addr;
 	socklen_t						clnt_addrsz = sizeof(clnt_addr);
 	int									clnt_sockfd = accept(serv_sockfd, (struct sockaddr *) &clnt_addr, &clnt_addrsz);
-	// int									option;
-	// socklen_t						option_len;
+
 	if (clnt_sockfd == -1)
 		throw(std::runtime_error("ACCEPT() ERROR"));
 	fcntl(clnt_sockfd, F_SETFL, O_NONBLOCK);
@@ -177,16 +167,13 @@ void  ServManager::registerNewClnt(int serv_sockfd){
   _linger.l_onoff = 1;
   _linger.l_linger = 0;
   setsockopt(clnt_sockfd, SOL_SOCKET, SO_LINGER, &_linger, sizeof(_linger));  
-	// option_len = sizeof(option);
-	// option = 1;
-	// setsockopt(clnt_sockfd, SOL_SOCKET, SO_REUSEADDR, (void *)&option, option_len);
 	for (idx = 0; idx < serv_sock_fds_.size(); idx++){
 		if (serv_sock_fds_[idx] == serv_sockfd)
 			break;
 	}
 	UData*	udata_ptr = new UData(CLNT, listen_ports_[idx]);
-	std::cout << "Connected Client : " << clnt_sockfd << std::endl;
-	std::cout << "my_port:::" <<  listen_ports_[idx] << std::endl;
+	std::cout << GREEN << "Connected Client: " << clnt_sockfd << CLOSE << std::endl;
+	std::cout << GREEN << "my_port:::" << listen_ports_[idx] << CLOSE << std::endl;
 	udata_ptr->client_fd_ = clnt_sockfd;
 	Kqueue::registerReadEvent(clnt_sockfd, udata_ptr);
 }

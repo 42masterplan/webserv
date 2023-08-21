@@ -1,9 +1,6 @@
-#ifndef HTTPREQUEST_HPP
-# define HTTPREQUEST_HPP
-# include <iostream>
-# include <string>
-# include <map>
-# include <vector>
+#ifndef HTTP_REQUEST_HPP
+# define HTTP_REQUEST_HPP
+
 # include "../../Tools/ParseTool.hpp"
 # include "../HttpResponse/Features/Session.hpp"
 
@@ -48,7 +45,6 @@ class HttpRequest{
 		/* methods */
 		void		clear();
 		void		parse(std::vector<char>& raw_data);
-		void		printBodyInfo();//for test
 
 	private :
 		e_method				method_;
@@ -87,5 +83,5 @@ class HttpRequest{
 		static const std::map<std::string, bool>	get_multiple_header();
 		int							hexToDec(const std::string& base_num);
 };
-void	print_vec(const std::vector<char>& t);
+
 #endif

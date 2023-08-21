@@ -81,8 +81,8 @@ std::string  AutoIndex::getFileTemplate(const char* link, const char* file, cons
  * @return 생성된 오토인덱스 페이지가 담긴 string입니다.
  * @exception opendir(), readdir(), stat() 시스템콜에서 에러 발생 시 runtime_error를 throw합니다.
  */
-std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
-  const char* input_dir = cur_response.file_path_.c_str();
+std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& res){
+  const char* input_dir = res.file_path_.c_str();
   DIR*          dir;
   std::string   form = autoindex_template_;
   struct dirent *ent;
@@ -96,7 +96,7 @@ std::vector<char>  AutoIndex::getDirectoryListing(HttpResponse& cur_response){
     return ret;
   while (ent){
     std::string file_path = input_dir;
-    std::string temp = cur_response.loc_block_.getRoot();
+    std::string temp = res.loc_block_.getRoot();
     if (stat((file_path + ent->d_name).c_str(), &file_stat) == -1)
       return ret;
     file_path.replace(file_path.find(temp), temp.size(), "");

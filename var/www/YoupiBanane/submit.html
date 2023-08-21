@@ -1,90 +1,90 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>PNG Image Upload</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-    #container {
-      width: 50%;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    #imageInput {
-      margin-bottom: 10px;
-    }
-    #uploadResult {
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    #error {
-      color: red;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <div id="container">
-    <h1>PNG Image Upload</h1>
-    <input type="file" id="imageInput">
-    <button id="uploadButton" onclick="uploadImage()" disabled>Upload</button>
-    <div id="uploadResult"></div>
-    <div id="error"></div>
-  </div>
-  
-  <script>
-    var input = document.getElementById('imageInput');
-    var uploadButton = document.getElementById('uploadButton');
-    
-    input.addEventListener('change', function() {
-      if (input.files.length > 0) {
-        uploadButton.removeAttribute('disabled');
-      } else {
-        uploadButton.setAttribute('disabled', 'true');
+  <head>
+    <title>PNG Image Upload</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
       }
-    });
-    
-    function uploadImage() {
-      var file = input.files[0];
-      var uploadResult = document.getElementById('uploadResult');
-      var error = document.getElementById('error');
-      
-      // Clear previous messages
-      uploadResult.textContent = '';
-      error.textContent = '';
-      
-      // Check if the uploaded file is a PNG image
-      if (file.type === 'image/png') {
-        var reader = new FileReader();
-        reader.onload = function(event) {
-          var binaryData = event.target.result;
-          var currentURL = 'http://localhost:80/CGI.php';
-          
-          fetch(currentURL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/octet-stream'
-            },
-            body: binaryData
-          })
-          .then(response => response.text()) // 응답 본문을 텍스트로 변환
-          .then(result => {
-            uploadResult.textContent = 'Image uploaded successfully: ' + result;
-          })
-          .catch(error => {
-            uploadResult.textContent = 'Error uploading image';
-          });
-        };
-        
-        reader.readAsArrayBuffer(file);
-      } else {
-        error.textContent = 'Please select a PNG image';
+      #container {
+        width: 50%;
+        margin: 0 auto;
+        padding: 20px;
       }
-    }
-  </script>
-</body>
+      #imageInput {
+        margin-bottom: 10px;
+      }
+      #uploadResult {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+      #error {
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <h1>PNG Image Upload</h1>
+      <input type="file" id="imageInput" />
+      <button id="uploadButton" onclick="uploadImage()" disabled>Upload</button>
+      <div id="uploadResult"></div>
+      <div id="error"></div>
+    </div>
+
+    <script>
+      var input = document.getElementById("imageInput");
+      var uploadButton = document.getElementById("uploadButton");
+
+      input.addEventListener("change", function () {
+        if (input.files.length > 0) {
+          uploadButton.removeAttribute("disabled");
+        } else {
+          uploadButton.setAttribute("disabled", "true");
+        }
+      });
+
+      function uploadImage() {
+        var file = input.files[0];
+        var uploadResult = document.getElementById("uploadResult");
+        var error = document.getElementById("error");
+
+        // Clear previous messages
+        uploadResult.textContent = "";
+        error.textContent = "";
+
+        // Check if the uploaded file is a PNG image
+        if (file.type === "image/png") {
+          var reader = new FileReader();
+          reader.onload = function (event) {
+            var binaryData = event.target.result;
+            var currentURL = "http://localhost:80/CGI.php";
+
+            fetch(currentURL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/octet-stream",
+              },
+              body: binaryData,
+            })
+              .then((response) => response.text()) // 응답 본문을 텍스트로 변환
+              .then((result) => {
+                uploadResult.textContent =
+                  "Image uploaded successfully: " + result;
+              })
+              .catch((error) => {
+                uploadResult.textContent = "Error uploading image";
+              });
+          };
+          reader.readAsArrayBuffer(file);
+        } else {
+          error.textContent = "Please select a PNG image";
+        }
+      }
+    </script>
+  </body>
 </html>

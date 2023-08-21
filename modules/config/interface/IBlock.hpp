@@ -1,5 +1,5 @@
-#ifndef IBLOCK_HPP
-# define IBLOCK_HPP
+#ifndef I_BLOCK_HPP
+# define I_BLOCK_HPP
 # include "../../Tools/ParseTool.hpp"
 class IBlock
 {

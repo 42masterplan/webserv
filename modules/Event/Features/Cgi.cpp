@@ -125,7 +125,7 @@ void  Cgi::forkCgi(UData* ptr){
     // std::cerr << "\nCGI2: " << exec_file[1] << std::endl;
     if (execve(exec_file[0], exec_file, envp) == -1){//envp needed
       for (int i = 0; i < 5; i++) {
-				if (envp[del_arr[i] != NULL])
+				if (envp[del_arr[i]] != NULL)
 	        delete envp[del_arr[i]];
 			}
       delete [] envp;

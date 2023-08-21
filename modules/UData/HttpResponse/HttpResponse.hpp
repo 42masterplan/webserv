@@ -41,7 +41,7 @@ class  HttpResponse{
 		void		processDefaultErrorRes(int status_code);
 		void		processRedirectRes(int status_code);
 		bool		makeCgiResponse();
-		void		makeBodyResponse(const HttpRequest& req);
+		void		makeBodyResponse();
 		/* getter, setter */
 
 		const std::string&				getFilePath() const;

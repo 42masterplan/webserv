@@ -1,5 +1,5 @@
-#ifndef LOCBLOCK_HPP
-# define LOCBLOCK_HPP
+#ifndef LOC_BLOCK_HPP
+# define LOC_BLOCK_HPP
 
 # include "../../Tools/ParseTool.hpp"
 # include "../otherBlock/OtherBlock.hpp"
@@ -19,7 +19,6 @@ public:
 	LocBlock();
 	LocBlock(std::string loc_info);
 	virtual ~LocBlock();
-	// LocBlock& operator=(const LocBlock& obj );
 
 	/*getter*/
 	const std::string& getUploadStore()const;
@@ -46,12 +45,13 @@ public:
 	void	refineAll();
 	void	printInfo()const;
 
-	/* 사용자가 호출하지 않는 public 함수 (재귀 템플릿 때문에 public.) */
+	/* 사용자가 호출하지 않는 public 함수 (재귀 템플릿 때문에 public) */
 	void	makeBlock(std::string line, std::ifstream& input, int& line_len_);
 	std::map<std::string, std::string>& getDirStore();
 	int getRank();
 	void setError();
 	void	setFileName(const std::string &file_name);
+	
 private:
 	void	parseLocDirective();
 	void	parseReturn(std::string ret_line);

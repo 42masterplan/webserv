@@ -14,7 +14,6 @@ const std::vector<int>& HttpBlock::getListenPorts()const{
 
 /**
  * @brief http의 모든 directive를 정제하는 함수 동시에 가지고 있는 모든 server_block에게 정제 명령을 내립니다.
- * @todo 같은 포트에 대해서 에러를 처리하는 코드를 주석해뒀습니다.(나중에 추가될 수 있는 사항)
  */
 void	HttpBlock::refineAll(){
 	parseHttpDirective(http_directives_);

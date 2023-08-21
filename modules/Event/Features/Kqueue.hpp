@@ -1,15 +1,6 @@
 #ifndef KQUEUE_HPP
 # define KQUEUE_HPP
-# include <sys/types.h>
-# include <sys/event.h>
-# include <sys/time.h>
-# include <arpa/inet.h>
-# include <unistd.h>
-# include <string>
-# include <iostream>
-# include <vector>
-# include <map>
-# include <fcntl.h>
+
 # include "../../UData/UData.hpp"
 
 /**
@@ -26,8 +17,7 @@ class Kqueue{
     static void registerTimeoutEvent(const pid_t& pid, void* udata);
     static void unregisterTimeoutEvent(const pid_t& pid, void* data);
     static void updateTimeoutEvent(const pid_t& pid, void* udata);
-    // static void registerExitEvent(const pid_t& pid, void* udata);
-    // static void unregisterExitEvent(const pid_t& pid, void* udata);
+
 	private:
 		~Kqueue();
 		Kqueue();

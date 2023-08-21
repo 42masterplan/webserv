@@ -1,5 +1,5 @@
-#ifndef HTTPBLOCK_HPP
-# define HTTPBLOCK_HPP
+#ifndef HTTP_BLOCK_HPP
+# define HTTP_BLOCK_HPP
 # include "../serverBlock/ServBlock.hpp"
 # include "../interface/IBlock.hpp"
 # include "HttpBase.hpp"

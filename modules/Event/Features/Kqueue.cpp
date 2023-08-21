@@ -6,7 +6,7 @@ Kqueue::Kqueue() {}
 Kqueue::~Kqueue() {}
 int Kqueue::kqueue_fd_ = 0;
 std::vector<struct kevent> Kqueue::change_list_;
-// std::vector<struct kevent> Kqueue::change_list_(0);
+
 /**
  * @brief kqueue를 만들고, 서버소켓의 read 이벤트를 등록하는 함수
  * @param serv_sock 서버소켓의 fd
@@ -60,12 +60,6 @@ void  Kqueue::unregisterTimeoutEvent(const pid_t& pid, void* udata){
 	if (n_event == -1)
     return;
 }
-
-// void  Kqueue::registerExitEvent(const pid_t& pid, void* udata){
-// 	struct kevent tmp_event;
-//   EV_SET(&tmp_event, pid, EVFILT_PROC, EV_ADD | EV_ENABLE, NOTE_EXIT, 0, udata);
-//   change_list_.push_back(tmp_event);
-// }
 
 /**
  * @brief 등록할 이벤트를 생성하여 change_list_에 추가하는 함수

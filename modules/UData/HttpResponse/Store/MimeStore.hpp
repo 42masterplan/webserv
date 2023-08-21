@@ -6,7 +6,6 @@
 #include <iostream>
 class MimeStore {
 	public:
-
 		static void initMimeStore();
 		static std::string getMime(std::string extension);
 		static std::string getExtension(std::string mime);

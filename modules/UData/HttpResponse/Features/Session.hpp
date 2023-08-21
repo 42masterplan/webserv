@@ -1,7 +1,6 @@
 #ifndef SESSION_HPP
 # define SESSION_HPP
-# include <string>
-# include <map>
+
 # include "../../../Tools/ParseTool.hpp"
 
 class Session {

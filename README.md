@@ -1,8 +1,4 @@
 # Web Server Project | 웹서버 프로젝트
-
-This project involves the creation of a web server that mimics the behavior of Nginx, adhering strictly to the HTTP 1.1 standards.
-이 프로젝트는 HTTP 1.1 표준을 준수하면서 Nginx와 유사하게 동작하는 웹서버를 구현하는 것입니다.
-
 ## Introduction | 소개
 
 This project involves the creation of a web server that mimics the behavior of Nginx, adhering strictly to the HTTP 1.1 standards.

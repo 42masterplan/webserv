@@ -20,9 +20,6 @@ To start the server, use the following command:
 If no configuration file is specified, the server will use a default configuration file.
 구성 파일이 지정되지 않은 경우 서버는 기본 구성 파일을 사용합니다.
 
-If no configuration file is specified, the server will use a default configuration file.
-구성 파일이 지정되지 않은 경우 서버는 기본 구성 파일을 사용합니다.
-
 ## Features
 ## 기능
 

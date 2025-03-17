@@ -75,5 +75,5 @@ Ensure you have the following dependencies installed:
 - To run on Linux, you need to change the code in kqueue to epoll or poll or select.
 - Linux에서 실행하려면 kqueue의 코드를 epoll 또는 poll 또는 select로 변경해야 합니다.
 
-## POST (현재 발행중)
+## POST
 [블로그 링크](https://haward.tistory.com/category/42Seoul/webserv)

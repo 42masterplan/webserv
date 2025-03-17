@@ -76,4 +76,4 @@ Ensure you have the following dependencies installed:
 - Linux에서 실행하려면 kqueue의 코드를 epoll 또는 poll 또는 select로 변경해야 합니다.
 
 ## POST (현재 발행중)
-[블로그 링크](https://haward.tistory.com/category/42%EC%84%9C%EC%9A%B8/webserv)
+[블로그 링크](https://haward.tistory.com/category/42Seoul/webserv)
